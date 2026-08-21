@@ -139,6 +139,17 @@ jobs:
         shell: cmd
         run: .\build-installer.bat /s
 
+      # This is not lint or a test gate — see the top of this file. It is the one
+      # check that answers whether the artifact about to be published actually
+      # works: it launches the real packaged app and drives it over CDP. It is
+      # deliberately NOT continue-on-error — an installer whose app will not
+      # launch is worse than no release, and the always-run artifact collector
+      # below still preserves the installer and logs for inspection if this
+      # fails. See docs/features/build-and-packaging/smoke-test.md.
+      - name: Smoke test the built application
+        shell: cmd
+        run: node scripts\smoke-test.mjs
+
       - name: Compute release tag
         id: tag
         shell: pwsh

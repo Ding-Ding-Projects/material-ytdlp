@@ -54,6 +54,7 @@ import { wireFileOps } from './wire-fileops.mjs'
 import { wireSettingsActions } from './wire-settings-actions.mjs'
 import { wireProbes } from './wire-probes.mjs'
 import { wireExports } from './wire-exports.mjs'
+import { wireTruth } from './wire-truth.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(__dirname, '..')
@@ -216,6 +217,11 @@ function main() {
   // Exports runs last of all: several of its needles target text the lanes
   // above created, so it cannot be derived from the design source alone.
   html = wireExports(html, replaceExact)
+
+  // Truth pass runs last of everything: it replaces the remaining hardcoded
+  // figures with real ones, and several of its needles target text the lanes
+  // above produced rather than anything in the design source.
+  html = wireTruth(html, replaceExact)
 
   writeFileSync(OUT_HTML_PATH, html, 'utf8')
   console.log(`build-renderer-from-design: wrote ${OUT_HTML_PATH}`)

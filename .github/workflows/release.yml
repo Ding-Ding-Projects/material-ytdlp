@@ -4,6 +4,14 @@ on:
   push:
   workflow_dispatch:
 
+# Queue release runs; never cancel one. Publishing is not idempotent, so a run
+# killed between creating a tag and uploading its artifacts leaves a release
+# that points at nothing. Serialising also stops several pushes in quick
+# succession from racing to publish and colliding over the same tag.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 # This workflow builds and packages the application and publishes a GitHub Release.
 # It intentionally runs NO test job, NO lint job, NO type-check gate, and NO coverage
 # check — nothing here can withhold a release on a code-quality verdict. Checking

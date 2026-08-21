@@ -54,20 +54,85 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Each vendored binary is cached against the exact submodule commit it is
+      # built from, so a build only runs when that upstream has actually moved.
+      # They are cached SEPARATELY on purpose: yt-dlp advances most days and
+      # takes a few minutes, ffmpeg advances rarely and takes about forty. One
+      # shared key would rebuild ffmpeg every time yt-dlp moved, throwing away
+      # most of the run for nothing.
+      #
+      # The key IS the submodule SHA, so a cached binary can never be served for
+      # a different source revision. There is deliberately no restore-keys
+      # fallback: a near-miss restore would hand back a binary built from some
+      # other commit while the build step skipped, and the release notes would
+      # then state a provenance that is false.
+      - name: Resolve vendored source revisions
+        id: revs
+        shell: pwsh
+        run: |
+          $ytdlp  = (git -C vendor/yt-dlp rev-parse HEAD).Trim()
+          $ffmpeg = (git -C vendor/ffmpeg rev-parse HEAD).Trim()
+          "ytdlp=$ytdlp"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "ffmpeg=$ffmpeg" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "yt-dlp source: $ytdlp"
+          Write-Host "ffmpeg source: $ffmpeg"
+
+      - name: Restore yt-dlp build
+        id: cache-ytdlp
+        uses: actions/cache@v4
+        with:
+          path: |
+            vendor/bin/yt-dlp.exe
+            vendor/bin/yt-dlp.build.json
+          key: ytdlp-${{ runner.os }}-${{ steps.revs.outputs.ytdlp }}
+
+      - name: Restore ffmpeg build
+        id: cache-ffmpeg
+        uses: actions/cache@v4
+        with:
+          path: |
+            vendor/bin/ffmpeg.exe
+            vendor/bin/ffprobe.exe
+            vendor/bin/ffmpeg.build.json
+          key: ffmpeg-${{ runner.os }}-${{ steps.revs.outputs.ffmpeg }}
       - name: Download dependencies
         shell: cmd
         run: .\download-dependencies.bat /s
 
       - name: Build yt-dlp from pinned source
+        if: steps.cache-ytdlp.outputs.cache-hit != 'true'
         shell: cmd
         run: .\build-ytdlp.bat /s
 
       - name: Build ffmpeg from pinned source
+        if: steps.cache-ffmpeg.outputs.cache-hit != 'true'
         shell: cmd
         # windows-latest already ships MSYS2 at C:\msys64; download-dependencies.bat
         # detects and reuses it rather than installing a second copy, so this step
         # only needs to install the missing mingw-w64 packages before building.
         run: .\build-ffmpeg.bat /s
+
+      # A cache hit means a build step was skipped, so nothing has yet proved the
+      # restored files are usable. Prove it here rather than finding out at
+      # packaging time: every binary the installer bundles must exist and run.
+      - name: Verify vendored binaries
+        shell: pwsh
+        run: |
+          Write-Host "yt-dlp cache hit: ${{ steps.cache-ytdlp.outputs.cache-hit }}"
+          Write-Host "ffmpeg cache hit: ${{ steps.cache-ffmpeg.outputs.cache-hit }}"
+          $bad = @()
+          foreach ($exe in 'yt-dlp', 'ffmpeg', 'ffprobe') {
+            $path = "vendor/bin/$exe.exe"
+            if (-not (Test-Path $path)) { $bad += "$path (missing)"; continue }
+            $flag = if ($exe -eq 'yt-dlp') { '--version' } else { '-version' }
+            $first = (& $path $flag 2>&1 | Select-Object -First 1)
+            if ($LASTEXITCODE -ne 0) { $bad += "$path (exit $LASTEXITCODE)" }
+            else { Write-Host "$exe : $first" }
+          }
+          if ($bad.Count -gt 0) {
+            Write-Error ("Vendored binaries missing or not runnable: " + ($bad -join '; ') + ". A cache entry restored files that cannot be used; delete that cache key and rerun.")
+            exit 1
+          }
 
       - name: Build installer
         shell: cmd

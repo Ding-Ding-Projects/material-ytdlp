@@ -2,10 +2,19 @@ import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
 import { registerIpcHandlers } from './ipc'
 import { handleSquirrelEvent } from './squirrel-startup'
+import { attachWebContentsLogging, initLogging } from './logging'
 
 // Code signing is permanently prohibited for this project. This build is
 // intentionally unsigned; nothing here requests, discovers, or invokes a
 // signer.
+
+// Local diagnostics logging MUST be initialised before anything else: main-
+// process code already catches startup/lifecycle failures into
+// `console.error` (Squirrel lifecycle handling included), and in a packaged
+// build there is no console anyone is watching — those lines go nowhere.
+// Initialising this first means even a Squirrel-lifecycle failure below
+// lands in app/logging/main.log instead of vanishing.
+initLogging()
 
 // Squirrel.Windows install/update/uninstall lifecycle handling MUST run
 // before anything else: before app.whenReady(), before any window is
@@ -52,6 +61,11 @@ function runApp(): void {
         sandbox: false,
       },
     })
+
+    // Capture renderer console output (including console.error/console.warn
+    // and Chromium's own "Uncaught ..." logging) and preload failures for
+    // this window's WebContents. See app/src/main/logging.ts.
+    attachWebContentsLogging(win.webContents)
 
     win.once('ready-to-show', () => {
       win.show()

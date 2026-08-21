@@ -80,6 +80,13 @@ import {
 } from '../shared/fileops-contract'
 import { CookiesIpcChannel, type ValidateCookiesFileResult } from '../shared/stubs-contract'
 import {
+  LoggingIpcChannel,
+  type LogFaultReport,
+  type LogLevel,
+  type LogWriteRequest,
+  type OpenLogFolderResult,
+} from '../shared/logging-contract'
+import {
   AuthenticatorIpcChannel,
   LocksIpcChannel,
   type AuthenticatorEntrySummary,
@@ -163,6 +170,62 @@ function subscribe<T>(channel: string, handler: (payload: T) => void): () => voi
     ipcRenderer.removeListener(channel, listener)
   }
 }
+
+// ---------------------------------------------------------------------------
+// Automatic renderer fault capture.
+//
+// Installed unconditionally, with no cooperation required from renderer
+// code, so an error thrown anywhere in the page still lands on disk. Sent
+// with `ipcRenderer.send` (fire-and-forget) rather than the deadline-
+// enforced invoke above: this path exists specifically to survive things
+// already going wrong, so it must never itself depend on a reply.
+//
+// `window` here is a native DOM EventTarget shared with the page's own
+// context even under contextIsolation (only the JS object graph — Object,
+// Array, and anything the page assigns onto `window` itself — is isolated
+// per world; `addEventListener`/dispatch on the underlying browsing
+// context is not). That is what lets a preload-registered `error`/
+// `unhandledrejection` listener observe an uncaught exception thrown by
+// the page's own main-world scripts. It is the reason this is written as
+// `addEventListener`, never as an attempt to monkey-patch `window.console`
+// or `window.onerror` from here — a direct property assignment on this
+// preload's `window` would land on a *different* object than the page's,
+// and would silently capture nothing. (Console output itself is captured
+// far more reliably from the main process, via `webContents.on(
+// 'console-message', ...)` in app/src/main/logging.ts — see that file for
+// why that is the authoritative path for console.error/console.warn.)
+function reportFault(report: LogFaultReport): void {
+  try {
+    ipcRenderer.send(LoggingIpcChannel.ReportFault, report)
+  } catch {
+    // Logging must never throw into the caller it is trying to diagnose.
+  }
+}
+
+window.addEventListener('error', (event) => {
+  const err = event.error instanceof Error ? event.error : null
+  reportFault({
+    kind: 'window-error',
+    message: event.message || err?.message || 'Unknown error',
+    stack: err?.stack ?? null,
+    source: event.filename || null,
+    line: typeof event.lineno === 'number' ? event.lineno : null,
+    column: typeof event.colno === 'number' ? event.colno : null,
+  })
+})
+
+window.addEventListener('unhandledrejection', (event) => {
+  const reason: unknown = event.reason
+  const err = reason instanceof Error ? reason : null
+  reportFault({
+    kind: 'unhandled-rejection',
+    message: err?.message ?? (typeof reason === 'string' ? reason : String(reason)),
+    stack: err?.stack ?? null,
+    source: null,
+    line: null,
+    column: null,
+  })
+})
 
 // ---------------------------------------------------------------------------
 // Bridge surface exposed to the renderer. No Node APIs are exposed directly.
@@ -380,6 +443,16 @@ const bridge = {
 
   ollama: {
     probe: () => invokeWithDeadline<OllamaProbeResult>(OllamaIpcChannel.Probe, MEDIUM),
+  },
+
+  logging: {
+    /** Writes one explicit log entry from renderer code. `meta` is redacted by field name before it reaches disk. */
+    write: (level: LogLevel, message: string, meta?: Record<string, unknown> | null) =>
+      invokeWithDeadline<void>(LoggingIpcChannel.Write, SHORT, { level, message, meta } satisfies LogWriteRequest),
+    /** Absolute path to the active log file (`.../userData/logs/main.log`). */
+    getPath: () => invokeWithDeadline<string>(LoggingIpcChannel.GetPath, SHORT),
+    /** Opens the log folder in the OS file manager. */
+    openFolder: () => invokeWithDeadline<OpenLogFolderResult>(LoggingIpcChannel.OpenFolder, MEDIUM),
   },
 }
 

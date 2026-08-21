@@ -93,6 +93,8 @@ import {
   runTotpTestVectors,
 } from './authenticator'
 import { sanitizeLanguagePrefs } from './language'
+import { LoggingIpcChannel, type LogFaultReport, type LogWriteRequest } from '../shared/logging-contract'
+import { getLogPath, handleRendererFaultReport, handleRendererWrite, openLogFolder } from './logging'
 
 // ---------------------------------------------------------------------------
 // History auto-recording.
@@ -458,6 +460,16 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): YtDl
   // -- Local Ollama model-suite probe (local HTTP API only) -----------------
 
   ipcMain.handle(OllamaIpcChannel.Probe, () => probeOllama())
+
+  // -- Local diagnostics logging (main.log under userData/logs) -------------
+  // See app/src/main/logging.ts. `ReportFault` is deliberately `.on` (fire-
+  // and-forget), not `.handle` — it exists to survive things already going
+  // wrong, so it must never itself depend on a request/response round trip.
+
+  ipcMain.handle(LoggingIpcChannel.Write, (_event, req: LogWriteRequest) => handleRendererWrite(req))
+  ipcMain.handle(LoggingIpcChannel.GetPath, () => getLogPath())
+  ipcMain.handle(LoggingIpcChannel.OpenFolder, () => openLogFolder())
+  ipcMain.on(LoggingIpcChannel.ReportFault, (_event, report: LogFaultReport) => handleRendererFaultReport(report))
 
   return manager
 }

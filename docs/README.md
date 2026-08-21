@@ -12,6 +12,8 @@ Categorized feature documentation for yt-dlp Studio.
   relates to the real application, and its parity status.
 - [Appearance](features/appearance/README.md) — Material Design 3 conformance and the planned
   appearance-customization system.
+- [Diagnostics](features/diagnostics/README.md) — local logging: where the log file lives, which
+  failures reach it, and what is redacted before it gets there.
 
 See also: [`completeness-inventory.md`](completeness-inventory.md) for the hand-written,
 per-feature status table covering every canonical feature named in

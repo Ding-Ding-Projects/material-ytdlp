@@ -323,7 +323,10 @@ jobs:
               Out-File -FilePath release-notes.md -Encoding utf8 -Append
           }
 
-          $files = "${{ steps.artifacts.outputs.paths }}" -split "`n" | Where-Object { $_.Trim() -ne "" }
+          # Trim each path: GITHUB_OUTPUT is written with CRLF, so splitting on
+          # "`n" alone leaves a trailing carriage return on every entry and gh
+          # then reports "no matches found" for a file that is sitting right there.
+          $files = "${{ steps.artifacts.outputs.paths }}" -split "`r?`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
           $dish = "${{ steps.dimsum.outputs.asset }}"
           if ($dish -and (Test-Path $dish)) { $files += (Resolve-Path $dish).Path }
 

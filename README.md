@@ -12,12 +12,76 @@ Easy mode for a one-click download, Expert mode for every option grouped and exp
 Plain mode for typing raw arguments — plus a queue, a live console with error-repair wizards,
 and a companion browser extension.
 
-**No separate installs.** The Windows installer bundles yt-dlp itself (built from the pinned
-source in `vendor/yt-dlp`) together with pinned `ffmpeg`/`ffprobe` binaries. A user who installs
-yt-dlp Studio does not need Python, yt-dlp, or ffmpeg on their machine.
+**Nothing to install but the app.** yt-dlp is compiled from pinned upstream source at build
+time, and ffmpeg is compiled from the FFmpeg source tree. Both ship inside the installer. No
+Python, no PATH setup, no hunting for an ffmpeg build.
 
 - Documentation: see [`docs/`](docs/README.md) for the full feature index.
 - Design reference: see [`design/`](design/) and [`design/HANDOFF.md`](design/HANDOFF.md).
+
+## Every feature
+
+Screenshots for each are in the [gallery](#screenshot-gallery) below. Anything not yet built is
+listed in [Not built yet](#not-built-yet) rather than quietly omitted.
+
+### Downloading
+
+| Feature | What it does |
+| --- | --- |
+| **Easy mode** | Paste a URL, pick a folder, press Download. Quality, subtitles and thumbnail switches, nothing else in the way. |
+| **Expert mode** | All **16 option groups and 250 flags** from yt-dlp's own documentation, each rendered as the right control — switch, text, slider, select, date, path or chips — with its real help text. |
+| **Plain mode** | A raw argument box for when you already know exactly what you want. |
+| **Live command preview** | The exact arguments that will be spawned, updating as you change anything. |
+| **Argument-array execution** | The command is passed as an array, never through a shell, so a URL can never be interpreted as one. |
+| **Real progress** | Parsed from `--progress-template` and aggregated across fragments, not scraped off the human-readable bar. |
+| **Queue** | Multiple jobs with per-job state, cancel, retry and remove. |
+| **Live console** | Real stdout and stderr, with errors and warnings marked. |
+| **Honest pause** | Windows has no `SIGSTOP`, so the control reads *Stop (resume continues the file)* and resumes with `--continue` rather than pretending to suspend a process. |
+
+### What is inside the installer
+
+| Feature | What it does |
+| --- | --- |
+| **yt-dlp built from source** | Compiled from the pinned `vendor/yt-dlp` submodule with PyInstaller during the build. Not downloaded, not a binary of unknown provenance. |
+| **ffmpeg built from source** | Compiled from the pinned `vendor/ffmpeg` submodule. An **LGPL** build: `--enable-gpl` is never passed and `--enable-nonfree` never will be. |
+| **Dependencies track upstream** | Both submodules follow `master` and are advanced on every pull, because yt-dlp breaks when a site changes and is fixed upstream within days. |
+| **Build provenance in every release** | Release notes carry the yt-dlp version, the exact submodule commit it was built from, and the SHA-256 of both the binary and the installer. |
+| **One-click builds** | `build.bat` and `build-installer.bat` install every dependency themselves, from a bare Windows machine, with a silent `/s` mode. |
+
+### Interface
+
+| Feature | What it does |
+| --- | --- |
+| **Material Design 3** | Tokens, typography, shape and elevation throughout, on a dark teal palette. |
+| **Frameless window** | A custom Material title bar rather than the operating system's default chrome. |
+| **Navigation rail** | Destinations down the left, with unbuilt ones plainly labelled as unbuilt. |
+| **Catalog drift guard** | A test fails the build if the shipped option catalog and the design reference ever disagree — verified by breaking it on purpose and watching it go red. |
+
+### The site
+
+| Feature | What it does |
+| --- | --- |
+| **Landing and documentation site** | Fully self-contained: no CDN, no remote fonts, no analytics, nothing fetched at page load. |
+| **Command planner** | Composes a real yt-dlp command from form inputs, with copy-to-clipboard and a graceful fallback. |
+| **Page search with a regex builder** | Plain text by default, regex as an explicit opt-in, with an anchored builder popover. |
+| **Light and dark themes** | Follows the system by default, with a toggle that persists. |
+| **Genuinely mobile** | Verified at 375px: no off-screen controls, a 57px header, no sideways scroll. |
+
+## Not built yet
+
+These are real roadmap items, listed so their absence reads as a decision rather than an
+oversight. See [`ROADMAP.md`](ROADMAP.md).
+
+Language modes (English / Cantonese / bilingual) · playfulness sliders · spoken narrator ·
+School mode · ADHD modes · command palette · browser-style tabs with groups · per-element
+appearance editor · scheduled settings · local model suite · file converter · changelog viewer ·
+support tickets · the companion browser extension · automatic updates · **automated tests**.
+
+## Screenshot gallery
+
+<!-- HUISHOT-GALLERY -->
+_Captures are taken from the real built application and are pending for this release._
+<!-- /HUISHOT-GALLERY -->
 
 ## Quick start
 

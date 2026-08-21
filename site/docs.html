@@ -42,6 +42,7 @@
     </a>
     <nav class="primary-nav" aria-label="Primary">
       <a href="index.html#capabilities">Capabilities</a>
+      <a href="index.html#gallery">Screenshots</a>
       <a href="index.html#workflow">Workflow</a>
       <a href="docs.html" aria-current="page">Documentation</a>
     </nav>
@@ -106,6 +107,7 @@
   </div>
   <div class="mobile-nav-panel" id="mobile-nav-panel" data-mobile-nav-panel hidden>
     <a href="index.html#capabilities">Capabilities</a>
+    <a href="index.html#gallery">Screenshots</a>
     <a href="index.html#workflow">Workflow</a>
     <a href="docs.html" aria-current="page">Documentation</a>
     <a class="btn-pill-nav" href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases">View releases</a>
@@ -118,6 +120,7 @@
       <nav class="docs-nav" aria-label="Documentation sections">
         <h4>On this page</h4>
         <ul>
+          <li><a href="#screenshots">Screenshots</a></li>
           <li><a href="#bundled-binaries">Bundled binaries</a></li>
           <li><a href="#unsigned-installer">The unsigned installer</a></li>
           <li><a href="#building-from-source">Building from source</a></li>
@@ -141,6 +144,179 @@
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M9 6v4M9 12.5h.01M2.5 15h13L9 3 2.5 15z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"></path></svg>
           <span>No release has been published yet. Everything on this page describes how the project is built and how it will behave once a build ships — check the <a href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases" rel="noopener">releases page</a> for the current state.</span>
         </div>
+
+        <h2 id="screenshots" data-index data-index-section="Screenshots">Screenshots</h2>
+        <p data-index data-index-section="Screenshots">Every image below is a capture of the real packaged application, launched from a fresh profile on an off-screen desktop &mdash; the same set shown on the <a href="index.html#gallery">home page gallery</a>. Where a figure can&#39;t be true yet on a fresh install, the app shows a dash rather than a plausible-looking number.</p>
+        <ul class="gallery-grid" data-gallery-grid>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="0">
+              <img src="screenshots/01-easy-mode.png" alt="Easy mode with an empty link field, a Waiting for a link card, quality presets from best-available through 4K down to audio-only, a save-to path, and subtitle, cover-art and skip-sponsors switches." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Easy mode: paste a link, pick a quality, download.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="1">
+              <img src="screenshots/02-download-queue.png" alt="Expert mode&#x27;s Download tab showing the intake box, quick-action chips, a session panel with active, queued and failed counters, and an empty queue and console each with their own search field." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Expert mode: intake, session panel, queue and console.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="2">
+              <img src="screenshots/03-expert-video-format.png" alt="The Video Format options group listing 16 of 16 flags including --format, --format-sort and --video-multistreams, each with a value field or toggle." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Video Format group: every format-selection flag, searchable.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="3">
+              <img src="screenshots/04-expert-post-processing.png" alt="The Post-Processing options group listing 37 of 37 flags including --extract-audio, --audio-format, --remux-video and --postprocessor-args." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Post-Processing group: extraction, remux, recode, postprocessor args.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="4">
+              <img src="screenshots/05-formats.png" alt="The Format explorer building an -f selector from clickable tokens like bv*, ba and [height&lt;=1080], next to an -S sort-order field and a list of named format recipes." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Format explorer: build -f/-S from tokens or a named recipe.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="5">
+              <img src="screenshots/06-output.png" alt="The Output template studio with an -o template field, a live filename preview and matching .part path, quick-insert chips, and a searchable panel of 120+ template fields." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Output template studio: compose -o with a live filename preview.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="6">
+              <img src="screenshots/07-library.png" alt="The Library and archive tab on a fresh profile reading 0 of 0 files with a dash for archive ids, otherwise empty." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Library and archive: genuinely empty on a fresh profile.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="7">
+              <img src="screenshots/08-sites.png" alt="The Supported sites tab with a searchable extractor list and cards for youtube, vimeo, soundcloud, bandcamp, twitch and many more, each showing the kind of link it accepts." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Supported sites: yt-dlp&#x27;s real extractor list, searchable.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="8">
+              <img src="screenshots/09-config.png" alt="The Config files tab with a list of Portable, Home, User and System config locations, and a right panel of numbered flag rows merged into an effective configuration." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Config files: every config file yt-dlp reads, and the merged result.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="9">
+              <img src="screenshots/10-chain.png" alt="The Processing chain tab listing every postprocessor stage in run order, with configured --exec hooks and postprocessor-args alongside." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Processing chain: every postprocessor in the order it runs.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="10">
+              <img src="screenshots/11-sponsorblock.png" alt="The SponsorBlock tab with a searchable category list (sponsor, intro, outro, filler and more), each with off, mark and remove buttons." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">SponsorBlock: per-category mark-or-remove policy.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="11">
+              <img src="screenshots/12-presets.png" alt="The Presets and aliases tab showing the built-in -t presets (mp3, aac, mp4, mkv, sleep, archive), each with the exact flags it expands to." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Presets and aliases: what each built-in -t shortcut expands to.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="12">
+              <img src="screenshots/13-rail-filter-history.png" alt="The navigation rail filtered by typing hist, leaving only the History destination visible." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">The navigation rail has its own filter field.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="13">
+              <img src="screenshots/14-history.png" alt="The History tab with a record count and disk size, a Live toggle, category chips, a day-grouped timeline, and the on-disk history.jsonl path." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Local history: every state-changing action, searchable.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="14">
+              <img src="screenshots/15-settings.png" alt="The Settings tab with rows for language mode, both funny-level sliders, School mode, ADHD mode and theme, each with an inline explanation." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Settings: language, funny levels, School and ADHD modes, theme.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="15">
+              <img src="screenshots/16-settings-vocabulary.png" alt="Settings filtered to vocabulary, showing a Personal vocabulary row stating no file is loaded and original wording is shown everywhere." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Personal vocabulary: nothing invented until you supply a file.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="16">
+              <img src="screenshots/17-settings-app-mark.png" alt="Settings filtered to app mark, showing a row stating the shipped app mark is in use and can be replaced, scoped to the title bar and tray." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">The app mark can be replaced with your own image.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="17">
+              <img src="screenshots/18-support-tickets.png" alt="A Support tickets dialog explaining plainly that it is a local joke, not a real help desk, with a category dropdown and a description field." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Support Tickets: a joke help desk that just opens your data folder.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="18">
+              <img src="screenshots/19-docs.png" alt="The in-app Docs tab on Getting started, with a contents list and cards explaining pasting a link, picking a quality and pressing Download." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">In-app docs: every feature explained offline, exportable as PDF.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="19">
+              <img src="screenshots/20-what-changed.png" alt="The Docs tab on What changed, showing a No releases yet notice stating plainly that nothing is invented to fill the gap." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">What changed: an honest empty state, not an invented changelog.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="20">
+              <img src="screenshots/21-plain-mode.png" alt="Plain mode showing a bare command textbox with a full yt-dlp invocation, a scrollable config panel, an empty output pane and a single Run button." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Plain mode: the command and config exactly as you&#x27;d type them.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="21">
+              <img src="screenshots/22-notifications.png" alt="A Notifications dialog explaining every notice is kept in a local file that can be searched, exported and cleared, with nothing sent to a server." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">The notification centre: every toast, kept and searchable.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="22">
+              <img src="screenshots/23-global-search.png" alt="The global search box in the title bar containing the text format, with a small regex toggle beside it." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Global search reaches flags, jobs, sites, config and history.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="23">
+              <img src="screenshots/24-regex-builder.png" alt="A Pattern builder popover with a live pattern field and button groups for match tokens, quantifiers, anchors and grouping." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">The regex builder: build a pattern from labelled blocks.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="24">
+              <img src="screenshots/25-command-palette.png" alt="The command palette opened with Ctrl+Shift+F, showing search results for Easy mode, Download queue and several settings with live controls inline." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Command palette (Ctrl+Shift+F): search and edit from one box.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="25">
+              <img src="screenshots/26-command-palette-search.png" alt="The command palette filtered to sponsor, showing a single SponsorBlock options result." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Palette results narrow instantly and say what they&#x27;ll do.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="26">
+              <img src="screenshots/27-flag-guide-popover.png" alt="A Picture quality flag-guide popover translating --format into a plain question with icon-labelled choices." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Every flag&#x27;s info icon opens a plain-language guide.</p>
+          </li>
+          <li class="gallery-item">
+            <button type="button" class="gallery-thumb" data-gallery-open data-index="27">
+              <img src="screenshots/28-tab-context-menu.png" alt="A right-click context menu on a tab with Pin, Duplicate, Move to group, Close options, Lock this element, Edit appearance and Export." loading="lazy" width="340" height="212">
+            </button>
+            <p class="gallery-caption">Every tab&#x27;s context menu: pin, group, lock, re-skin, export.</p>
+          </li>
+        </ul>
 
         <h2 id="bundled-binaries" data-index data-index-section="Bundled binaries">Bundled binaries</h2>
         <p data-index data-index-section="Bundled binaries">yt-dlp Studio bundles two external tools inside its own installer so nothing has to be installed separately: <strong>yt-dlp</strong>, built from a pinned commit of the upstream <a href="https://github.com/yt-dlp/yt-dlp" rel="noopener">yt-dlp</a> source, and <strong>ffmpeg</strong>, used for merging separate video and audio streams and for format conversion. Both ship as part of the application package rather than being downloaded at first run, so the app works fully offline once installed.</p>
@@ -185,5 +361,24 @@ npm run dist</code></pre>
 </footer>
 
 <script src="assets/app.js"></script>
+<div class="gallery-lightbox" data-gallery-lightbox hidden>
+  <div class="gallery-lightbox-backdrop" data-gallery-backdrop></div>
+  <div class="gallery-lightbox-dialog" role="dialog" aria-modal="true" aria-label="Screenshot viewer" data-gallery-dialog>
+    <button type="button" class="icon-btn gallery-close" data-gallery-close aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+    </button>
+    <button type="button" class="icon-btn gallery-nav gallery-prev" data-gallery-prev aria-label="Previous screenshot">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </button>
+    <figure class="gallery-figure">
+      <img data-gallery-image alt="">
+      <figcaption data-gallery-figcaption></figcaption>
+    </figure>
+    <button type="button" class="icon-btn gallery-nav gallery-next" data-gallery-next aria-label="Next screenshot">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </button>
+    <p class="gallery-counter" data-gallery-counter></p>
+  </div>
+</div>
 </body>
 </html>

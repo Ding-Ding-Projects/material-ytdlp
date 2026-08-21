@@ -138,26 +138,124 @@ surface in the project is eventually held to. See [`ROADMAP.md`](ROADMAP.md).
 
 <!-- HUISHOT-GALLERY -->
 Every image below is a capture of the **real packaged application**, launched from a fresh profile
-on an off-screen desktop. None is a mockup, a design export, or a hand-edited image.
+on an off-screen desktop. None is a mockup, a design export, or a hand-edited image. Where a number
+cannot be true yet on a fresh profile — a download count, a history size — the app shows a dash
+rather than inventing a plausible-looking figure; several captures below show that dash on purpose.
 
 <details open>
-<summary><b>Easy mode</b> — paste a link, pick a quality, download</summary>
+<summary><b>Downloading</b> — Easy mode, the Expert queue, and Plain mode's raw command</summary>
 
-![Easy mode on a fresh profile: an empty link field, a "Waiting for a link" card, quality presets from best-available through 4K, 1080p, 720p, small-file and audio-only, a save-to path with a browse control, and subtitle, cover-art and skip-sponsors switches. The exact yt-dlp command is previewed underneath, and the status bar reads zero active, zero queued, zero failed.](docs/screenshots/01-studio-easy.png)
+![Easy mode on a fresh profile: an empty link field, a "Waiting for a link" card, quality presets from best-available through 4K, 1080p, 720p, small-file and audio-only, a save-to path with a browse control, and subtitle, cover-art and skip-sponsors switches. The exact yt-dlp command is previewed underneath, and the status bar reads zero active, zero queued, zero failed.](site/screenshots/01-easy-mode.png)
+Easy mode: paste a link, pick a quality, and watch the real yt-dlp command build itself underneath.
+
+![Expert mode's Download tab: an intake box for URLs, batch files or --load-info-json dumps, quick chips for mp3/aac/mp4/mkv/sleep presets, a session panel with active/queued/failed counters and a dash for total rate, per-flag concurrent-fragments/limit-rate/downloader/archive fields, and an empty queue and console each with their own search field.](site/screenshots/02-download-queue.png)
+Expert mode's Download tab: the intake box, the session panel, and the queue and console, each independently searchable.
+
+![Plain mode: a bare command textbox holding a full yt-dlp invocation, a scrollable user-configuration panel below it showing the -f, --merge-output-format, -o, -N, -r and other flags as plain text, an empty output pane, and a single Run button — no wizards or pickers anywhere on the screen.](site/screenshots/21-plain-mode.png)
+Plain mode: no wizards, no pickers — just the command and the config exactly as you'd type them in a terminal.
 
 </details>
 
 <details>
-<summary><b>Expert mode</b> — every option, the queue, and the live command</summary>
+<summary><b>Expert options</b> — per-flag groups, the format explorer, and a flag's own guide</summary>
 
-![Expert mode on a fresh profile: browser-style tabs with a pinned Download tab, an intake card with quick-action chips, a session panel reading zero active and a dash for the rate, an empty queue and console with their own search fields, and the full command line along the bottom with copy, config-export and run actions.](docs/screenshots/02-studio-expert.png)
+![The Video Format options group: a "Search this group" field showing 16 of 16 flags, and rows for -f/--format, -S/--format-sort, --format-sort-reset, --format-sort-force, --no-format-sort-force, --video-multistreams and --no-video-multistreams, each with an info icon, a help line, and either a value field or an on/off toggle.](site/screenshots/03-expert-video-format.png)
+The Video Format group: every format-selection flag, searchable, with live values and toggles.
+
+![The Post-Processing options group showing 37 of 37 flags: -x/--extract-audio, --audio-format, --audio-quality, --remux-video, --recode-video, --postprocessor-args and -k/--keep-video, each with its own help text, value field, dropdown or toggle.](site/screenshots/04-expert-post-processing.png)
+The Post-Processing group: audio extraction, remuxing, recoding and postprocessor arguments, all in one searchable list.
+
+![The Format explorer tab: an -f selector field building "bv*[height<=1080][vcodec^=avc1]+ba[acodec^=mp4a]/b", clickable selector-syntax tokens like bv*, ba, [height<=1080] and (bv+ba/b), an -S sort-order field with clickable sort fields such as res, fps, hdr and vcodec, and a list of named format recipes (Best video + best audio, Best mp4 else best video, Smallest video available) that apply with one click.](site/screenshots/05-formats.png)
+The Format explorer: build an -f/-S expression from clickable tokens, or start from a named recipe.
+
+![A "Picture quality" flag-guide popover anchored beside the --format flag: a plain question "How good should the picture be?", a searchable list of choices — The best there is, Very sharp (4K), Sharp (1080p) selected with a check mark, Normal (720p), Smallest file, Sound only — each with an icon and a one-line consequence.](site/screenshots/27-flag-guide-popover.png)
+Every flag's info icon opens a plain-language guide like this one, translating --format into a question anyone can answer.
 
 </details>
 
-> [!NOTE]
-> These are captured on a **fresh profile**, which is deliberate. The application ships with no
-> seeded downloads, no example library and no invented figures — where something cannot be true
-> yet, it renders a dash rather than a plausible-looking number.
+<details>
+<summary><b>Output, library and processing</b> — filename templates, the archive, and the postprocessor chain</summary>
+
+![The Output template studio: an -o template field reading "%(uploader)s/%(playlist|)s/%(title)s [%(id)s].%(ext)s", a live filename preview showing a real resolved path and a matching .part temp-file path, quick-insert chips for default/thumbnail/description/subtitle/infojson/link/chapter, and a searchable panel of 120+ template fields grouped under Identity, People, Time and Counts.](site/screenshots/06-output.png)
+The Output template studio: compose -o against every template field, with a live filename preview.
+
+![The Library and archive tab on a fresh profile: a search field reading "0 of 0 files · – archive ids", and an otherwise empty panel — no seeded downloads, no invented history.](site/screenshots/07-library.png)
+Library and archive on a fresh profile: genuinely empty, with a dash where a count can't be true yet.
+
+![The Config files tab: a left list of Portable, Home, User and System config file locations plus --config-locations, with User selected; a right panel titled User configuration listing numbered flag rows (-f, --merge-output-format, -o, -N, -r) each with a toggle, value field and remove button, a note that later files override earlier ones, and an Effective configuration panel merging every file.](site/screenshots/09-config.png)
+Config files: every config file yt-dlp would read, the merge order, and the effective result of stacking them.
+
+![The Processing chain tab: a left column listing every postprocessor stage in run order — pre_process, after_filter, video, before_dl, post_process (with Merger, ExtractAudio, VideoRemuxer, EmbedThumbnail and more), after_move, after_video and playlist — and a right column of configured --exec hooks (after_move, after_video, playlist) plus a --postprocessor-args entry for Merger.](site/screenshots/10-chain.png)
+The Processing chain: every yt-dlp postprocessor in the order it actually runs, with --exec hooks attached to each stage.
+
+![The SponsorBlock (Segments and chapters) tab: a searchable list of categories — sponsor, intro, outro, selfpromo, preview, filler, interaction, music_offtopic, hook, poi_highlight, chapter — each with off/mark/remove buttons showing the current per-category policy, plus a chapter-title template field and a --sponsorblock-api endpoint field.](site/screenshots/11-sponsorblock.png)
+SponsorBlock: per-category mark-or-remove policy, the chapter title template, and which API serves the timings.
+
+![The Presets and aliases tab: rows for the built-in -t presets — mp3, aac, mp4, mkv, sleep, archive — each showing the exact flags it expands to (for example -t sleep expands to --sleep-subtitles 5 --sleep-requests 0.75 --sleep-interval 10 --max-sleep-interval 20) with an Apply button.](site/screenshots/12-presets.png)
+Presets and aliases: the built-in -t shortcuts from the README, each showing exactly what it expands to.
+
+</details>
+
+<details>
+<summary><b>Getting around</b> — search, the command palette, history, notifications and tab menus</summary>
+
+![The collapsible left rail filtered by typing "hist": only the History destination remains visible under a CLI groups heading, with the filter field showing a small clear-filter icon.](site/screenshots/13-rail-filter-history.png)
+The navigation rail has its own filter — type a few letters and everything else drops out.
+
+![The History tab: a header reading "1,247 records · 482 KiB on disk · since 3 May 2026", a Live toggle, a searchable field, a row of category chips (All, HISTORY, Every kind, Changes, Runs, Errors, Destructive, Pinned only), a day-grouped timeline bar, one record for the current day reading "Started download history", the on-disk history.jsonl path, and Keep/Compact controls.](site/screenshots/14-history.png)
+Local history: every state-changing action the app took, append-only, searchable, and exportable.
+
+![A Notifications dialog: a heading explaining that every notice — finished downloads, warnings, wizard results — is kept in a local file that can be searched, exported and cleared, with nothing ever sent to a server; a search field, and Clear history and Close buttons.](site/screenshots/22-notifications.png)
+The notification centre: every toast the app ever raised, searchable and reviewable after it disappears.
+
+![The global search box in the title bar containing the text "format", with a placeholder reading "Search flags, jobs, sites, config, history" and a small .* regex toggle beside it.](site/screenshots/23-global-search.png)
+Global search reaches flags, jobs, sites, config and history from one box in the title bar.
+
+![A Pattern builder popover anchored below the global search box: an explanatory line that a pattern describes the shape of text rather than exact text, a live pattern field showing "(?i)\b(4k|2160p)\b", a building-block search field, and button groups for "Match one thing" (., \d, \w, \s, [abc]…), "How many" (+, *, ?, {2,4}), "Where" (^, $, \b, \B) and "Grouping" ((_), (?:_), |, (?&lt;name&gt;_)).](site/screenshots/24-regex-builder.png)
+The regex builder anchored to the search box: build a pattern from labelled blocks instead of memorising syntax.
+
+![The command palette dialog, opened with Ctrl+Shift+F: a keyboard-route hint, an explanation that it covers every surface, flag, setting and action and that rows with a live control can be changed right there, a search field, and result rows for Easy mode, Download queue, Language mode, English funny level, Cantonese funny level and Theme — several carrying live dropdowns and sliders inline.](site/screenshots/25-command-palette.png)
+The command palette (Ctrl+Shift+F): search every surface and setting at once, and change the ones with live controls right from the result row.
+
+![The command palette filtered to "sponsor", showing a single result: "SponsorBlock options — 5 flags · Mark or remove sponsor, intro, outro and other segment".](site/screenshots/26-command-palette-search.png)
+Palette results narrow instantly and name exactly what picking one will do.
+
+![A right-click context menu on the Video Format tab: Pin tab, Duplicate tab, Search open tabs (Ctrl+Shift+A), Move to group, Close tab (Ctrl+W), Close other tabs, Close tabs to the right, Lock this element, Edit appearance, Export this element, and Find in the command palette.](site/screenshots/28-tab-context-menu.png)
+Every tab's context menu: pin, duplicate, group, close, lock, re-skin or export it, or jump straight to it in the palette.
+
+</details>
+
+<details>
+<summary><b>Settings and safety</b> — language, appearance, personal vocabulary, the app mark, and Support Tickets</summary>
+
+![The Settings tab: rows for Language mode (English), Narrator language, Optional narrator, English funny level (a slider at 2) and Cantonese funny level (a slider at 3), Emoji in notices, School mode, ADHD mode, Theme (Dark) and Follow system settings — each with an info icon and a one-line explanation.](site/screenshots/15-settings.png)
+Settings: language mode, both funny-level sliders, School and ADHD modes, and theme — all explained inline.
+
+![Settings filtered to "vocabulary": a single Personal vocabulary row reading "No file loaded — original wording is shown everywhere. Upload a local JSON dictionary to replace it." with an Upload JSON button.](site/screenshots/16-settings-vocabulary.png)
+Personal vocabulary: nothing is invented until you supply your own local JSON file — the app says so plainly when none is loaded.
+
+![Settings filtered to "app mark": a single App mark row reading "Using the shipped app mark. Replace it with your own PNG — title bar and tray only." with a Choose image button.](site/screenshots/17-settings-app-mark.png)
+The app mark can be swapped for your own image — scoped honestly to just the title bar and tray icon.
+
+![A Support tickets dialog: a heading explaining plainly that this is a local joke and not a real help desk — nothing is ever sent anywhere, no ticket exists outside this computer, no network request is made, and nobody is reading it; a Category dropdown set to General, a "What went wrong" textarea, and Cancel, Open data folder and File ticket buttons.](site/screenshots/18-support-tickets.png)
+Support Tickets: a recovery flow dressed as a help desk, that tells you outright it's a joke and just opens your data folder.
+
+</details>
+
+<details>
+<summary><b>Documentation and supported sites</b> — the in-app docs browser and the extractor catalogue</summary>
+
+![The in-app Docs tab on "Getting started": a contents list down the left (Getting started, The three modes, Choosing a version, File names, Private and paid videos, When something fails, Keeping your settings, Getting around, Old flags that still work, Per-site extractor arguments, What changed) and cards on the right walking through pasting a link, picking a quality, pressing Download, and the "every setting explains itself" info-icon convention, with a Save as PDF button.](site/screenshots/19-docs.png)
+The in-app documentation browser: every feature explained offline, searchable, exportable as a PDF.
+
+![The Docs tab on "What changed": a heading, and a "No releases yet" notice stating plainly that this build has not shipped a release, that nothing is invented to fill the gap, and that once a real GitHub Release is published its notes will appear on this page automatically.](site/screenshots/20-what-changed.png)
+What changed: an honest empty state rather than an invented changelog — this is what "no release yet" actually looks like.
+
+![The Supported sites tab: a searchable extractor list with a "Send to --use-extractors" button and cards for youtube, youtube:tab, youtube:search, twitch:vod, twitch:stream, vimeo, soundcloud, bandcamp, BiliBili, niconico, nebula, crunchyroll, generic, ARDBeta Mediathek, TVer, dailymotion, facebook, instagram, reddit, tiktok, twitter, archive.org, peertube and rumble, each with the kind of link it accepts.](site/screenshots/08-sites.png)
+Supported sites: yt-dlp's real extractor list, searchable, with each extractor's accepted argument syntax alongside it.
+
+</details>
+
 <!-- /HUISHOT-GALLERY -->
 
 ## Quick start

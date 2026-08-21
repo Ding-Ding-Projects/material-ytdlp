@@ -49,10 +49,10 @@ REM Squirrel.Windows output lands under app\dist\squirrel-windows\ (electron-bui
 REM writes Setup.exe, RELEASES, and the full .nupkg there for the --win squirrel target).
 set "SQUIRREL_DIR=%REPO_ROOT%\app\dist\squirrel-windows"
 set "SETUP_EXE="
-for /f "delims=" %%F in ('dir /b "%SQUIRREL_DIR%\*Setup.exe" 2^>nul') do set "SETUP_EXE=%SQUIRREL_DIR%\%%F"
+for /f "delims=" %%F in ('dir /b "%SQUIRREL_DIR%\*Setup*.exe" 2^>nul') do set "SETUP_EXE=%SQUIRREL_DIR%\%%F"
 
 if not defined SETUP_EXE (
-  call :fail "No *Setup.exe found under %SQUIRREL_DIR%. electron-builder reported success but produced no Squirrel setup executable."
+  call :fail "No *Setup*.exe found under %SQUIRREL_DIR%. electron-builder reported success but produced no Squirrel setup executable."
   exit /b 1
 )
 

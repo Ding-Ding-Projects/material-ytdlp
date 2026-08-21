@@ -84,7 +84,7 @@ jobs:
         id: artifacts
         shell: pwsh
         run: |
-          $setupExe = Get-ChildItem -Path app -Recurse -Filter "*Setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $setupExe = Get-ChildItem -Path app -Recurse -Filter "*Setup*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           $releases = Get-ChildItem -Path app -Recurse -Filter "RELEASES" -ErrorAction SilentlyContinue | Select-Object -First 1
           $nupkgs = Get-ChildItem -Path app -Recurse -Filter "*-full.nupkg" -ErrorAction SilentlyContinue
           if (-not $setupExe -or -not $releases -or -not $nupkgs) {
@@ -118,7 +118,7 @@ jobs:
           "ffprobe-sha=$($ffstamp.ffprobeSha256)"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "ffmpeg-submodule-sha=$($ffstamp.submoduleSha)"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
-          $setup = Get-ChildItem -Path app -Recurse -Filter "*Setup.exe" | Select-Object -First 1
+          $setup = Get-ChildItem -Path app -Recurse -Filter "*Setup*.exe" | Select-Object -First 1
           $setupHash = (Get-FileHash $setup.FullName -Algorithm SHA256).Hash.ToLower()
           "setup-sha=$setupHash" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "setup-size=$([math]::Round($setup.Length / 1MB, 1))" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8

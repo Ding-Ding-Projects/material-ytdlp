@@ -45,7 +45,7 @@ localized copy · **Tests** = automated tests · **Capture** = screenshot/captur
 | Universal file converter | not implemented | — | not implemented | none | none |
 | Local Ollama suite manager | not implemented | — | not implemented | none | none |
 | Local history manager (full UI) | not implemented | — | not implemented | none | none |
-| Personal-vocabulary JSON upload | not implemented | — | n/a | none | none |
+| Personal-vocabulary JSON upload | `app/src/main/vocabulary.ts`, `app/src/renderer/vocabulary-apply.ts` | [personal-vocabulary.md](features/appearance/personal-vocabulary.md) | n/a — it *is* the wording mechanism | none | none |
 | App-mark / logo customization | not implemented | — | n/a | none | none |
 | Browser companion extension | not implemented | — | not implemented | none | none |
 | Documentation site (GitHub Pages) | not implemented | — | not implemented | none | none |
@@ -56,3 +56,23 @@ localized copy · **Tests** = automated tests · **Capture** = screenshot/captur
 **Every "none" and "not implemented" above is an honest current-state report, not a placeholder
 to be filled in mechanically.** Update this table in the same commit that changes any of these
 facts.
+
+## Rows added after the first pass
+
+These features were built after the inventory was first written. They are listed here rather
+than silently slotted in, so the history of what was committed when stays readable.
+
+| Feature | Impl. | Docs | i18n | Tests | Capture |
+|---|---|---|---|---|---|
+| Download history (local Git-backed, append-only) | `app/src/main/history.ts`, `app/src/renderer/components/HistoryPanel.tsx` | — *(article outstanding)* | not localized yet | none | none |
+| History filters with anchored regex builder | `app/src/renderer/components/HistoryFilters.tsx` | — *(article outstanding)* | not localized yet | none | none |
+| ffmpeg built from pinned source | `build-ffmpeg.bat`, `vendor/ffmpeg` | [building-ffmpeg-from-source.md](features/build-and-packaging/building-ffmpeg-from-source.md) | n/a | none — verified by `objdump` and a real merged download | n/a |
+| Vendored icon and text fonts (offline) | `app/src/renderer/assets/fonts/` | — *(article outstanding)* | n/a | none | shown in `docs/screenshots/` |
+| Submodules tracked at upstream tips | `.githooks/`, `scripts/enable-hooks.mjs` | — *(article outstanding)* | n/a | none — verified by moving a submodule back and watching it advance | n/a |
+| Design component as the renderer | `scripts/build-renderer-from-design.mjs` | [design-parity.md](design-parity.md) | n/a | none | recapture pending |
+
+**Honest note on this whole table.** The `Tests` column reads `none` on nearly every row and that
+is accurate: this project currently has no automated test suite at all. Several rows record a
+verification that genuinely happened (running the binary, reading an import table, completing a
+real download) — those are real evidence, but they are one-time manual checks, not tests that
+will catch a regression tomorrow.

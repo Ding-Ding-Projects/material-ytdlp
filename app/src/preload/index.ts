@@ -29,6 +29,14 @@ import {
   type VocabularyState,
 } from '../shared/vocabulary-contract'
 import {
+  ModesIpcChannel,
+  OllamaIpcChannel,
+  type AdhdFlags,
+  type ModesState,
+  type OllamaProbeResult,
+  type SchoolCredentialResult,
+} from '../shared/tools-contract'
+import {
   ProbesIpcChannel,
   type ExtractorCountResult,
   type ListFormatsResult,
@@ -47,6 +55,14 @@ import {
   type TicketCreateResult,
 } from '../shared/settings-actions-contract'
 import {
+  AppearanceIpcChannel,
+  type ElementAppearanceOverride,
+  type ElementAppearanceOverrides,
+  type RenameSetResult,
+  type RenameState,
+} from '../shared/appearance-contract'
+import { TabsStateIpcChannel, type TabsState } from '../shared/tabs-contract'
+import {
   FileOpsIpcChannel,
   type CompactArchiveResult,
   type ConfigFileId,
@@ -63,6 +79,25 @@ import {
   type WriteConfigFileResult,
 } from '../shared/fileops-contract'
 import { CookiesIpcChannel, type ValidateCookiesFileResult } from '../shared/stubs-contract'
+import {
+  AuthenticatorIpcChannel,
+  LocksIpcChannel,
+  type AuthenticatorEntrySummary,
+  type ConfirmPairingRequest,
+  type ConfirmPairingResult,
+  type CreateLockRequest,
+  type CreateLockResult,
+  type CurrentCodeRequest,
+  type CurrentCodeResult,
+  type LockSummary,
+  type RegisterAuthenticatorRequest,
+  type RegisterAuthenticatorResult,
+  type RemoveAuthenticatorResult,
+  type RemoveLockResult,
+  type RunTestVectorsResult,
+  type UnlockRequest,
+  type UnlockResult,
+} from '../shared/locks-contract'
 
 // ---------------------------------------------------------------------------
 // Deadline-enforced invoke.
@@ -247,6 +282,22 @@ const bridge = {
       invokeWithDeadline<{ ok: boolean; error: string | null }>(SupportTicketsIpcChannel.OpenDataFolder, MEDIUM),
   },
 
+  appearance: {
+    /** Display-name rename: title bar / About / notifications only — never touches installed identity. */
+    getRename: () => invokeWithDeadline<RenameState>(AppearanceIpcChannel.GetRename, SHORT),
+    setRename: (name: string) => invokeWithDeadline<RenameSetResult>(AppearanceIpcChannel.SetRename, SHORT, name),
+    resetRename: () => invokeWithDeadline<RenameState>(AppearanceIpcChannel.ResetRename, SHORT),
+    /** Per-element "Edit appearance…" overrides, keyed by the element's own target label. */
+    getElementOverrides: () =>
+      invokeWithDeadline<ElementAppearanceOverrides>(AppearanceIpcChannel.GetElementOverrides, SHORT),
+    setElementOverride: (targetId: string, override: Partial<ElementAppearanceOverride>) =>
+      invokeWithDeadline<ElementAppearanceOverrides>(AppearanceIpcChannel.SetElementOverride, SHORT, targetId, override),
+    resetElementOverride: (targetId: string) =>
+      invokeWithDeadline<ElementAppearanceOverrides>(AppearanceIpcChannel.ResetElementOverride, SHORT, targetId),
+    resetAllElementOverrides: () =>
+      invokeWithDeadline<ElementAppearanceOverrides>(AppearanceIpcChannel.ResetAllElementOverrides, SHORT),
+  },
+
   fileOps: {
     /** Real Save As… dialog, then an atomic write. LONG: the user may leave the dialog open a while. */
     exportContent: (req: ExportContentRequest) =>
@@ -271,6 +322,26 @@ const bridge = {
     validateFile: (path: string) =>
       invokeWithDeadline<ValidateCookiesFileResult>(CookiesIpcChannel.ValidateFile, SHORT, path),
   },
+
+  locks: {
+    list: () => invokeWithDeadline<LockSummary[]>(LocksIpcChannel.List, SHORT),
+    create: (req: CreateLockRequest) => invokeWithDeadline<CreateLockResult>(LocksIpcChannel.Create, SHORT, req),
+    unlock: (req: UnlockRequest) => invokeWithDeadline<UnlockResult>(LocksIpcChannel.Unlock, SHORT, req),
+    remove: (id: string) => invokeWithDeadline<RemoveLockResult>(LocksIpcChannel.Remove, SHORT, id),
+    recoveryPath: () => invokeWithDeadline<string>(LocksIpcChannel.RecoveryPath, SHORT),
+  },
+
+  authenticator: {
+    list: () => invokeWithDeadline<AuthenticatorEntrySummary[]>(AuthenticatorIpcChannel.List, SHORT),
+    register: (req: RegisterAuthenticatorRequest) =>
+      invokeWithDeadline<RegisterAuthenticatorResult>(AuthenticatorIpcChannel.Register, SHORT, req),
+    confirmPairing: (req: ConfirmPairingRequest) =>
+      invokeWithDeadline<ConfirmPairingResult>(AuthenticatorIpcChannel.ConfirmPairing, SHORT, req),
+    currentCode: (req: CurrentCodeRequest) =>
+      invokeWithDeadline<CurrentCodeResult>(AuthenticatorIpcChannel.CurrentCode, SHORT, req),
+    remove: (id: string) => invokeWithDeadline<RemoveAuthenticatorResult>(AuthenticatorIpcChannel.Remove, SHORT, id),
+    runTestVectors: () => invokeWithDeadline<RunTestVectorsResult>(AuthenticatorIpcChannel.RunTestVectors, SHORT),
+  },
   probes: {
     extractorCount: () => invokeWithDeadline<ProbeResult<ExtractorCountResult>>(ProbesIpcChannel.ExtractorCount, MEDIUM),
     listSubtitles: (requestId: string, url: string) =>
@@ -284,6 +355,32 @@ const bridge = {
     cancel: (requestId: string) => invokeWithDeadline<void>(ProbesIpcChannel.Cancel, SHORT, requestId),
   },
 
+  tabsState: {
+    /** Reads the persisted tab/group/palette-preference state (order, pinned, groups, dock edge, palette prefs). */
+    get: () => invokeWithDeadline<TabsState>(TabsStateIpcChannel.Get, SHORT),
+    /** Persists the complete state. Called (debounced) whenever the renderer's tab/group/palette state changes. */
+    set: (state: TabsState) => invokeWithDeadline<TabsState>(TabsStateIpcChannel.Set, SHORT, state),
+  },
+
+
+  modes: {
+    getState: () => invokeWithDeadline<ModesState>(ModesIpcChannel.GetState, SHORT),
+    setAdhdFlag: (flag: keyof AdhdFlags, value: boolean) =>
+      invokeWithDeadline<ModesState>(ModesIpcChannel.SetAdhdFlag, SHORT, flag, value),
+    setOneThingAction: (text: string | null) => invokeWithDeadline<ModesState>(ModesIpcChannel.SetOneThingAction, SHORT, text),
+    setMomentumSnooze: (untilMs: number | null) =>
+      invokeWithDeadline<ModesState>(ModesIpcChannel.SetMomentumSnooze, SHORT, untilMs),
+    schoolEnable: (password: string) =>
+      invokeWithDeadline<SchoolCredentialResult>(ModesIpcChannel.SchoolEnable, SHORT, password),
+    schoolDisable: (password: string) =>
+      invokeWithDeadline<SchoolCredentialResult>(ModesIpcChannel.SchoolDisable, SHORT, password),
+    schoolRename: (name: string) => invokeWithDeadline<ModesState>(ModesIpcChannel.SchoolRename, SHORT, name),
+    schoolReset: () => invokeWithDeadline<ModesState>(ModesIpcChannel.SchoolReset, SHORT),
+  },
+
+  ollama: {
+    probe: () => invokeWithDeadline<OllamaProbeResult>(OllamaIpcChannel.Probe, MEDIUM),
+  },
 }
 
 export type Bridge = typeof bridge

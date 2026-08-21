@@ -30,14 +30,27 @@
   .msym{font-family:'Material Symbols Outlined';font-weight:400;font-style:normal;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;font-variation-settings:'opsz' 24}
   @keyframes slide{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  [data-motion="off"] *{animation:none!important;transition:none!important}
+
+  /* --- appearance lane: theme / reduced motion / corner radius / accent --- */
+  x-dc>div[data-theme="light"]{filter:invert(1) hue-rotate(180deg)}
+  x-dc>div[data-theme="light"] img,x-dc>div[data-theme="light"] video{filter:invert(1) hue-rotate(180deg)}
+  x-dc>div[data-reduced-motion="true"] *,x-dc>div[data-reduced-motion="true"] *::before,x-dc>div[data-reduced-motion="true"] *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  x-dc button,x-dc select,x-dc input,x-dc textarea{border-radius:var(--dc-radius,12px)!important}
+  a{color:var(--dc-accent,#82d5cc)}
+  a:hover{filter:brightness(1.15)}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline-color:var(--dc-accent,#82d5cc)}
+  @keyframes dc-rainbow-hue{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(360deg)}}
+  x-dc>div[data-accent-rainbow="true"] a{animation:dc-rainbow-hue var(--dc-rainbow-duration,6s) linear infinite}
+  x-dc>div[data-accent-rainbow="true"][data-reduced-motion="true"] a{animation:none!important;filter:none!important}
 </style>
 </helmet>
-<div style="height:100vh;display:flex;flex-direction:column;background:#0f1414;color:#dee4e3;overflow:hidden;min-width:1180px;font-size:{{ rootFontSize }};font-weight:{{ rootWeight }};font-family:{{ rootFont }}">
+<div data-motion="{{ motionOffAttr }}" data-theme="{{ rootTheme }}" data-reduced-motion="{{ rootMotion }}" data-accent-rainbow="{{ rootAccentRainbow }}" style="height:100vh;display:flex;flex-direction:column;background:#0f1414;color:#dee4e3;overflow:hidden;min-width:1180px;font-size:{{ rootFontSize }};font-weight:{{ rootWeight }};font-family:{{ rootFont }};--dc-radius:{{ rootRadius }};--dc-accent:{{ rootAccent }}">
 
   <header style="height:64px;display:flex;align-items:center;gap:12px;padding:0 8px 0 16px;background:#0f1414;flex:0 0 auto">
     <div style="width:36px;height:36px;display:grid;place-items:center;border-radius:12px;background:#82d5cc;color:#003733;font-weight:500;font-size:16px;flex:0 0 auto">Y</div>
     <div style="flex:0 0 auto">
-      <div style="font-size:16px;font-weight:500;letter-spacing:.15px;line-height:1.25">yt-dlp Studio</div>
+      <div style="font-size:16px;font-weight:500;letter-spacing:.15px;line-height:1.25">{{ liveAppName }}</div>
       <div style="font-size:11px;color:#889391;letter-spacing:.4px">2026.08.14 · ffmpeg 7.1 · aria2c 1.37</div>
     </div>
     <div style="flex:1;display:flex;justify-content:center;min-width:0;padding:0 12px">
@@ -48,7 +61,7 @@
         <button onClick="{{ openPalette }}" title="Command palette (Ctrl+Shift+F)" style="width:34px;height:34px;border-radius:17px;background:transparent;color:#bec9c7;flex:0 0 auto"><i class="msym" style="font-size:20px">keyboard_command_key</i></button>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:2px;flex:0 0 auto">
+    <div style="display:flex;align-items:center;gap:2px;flex:0 0 auto;{{ focusChromeStyle }}">
       <div style="display:flex;background:#252b2b;border-radius:18px;padding:3px;gap:2px">
         <sc-for list="{{ modeTabs }}" as="m" hint-placeholder-count="3">
           <button onClick="{{ m.pick }}" title="{{ m.help }}" style="height:30px;padding:0 14px;border-radius:15px;background:{{ m.bg }};color:{{ m.fg }};font-size:12.5px;font-weight:500">{{ m.label }}</button>
@@ -60,6 +73,31 @@
       <button title="Maximize" style="width:40px;height:40px;border-radius:20px;background:transparent;color:#bec9c7"><i class="msym" style="font-size:18px">crop_square</i></button>
       <button title="Close" style="width:40px;height:40px;border-radius:20px;background:transparent;color:#bec9c7"><i class="msym" style="font-size:20px">close</i></button>
     </div>
+  <sc-if value="{{ adhdBarVisible }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;gap:14px;padding:6px 16px;background:#151a1c;border-bottom:1px solid #2a3130;flex:0 0 auto;font-size:12px;color:#bec9c7">
+      <sc-if value="{{ adhdTimeOn }}" hint-placeholder-val="{{ false }}">
+        <span title="How long this session has been open"><i class="msym" style="font-size:14px;vertical-align:-2px">schedule</i> {{ elapsedSessionText }}</span>
+      </sc-if>
+      <sc-if value="{{ adhdOneThingOn }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;max-width:420px">
+          <i class="msym" style="font-size:14px;flex:0 0 auto">flag</i>
+          <input value="{{ oneThingActionDraft }}" onChange="{{ setOneThingActionDraft }}" onBlur="{{ commitOneThingAction }}" placeholder="What is the one thing right now?" style="flex:1;min-width:0;background:transparent;border:0;border-bottom:1px solid #2a3130;color:#dee4e3;font-size:12px;padding:2px 0" />
+        </div>
+      </sc-if>
+      <sc-if value="{{ adhdFocusOn }}" hint-placeholder-val="{{ false }}">
+        <span style="color:#82d5cc"><i class="msym" style="font-size:14px;vertical-align:-2px">center_focus_strong</i> Focus on</span>
+      </sc-if>
+      <sc-if value="{{ adhdLowStimOn }}" hint-placeholder-val="{{ false }}">
+        <span style="color:#82d5cc"><i class="msym" style="font-size:14px;vertical-align:-2px">volume_off</i> Low stimulation on</span>
+      </sc-if>
+      <sc-if value="{{ momentumNudgeVisible }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;background:#252b2b;border-radius:14px;padding:4px 10px">
+          <span>Still on “{{ oneThingActionDraft }}”? It has sat untouched a while.</span>
+          <button onClick="{{ snoozeMomentum }}" style="background:transparent;color:#82d5cc;font-size:12px;font-weight:500">Not now</button>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
   </header>
 
   <div style="display:flex;flex:1;min-height:0;flex-direction:{{ shellDirection }}">
@@ -1470,6 +1508,12 @@
           </sc-for>
         </div>
         <div style="border-top:1px solid #2a3130;padding-top:16px">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;font-size:13px;color:#bec9c7">
+            <span>Close tabs</span>
+            <button onClick="{{ setCloseModeContaining }}" style="height:30px;padding:0 14px;border-radius:15px;background:{{ closeModeContainingBg }};color:{{ closeModeContainingFg }};border:1px solid #889391;font-size:12px;font-weight:500">containing</button>
+            <button onClick="{{ setCloseModeNotContaining }}" style="height:30px;padding:0 14px;border-radius:15px;background:{{ closeModeNotContainingBg }};color:{{ closeModeNotContainingFg }};border:1px solid #889391;font-size:12px;font-weight:500">NOT containing</button>
+            <span>the query above</span>
+          </div>
           <label style="display:flex;gap:10px;align-items:center;font-size:14px;color:#dee4e3;margin-bottom:10px">
             <input type="checkbox" checked="{{ includePinned }}" onChange="{{ toggleIncludePinned }}" style="width:18px;height:18px;accent-color:#82d5cc" /> Include pinned tabs after preview
           </label>
@@ -1491,6 +1535,14 @@
           <button onClick="{{ closeDialog }}" style="width:40px;height:40px;border-radius:20px;background:transparent;color:#bec9c7;font-size:15px">✕</button>
         </div>
         <div style="font-size:13px;color:#889391;margin-bottom:16px">{{ appearanceTarget }}</div>
+        <div style="display:flex;gap:8px;align-items:end;margin-bottom:16px">
+          <label style="display:grid;gap:5px;font-size:12px;color:#bec9c7;flex:1">App display name
+            <input value="{{ renameDraft }}" onChange="{{ setRenameDraft }}" maxlength="60" placeholder="{{ renamePlaceholder }}" style="height:40px;background:#252b2b;border:0;border-bottom:1px solid #889391;border-radius:8px 8px 0 0;color:#dee4e3;padding:0 12px;font-size:13px" />
+          </label>
+          <button onClick="{{ saveRename }}" style="height:40px;padding:0 16px;border-radius:20px;background:#324b48;color:#cfe9e5;font-size:13px;font-weight:500">Save</button>
+          <button onClick="{{ resetRenameAction }}" style="height:40px;padding:0 16px;border-radius:20px;background:transparent;border:1px solid #889391;color:#bec9c7;font-size:13px">Reset</button>
+        </div>
+        <div style="font-size:11px;color:#889391;margin:-10px 0 14px;line-height:1.5">Display only — title bar, About and notifications. Never changes where your data lives or how updates are found. Real diagnostics still say "{{ shippedAppName }}".</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <label style="display:grid;gap:5px;font-size:12px;color:#bec9c7">Theme
             <select value="{{ apTheme }}" onChange="{{ setApTheme }}" style="height:44px;background:#252b2b;border:0;border-bottom:1px solid #889391;border-radius:8px 8px 0 0;color:#dee4e3;padding:0 14px;font-size:14px">
@@ -1536,6 +1588,15 @@
               <button onClick="{{ a.pick }}" title="{{ a.color }}" style="width:28px;height:28px;border-radius:14px;background:{{ a.color }};border:2px solid {{ a.border }}"></button>
             </sc-for>
             <button onClick="{{ randomAccent }}" title="Surprise me" style="width:28px;height:28px;border-radius:14px;background:conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);border:2px solid transparent"></button>
+            <button onClick="{{ toggleRainbowAccent }}" title="Animated rainbow accent" style="width:28px;height:28px;border-radius:14px;background:{{ rainbowSwatchBg }};border:2px solid {{ rainbowSwatchBorder }};color:#0f1414;font-size:9px;font-weight:700">R</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;font-family:'Roboto Mono',Consolas,monospace;font-size:11px;color:#bec9c7">
+            <div>HEX8 <b style="color:#dee4e3">{{ apHex8 }}</b></div>
+            <div>RGB <b style="color:#dee4e3">{{ apRgb }}</b></div>
+            <div>HSL <b style="color:#dee4e3">{{ apHsl }}</b></div>
+            <div>HSV <b style="color:#dee4e3">{{ apHsv }}</b></div>
+            <div>CMYK <b style="color:#dee4e3">{{ apCmyk }}</b></div>
+            <div>{{ rainbowStatusLabel }}</div>
           </div>
         </div>
         <div style="display:grid;gap:12px;margin-top:16px">
@@ -1611,7 +1672,39 @@
     </div>
   </sc-if>
 
-  <sc-if value="{{ hasWizard }}" hint-placeholder-val="{{ false }}">
+  <sc-if value="{{ dialogSchoolEnable }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:#000b;display:grid;place-items:center;overflow:auto;padding:24px 0;z-index:48">
+      <div style="width:min(420px,calc(100vw - 40px));background:#1b2121;border-radius:28px;padding:24px;box-shadow:0 8px 24px #000a">
+        <div style="font-size:22px;font-weight:400;margin-bottom:6px">Turn on School mode</div>
+        <div style="font-size:12px;color:#889391;margin-bottom:16px;line-height:1.5">A user-experience lock, not a security boundary. Forces English and hides Cantonese, bilingual, and funny-level controls until you turn it off again. You can rename it below; it can also be recovered by deleting this app’s local data folder.</div>
+        <label style="display:block;font-size:12px;color:#bec9c7;margin-bottom:4px">Display name</label>
+        <input value="{{ schoolNameDraft }}" onChange="{{ setSchoolNameDraft }}" placeholder="School mode" style="width:100%;height:40px;border-radius:8px;background:#252b2b;color:#dee4e3;border:1px solid #3f4948;padding:0 10px;margin-bottom:12px;box-sizing:border-box" />
+        <label style="display:block;font-size:12px;color:#bec9c7;margin-bottom:4px">Unlock password or PIN</label>
+        <input type="password" value="{{ schoolPassword }}" onChange="{{ setSchoolPassword }}" placeholder="Anything — this is just a speed bump" style="width:100%;height:40px;border-radius:8px;background:#252b2b;color:#dee4e3;border:1px solid #3f4948;padding:0 10px;box-sizing:border-box" />
+        <div style="font-size:12px;color:#e9927c;min-height:16px;margin:8px 0 4px">{{ schoolError }}</div>
+        <div style="display:flex;justify-content:end;gap:8px;margin-top:14px">
+          <button onClick="{{ closeSchoolDialog }}" style="height:40px;padding:0 20px;border-radius:20px;background:#252b2b;color:#bec9c7;font-size:14px;font-weight:500">Cancel</button>
+          <button onClick="{{ confirmSchoolEnable }}" style="height:40px;padding:0 24px;border-radius:20px;background:#82d5cc;color:#003733;font-size:14px;font-weight:700">Turn on</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ dialogSchoolDisable }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:#000b;display:grid;place-items:center;overflow:auto;padding:24px 0;z-index:48">
+      <div style="width:min(420px,calc(100vw - 40px));background:#1b2121;border-radius:28px;padding:24px;box-shadow:0 8px 24px #000a">
+        <div style="font-size:22px;font-weight:400;margin-bottom:6px">Turn off {{ schoolDisplayName }}</div>
+        <div style="font-size:12px;color:#889391;margin-bottom:16px;line-height:1.5">Enter the password or PIN you set. Forgot it? Close this and delete this app’s local data folder instead — that resets everything, including this lock.</div>
+        <input type="password" value="{{ schoolPassword }}" onChange="{{ setSchoolPassword }}" placeholder="Password or PIN" style="width:100%;height:40px;border-radius:8px;background:#252b2b;color:#dee4e3;border:1px solid #3f4948;padding:0 10px;box-sizing:border-box" />
+        <div style="font-size:12px;color:#e9927c;min-height:16px;margin:8px 0 4px">{{ schoolError }}</div>
+        <div style="display:flex;justify-content:end;gap:8px;margin-top:14px">
+          <button onClick="{{ closeSchoolDialog }}" style="height:40px;padding:0 20px;border-radius:20px;background:#252b2b;color:#bec9c7;font-size:14px;font-weight:500">Cancel</button>
+          <button onClick="{{ confirmSchoolDisable }}" style="height:40px;padding:0 24px;border-radius:20px;background:#82d5cc;color:#003733;font-size:14px;font-weight:700">Turn off</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasWizard }}" hint-placeholder-val="{{ false }}">  <sc-if value="{{ hasWizard }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ closeWizard }}" style="position:fixed;inset:0;background:#0009;backdrop-filter:blur(3px);display:grid;place-items:center;overflow:auto;padding:24px 0;z-index:45">
       <div onClick="{{ stop }}" style="width:min(720px,calc(100vw - 40px));background:#1b2121;border:1px solid #3f4948;border-radius:9px;box-shadow:0 20px 70px #000b;overflow:hidden">
         <div style="height:34px;background:#0a0f0f;border-bottom:1px solid #2a3130;display:flex;align-items:center;gap:9px;padding:0 12px">
@@ -1803,8 +1896,10 @@
             </sc-if>
             <sc-if value="{{ lockIsTotp }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;gap:12px;align-items:center">
-                <div style="width:104px;height:104px;border-radius:10px;background:#dee4e3;display:grid;place-items:center;flex:0 0 auto">
-                  <i class="msym" style="font-size:74px;color:#0f1414">qr_code_2</i>
+                <div style="width:104px;height:104px;border-radius:10px;background-color:#dee4e3;background-image:{{ lockQrBg }};background-size:96px 96px;background-repeat:no-repeat;background-position:center;display:grid;place-items:center;flex:0 0 auto">
+                  <sc-if value="{{ !lockQrBg }}" hint-placeholder-val="{{ false }}">
+                    <i class="msym" style="font-size:74px;color:#0f1414">qr_code_2</i>
+                  </sc-if>
                 </div>
                 <div style="min-width:0">
                   <div style="font-size:12px;color:#bec9c7;margin-bottom:6px">Scan with the built-in authenticator or any TOTP app.</div>
@@ -1992,7 +2087,73 @@
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;startMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;easy&quot;,&quot;expert&quot;],&quot;default&quot;:&quot;easy&quot;,&quot;tsType&quot;:&quot;'easy' | 'expert'&quot;,&quot;section&quot;:&quot;Behaviour&quot;},&quot;showUpdateBanner&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behaviour&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;options&quot;:[&quot;#82d5cc&quot;,&quot;#febc2e&quot;,&quot;#c9a0ff&quot;,&quot;#7fb8ff&quot;],&quot;default&quot;:&quot;#82d5cc&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Appearance&quot;}}">
+const ADHD_PREF_TO_FLAG = { adhdFocus: 'focus', adhdLowStim: 'lowStim', adhdTime: 'timeAwareness', adhdOneThing: 'oneThing', adhdMomentum: 'momentum' };
+function formatElapsedMs(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), sec = total % 60;
+  return (h > 0 ? h + 'h ' : '') + m + 'm ' + sec + 's';
+}
 class Component extends DCLogic {
+  // Palette + tabs persistence (scripts/wire-palette-tabs.mjs) --------------
+  //
+  // Loads once on mount; merges onto the design's seed tabs/dialog state
+  // rather than replacing it wholesale, so a first-ever launch (nothing
+  // persisted yet) renders exactly the same seed tabs the design ships,
+  // and a restored launch overlays the saved order/pins/groups/prefs on
+  // top of that same shape.
+  async _loadTabsState() {
+    try {
+      if (!window.ytdlpStudio || !window.ytdlpStudio.tabsState) return;
+      const saved = await window.ytdlpStudio.tabsState.get();
+      if (!saved) return;
+      this.setState(st => {
+        const next = {};
+        if (Array.isArray(saved.tabs) && saved.tabs.length) {
+          // Persisted tabs carry id/label/pinned/group; anything the design's
+          // richer runtime shape needs (view/groupId) is preserved from the
+          // live tab of the same id when one still exists, so restoring
+          // pin/group/order never clobbers a tab's own routing.
+          const byId = new Map(st.tabs.map(t => [t.id, t]));
+          next.tabs = saved.tabs.map(pt => ({ ...(byId.get(pt.id) || {}), ...pt }));
+          next.nextTab = Math.max(st.nextTab, ...saved.tabs.map(t => (typeof t.id === 'number' ? t.id : 0)), 0) + 1;
+        }
+        if (Array.isArray(saved.groups)) next.customGroups = saved.groups;
+        if (typeof saved.dock === 'string' && saved.dock) next.dock = saved.dock;
+        if (saved.prefs && typeof saved.prefs === 'object') next.prefs = { ...(st.prefs || {}), ...saved.prefs };
+        return next;
+      });
+    } catch (err) {
+      // Fail open to the design's seed state — a missing/corrupt persisted
+      // file is the honest first-launch state, never a crash.
+      console.warn('tabsState: load failed', err);
+    }
+  }
+
+  // Debounced save: componentDidUpdate calls this on every render, and it
+  // only actually persists (after a short debounce, so a drag-reorder or a
+  // held slider does not fire a write per frame) when one of the persisted
+  // slices actually changed since the previous state.
+  _maybeSaveTabsState(component, prevState) {
+    const st = component.state;
+    const changed =
+      prevState.tabs !== st.tabs ||
+      prevState.customGroups !== st.customGroups ||
+      prevState.dock !== st.dock ||
+      prevState.prefs !== st.prefs;
+    if (!changed) return;
+    clearTimeout(component._tabsStateSaveTimer);
+    component._tabsStateSaveTimer = setTimeout(() => {
+      if (!window.ytdlpStudio || !window.ytdlpStudio.tabsState) return;
+      const payload = {
+        tabs: (st.tabs || []).map(t => ({ id: t.id, label: t.label, pinned: !!t.pinned, group: t.group || 'Ungrouped' })),
+        groups: st.customGroups || [],
+        dock: st.dock || 'left',
+        prefs: st.prefs || {},
+      };
+      window.ytdlpStudio.tabsState.set(payload).catch(err => console.warn('tabsState: save failed', err));
+    }, 400);
+  }
+
 
   // ---------------------------------------------------------------------
   // Real IPC wiring (generated — see scripts/build-renderer-from-design.mjs).
@@ -2002,6 +2163,9 @@ class Component extends DCLogic {
   // design/ — this text only exists in the generated app/src/renderer/index.html.
   // ---------------------------------------------------------------------
   _wireBridge() {
+    this._wire = this._wire || {};
+    this._wire.loadTabsState = (component) => component._loadTabsState();
+    this._wire.maybeSaveTabsState = (component, prevState) => component._maybeSaveTabsState(component, prevState);
     const bridge = window.ytdlpStudio;
     if (!bridge) { this.toast('Not connected', 'window.ytdlpStudio is missing — running outside the packaged app?'); return; }
     this._offProgress = bridge.jobs.onProgress(ev => {
@@ -2588,6 +2752,17 @@ class Component extends DCLogic {
       { id: 3, label: 'Post-Processing', view: 'group', groupId: 'postproc' },
     ],
     activeTab: 1, nextTab: 4,
+    // Real groups (scripts/wire-palette-tabs.mjs): {name,color,collapsed,order}.
+    // Starts empty — the design's four-item picker fell back to a hardcoded
+    // list before any group had ever really been created; the real list is
+    // now customGroups plus whatever group names live on state.tabs, so a
+    // freshly-restored profile with no created groups still shows
+    // 'Ungrouped' and whatever a tab is already tagged with.
+    customGroups: [],
+    // Bulk-close predicate direction: 'containing' (default) or
+    // 'not-containing' — the documented inverse of the same match(), never
+    // a second, independently-drifting query.
+    tabCloseMode: 'containing',
     dialog: null, regexTarget: null, regexPattern: '(?i)\\b(4k|2160p)\\b', regexFlags: 'iu',
     regexSample: 'Big Buck Bunny 4K remaster [aqz-KE-bpKQ]',
     paletteQuery: '', queueSearch: '', queueState: 'all', logSearch: '', flagSearch: '',
@@ -2602,14 +2777,36 @@ class Component extends DCLogic {
     historySurf: 'all', historyKind: 'All', historyPinnedOnly: false, historySel: {}, historyOpen: 'h2',
     historyPins: {}, historyLive: true, historyKeep: '90 days', historyCollapsed: {},
     settingsSearch: '', ppSearch: '', configFile: 'user', cookieBrowser: 'firefox', cookieFilePath: '',
-    toasts: [], loginCookieCount: 0,
+    toasts: [], loginCookieCount: 0, narratorVoicesEn: [], narratorVoicesYue: [],
     jobs: [],
     log: [],
     timeline: [],
   };
 
   componentDidMount() {
+    if (window.ytdlpStudio && window.ytdlpStudio.modes) {
+      window.ytdlpStudio.modes.getState().then(ms => {
+        this.setState(st => ({
+          modesState: ms,
+          prefs: {
+            ...(st.prefs || {}),
+            adhdFocus: ms.adhd.focus, adhdLowStim: ms.adhd.lowStim, adhdTime: ms.adhd.timeAwareness,
+            adhdOneThing: ms.adhd.oneThing, adhdMomentum: ms.adhd.momentum, school: ms.school.enabled,
+          },
+          oneThingActionDraft: ms.oneThingAction || '',
+        }));
+      }).catch(() => {});
+    }
+    if (window.ytdlpStudio && window.ytdlpStudio.ollama) {
+      window.ytdlpStudio.ollama.probe().then(res => this.setState({ ollamaState: res })).catch(err => {
+        this.setState({ ollamaState: { status: 'unreachable', error: (err && err.message) ? err.message : String(err), version: null, models: [], hostTotalMemBytes: 0, hostFreeMemBytes: 0 } });
+      });
+    }
+    this._modesTimer = setInterval(() => this.forceUpdate(), 1000);
     import('./dc-ytdlp-flags.js').then(m => this.setState({ groups: m.GROUPS, presets: m.PRESETS }));
+    this._loadLanguagePrefs();
+    this._initNarratorVoices();
+    this.refreshLocksAndAuth();
     this._key = e => {
       if (e.ctrlKey && e.shiftKey && (e.key === 'F' || e.key === 'f')) { e.preventDefault(); this.setState({ dialog: 'palette' }); }
       if (e.key === 'Escape') this.setState({ dialog: null });
@@ -2619,8 +2816,25 @@ class Component extends DCLogic {
     this.refreshTotp();
     this._wire.fetchExtractorCount(this);
     this._wireBridge();
+    if (window.ytdlpStudio && window.ytdlpStudio.store) {
+      window.ytdlpStudio.store.getPreferences().then(p => {
+        if (p) this.setState(st => ({ prefs: { ...(st.prefs || {}), ...p } }));
+      }).catch(() => {});
+    }
+    if (window.ytdlpStudio && window.ytdlpStudio.appearance) {
+      window.ytdlpStudio.appearance.getRename().then(r => this.setState({ renameState: r })).catch(() => {});
+    }
+    this._wire.loadTabsState(this);
   }
-  componentWillUnmount() { clearInterval(this._timer); clearInterval(this._totpTimer); window.removeEventListener('keydown', this._key); this._unwireBridge(); }
+  componentDidUpdate(prevProps, prevState) {
+    this._wire.maybeSaveTabsState(this, prevState);
+  }
+  componentWillUnmount() {
+    clearInterval(this._timer); clearInterval(this._totpTimer); clearTimeout(this._tabsStateSaveTimer); window.removeEventListener('keydown', this._key); clearInterval(this._modesTimer); this._unwireBridge();
+    if (this._voicesChangedHandler && typeof window.speechSynthesis !== 'undefined') window.speechSynthesis.removeEventListener('voiceschanged', this._voicesChangedHandler);
+    if (this._narratorDebounce) clearTimeout(this._narratorDebounce);
+    if (typeof window.speechSynthesis !== 'undefined') window.speechSynthesis.cancel();
+  }
 
   toast(title, body) {
     if (title === 'Copied' && typeof body === 'string' && typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
@@ -2634,8 +2848,217 @@ class Component extends DCLogic {
   }
   _toastRaw(title, body) {
     const id = Math.random();
-    this.setState(s => ({ toasts: [...s.toasts, { id, title, body }] }));
+    const applied = this._applyLanguageToast(title, body);
+    this.setState(s => ({ toasts: [...s.toasts, { id, title: applied.title, body: applied.body }] }));
+    this._speakNarrator(applied);
     setTimeout(() => this.setState(s => ({ toasts: s.toasts.filter(t => t.id !== id) })), 3600);
+  }
+
+  // ---- language/voice (scripts/wire-language.mjs) ----
+  // Mirrors app/src/renderer/language-apply.ts by hand; this generated file
+  // has no module graph to import it from.
+
+  _languagePrefs() {
+    const p = (this.state.prefs) || {};
+    const uiMode = { English: 'en', Yue: 'yue', Bilingual: 'bilingual' };
+    const uiNarratorLang = { English: 'en', Yue: 'yue', Both: 'both' };
+    return {
+      mode: uiMode[p.mode] || 'en',
+      enFunny: Math.min(5, Math.max(1, Math.round(Number(p.enFunny) || 2))),
+      yueFunny: Math.min(5, Math.max(1, Math.round(Number(p.yueFunny) || 3))),
+      emoji: p.emoji === true,
+      narrator: p.narrator === true,
+      narratorLanguage: uiNarratorLang[p.narratorLanguage] || 'en',
+      narratorVoiceEn: p.narratorVoiceEn || 'auto',
+      narratorVoiceYue: p.narratorVoiceYue || 'auto',
+      narratorRate: Number.isFinite(Number(p.narratorRate)) ? Math.min(2, Math.max(0.5, Number(p.narratorRate))) : 1,
+      narratorPitch: Number.isFinite(Number(p.narratorPitch)) ? Math.min(2, Math.max(0, Number(p.narratorPitch))) : 1,
+    };
+  }
+
+  static _CANTONESE_TOAST_TITLES = {
+    'App mark': '應用程式標記', 'Appearance applied': '外觀已套用', Applied: '已套用', Archive: '存檔',
+    Authorized: '已授權', 'Code applied': '代碼已套用', Compacted: '已壓縮', Config: '設定',
+    'Cookies handed back': 'Cookies 已交還', 'Copied as JSON': '已複製為 JSON', Copied: '已複製',
+    Default: '預設', Disabled: '已停用', Dismissed: '已忽略', 'Element locked': '元件已鎖定', Exec: '執行',
+    Explorer: '檔案總管', Exported: '已匯出', 'File picker': '選擇檔案', 'Folder picked': '已選資料夾',
+    Folder: '資料夾', Forgotten: '已忘記', 'Group collapsed': '群組已收合', 'Group created': '群組已建立',
+    'Group renamed': '群組已重新命名', Groups: '群組', 'Handed off': '已交接', 'Item range': '項目範圍',
+    Jumped: '已跳至', Moved: '已移動', 'Navigation moved': '導覽已移動', 'No code yet': '仲未有代碼',
+    'Not armed': '未啟動', Palette: '指令面板', 'Pattern applied': '樣式已套用', Pinned: '已固定',
+    Player: '播放器', 'Post-processing': '後製處理', 'Preset applied': '預設已套用', 'Preview first': '先預覽',
+    Printing: '列印中', Queue: '佇列', Queued: '已排入佇列', 'Recipe applied': '配方已套用', Recovery: '復原',
+    Refreshed: '已重新整理', Removed: '已移除', Reset: '已重設', Retention: '保留', Retrying: '重試中',
+    Running: '執行中', 'Safety gate': '安全閘', Saved: '已儲存', Started: '已開始', 'Still locked': '仍然鎖定',
+    Tabs: '分頁', 'Theme saved': '主題已儲存', Unlocked: '已解鎖', 'Vocabulary loaded': '詞彙已載入',
+    'info.json': 'info.json', '🥟 Dim-sum surprise': '🥟 點心驚喜', 'Not connected': '未連接',
+  };
+
+  static _EN_FUNNY_TAILS = { 1: '', 2: '', 3: ' Nice.', 4: ' All good here.', 5: ' Living our best download life.' };
+  static _YUE_FUNNY_TAILS = { 1: '', 2: '', 3: ' 幾好呀。', 4: ' 一切順利。', 5: ' 今日又叻咗一次。' };
+
+  _emojiForToastTitle(title) {
+    if (/lock|not connected|not armed|forgotten|safety|retry|retrying|error|fail/i.test(title)) return '⚠️';
+    if (/saved|applied|copied|exported|pinned|unlocked|refreshed|authorized|handed|compacted/i.test(title)) return '✅';
+    if (/running|started|queued|printing|jumped|moved/i.test(title)) return '⏳';
+    return '✨';
+  }
+
+  _applyLanguageToast(title, body) {
+    const prefs = this._languagePrefs();
+    const yueTitle = Component._CANTONESE_TOAST_TITLES[title];
+    const enTail = Component._EN_FUNNY_TAILS[prefs.enFunny] || '';
+    const yueTail = Component._YUE_FUNNY_TAILS[prefs.yueFunny] || '';
+    const enTitleRaw = title;
+    const enBodyRaw = body ? body + enTail : body;
+    const yueTitleRaw = yueTitle || title;
+    const yueBodyRaw = body ? body + yueTail : body;
+    let displayTitle, displayBody;
+    if (prefs.mode === 'yue') { displayTitle = yueTitleRaw; displayBody = yueBodyRaw; }
+    else if (prefs.mode === 'bilingual') {
+      displayTitle = yueTitle ? (enTitleRaw + ' · ' + yueTitleRaw) : enTitleRaw;
+      displayBody = enBodyRaw;
+    } else { displayTitle = enTitleRaw; displayBody = enBodyRaw; }
+    if (prefs.emoji && displayTitle) displayTitle = this._emojiForToastTitle(title) + ' ' + displayTitle;
+    return {
+      title: displayTitle, body: displayBody,
+      spokenEn: enTitleRaw + (enBodyRaw ? '. ' + enBodyRaw : ''),
+      spokenYue: yueTitleRaw + (yueBodyRaw ? '. ' + yueBodyRaw : ''),
+      prefs,
+    };
+  }
+
+  // ---- narrator: persistence ----
+
+  _loadLanguagePrefs() {
+    const bridge = window.ytdlpStudio;
+    if (!bridge || !bridge.store) return;
+    bridge.store.getPreferences().then(stored => {
+      if (!stored) return;
+      const modeUi = { en: 'English', yue: 'Yue', bilingual: 'Bilingual' };
+      const narratorUi = { en: 'English', yue: 'Yue', both: 'Both' };
+      this._langHydrating = true;
+      this.setState(s => ({
+        prefs: {
+          ...(s.prefs || {}),
+          mode: modeUi[stored.languageMode] || 'English',
+          enFunny: typeof stored.funnyLevelEn === 'number' ? stored.funnyLevelEn : (s.prefs || {}).enFunny,
+          yueFunny: typeof stored.funnyLevelYue === 'number' ? stored.funnyLevelYue : (s.prefs || {}).yueFunny,
+          emoji: stored.emoji === true,
+          narrator: stored.narrator === true,
+          narratorLanguage: narratorUi[stored.narratorLanguage] || 'English',
+          narratorVoiceEn: stored.narratorVoiceEn || 'auto',
+          narratorVoiceYue: stored.narratorVoiceYue || 'auto',
+          narratorRate: typeof stored.narratorRate === 'number' ? stored.narratorRate : 1,
+          narratorPitch: typeof stored.narratorPitch === 'number' ? stored.narratorPitch : 1,
+        },
+      }), () => { this._langHydrating = false; });
+    }).catch(() => {});
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const keys = ['mode', 'enFunny', 'yueFunny', 'emoji', 'narrator', 'narratorLanguage', 'narratorVoiceEn', 'narratorVoiceYue', 'narratorRate', 'narratorPitch'];
+    const prevP = prevState.prefs || {};
+    const curP = this.state.prefs || {};
+    if (this._langHydrating) return;
+    if (keys.some(k => prevP[k] !== curP[k])) this._persistLanguagePrefs(curP);
+  }
+
+  _persistLanguagePrefs(p) {
+    const bridge = window.ytdlpStudio;
+    if (!bridge || !bridge.store) return;
+    const uiMode = { English: 'en', Yue: 'yue', Bilingual: 'bilingual' };
+    const uiNarratorLang = { English: 'en', Yue: 'yue', Both: 'both' };
+    bridge.store.getPreferences().then(current => {
+      const next = Object.assign({}, current, {
+        languageMode: uiMode[p.mode] || 'en',
+        funnyLevelEn: Math.min(5, Math.max(1, Math.round(Number(p.enFunny) || 2))),
+        funnyLevelYue: Math.min(5, Math.max(1, Math.round(Number(p.yueFunny) || 3))),
+        emoji: p.emoji === true,
+        narrator: p.narrator === true,
+        narratorLanguage: uiNarratorLang[p.narratorLanguage] || 'en',
+        narratorVoiceEn: p.narratorVoiceEn || 'auto',
+        narratorVoiceYue: p.narratorVoiceYue || 'auto',
+        narratorRate: Number.isFinite(Number(p.narratorRate)) ? Number(p.narratorRate) : 1,
+        narratorPitch: Number.isFinite(Number(p.narratorPitch)) ? Number(p.narratorPitch) : 1,
+      });
+      bridge.store.setPreferences(next).catch(() => {});
+    }).catch(() => {});
+  }
+
+  // ---- narrator: voice enumeration (real speechSynthesis.getVoices(),
+  // re-read on the platform's own late 'voiceschanged' event) ----
+
+  _initNarratorVoices() {
+    if (typeof window.speechSynthesis === 'undefined') { this.setState({ narratorUnsupported: true }); return; }
+    const read = () => {
+      const voices = window.speechSynthesis.getVoices() || [];
+      this.setState({
+        narratorVoicesEn: voices.filter(v => (v.lang || '').toLowerCase().startsWith('en')),
+        narratorVoicesYue: voices.filter(v => (v.lang || '').toLowerCase().startsWith('zh')),
+      });
+    };
+    read();
+    this._voicesChangedHandler = read;
+    window.speechSynthesis.addEventListener('voiceschanged', this._voicesChangedHandler);
+  }
+
+  _voiceIdentity(v) { return (v.voiceURI && v.voiceURI.length) ? v.voiceURI : (v.name + '::' + v.lang); }
+
+  narratorVoiceOptions(lang) {
+    const list = (lang === 'yue' ? this.state.narratorVoicesYue : this.state.narratorVoicesEn) || [];
+    return ['auto', ...list.map(v => this._voiceIdentity(v))];
+  }
+
+  _resolveNarratorVoice(lang, prefs) {
+    const list = (lang === 'yue' ? this.state.narratorVoicesYue : this.state.narratorVoicesEn) || [];
+    const storedId = lang === 'yue' ? prefs.narratorVoiceYue : prefs.narratorVoiceEn;
+    if (storedId && storedId !== 'auto') {
+      const explicit = list.find(v => this._voiceIdentity(v) === storedId);
+      if (explicit) return { voice: explicit, fallenBack: false };
+    }
+    return { voice: list[0] || null, fallenBack: !!(storedId && storedId !== 'auto') };
+  }
+
+  // ---- narrator: debounced, serialized speech queue. A burst of toasts
+  // inside 450ms collapses to the latest (never stacked); 'both' speaks
+  // English then Cantonese strictly serialized via onend chaining; only
+  // ever one SpeechSynthesisUtterance in flight. ----
+
+  _speakNarrator(applied) {
+    if (!applied.prefs.narrator || typeof window.speechSynthesis === 'undefined') return;
+    if (this._narratorDebounce) clearTimeout(this._narratorDebounce);
+    this._narratorDebounce = setTimeout(() => {
+      this._narratorDebounce = null;
+      this._narratorPending = applied;
+      this._drainNarratorQueue();
+    }, 450);
+  }
+
+  _drainNarratorQueue() {
+    if (this._narratorSpeaking) return;
+    const applied = this._narratorPending;
+    this._narratorPending = null;
+    if (!applied) return;
+    this._narratorSpeaking = true;
+    const synth = window.speechSynthesis;
+    const parts = [];
+    if (applied.prefs.narratorLanguage === 'en' || applied.prefs.narratorLanguage === 'both') parts.push({ text: applied.spokenEn, lang: 'en' });
+    if (applied.prefs.narratorLanguage === 'yue' || applied.prefs.narratorLanguage === 'both') parts.push({ text: applied.spokenYue, lang: 'yue' });
+    const speakPart = () => {
+      const part = parts.shift();
+      if (!part) { this._narratorSpeaking = false; this._drainNarratorQueue(); return; }
+      const utter = new SpeechSynthesisUtterance(part.text);
+      const resolved = this._resolveNarratorVoice(part.lang, applied.prefs);
+      if (resolved.voice) { utter.voice = resolved.voice; utter.lang = resolved.voice.lang; }
+      else utter.lang = part.lang === 'yue' ? 'zh-HK' : 'en-US';
+      utter.rate = applied.prefs.narratorRate;
+      utter.pitch = applied.prefs.narratorPitch;
+      utter.onend = speakPart;
+      utter.onerror = speakPart;
+      synth.speak(utter);
+    };
+    speakPart();
   }
 
   // ---- easy mode helpers ----
@@ -2831,10 +3254,50 @@ class Component extends DCLogic {
   askDestructive(title, copy, run) {
     this.setState({ dialog: 'confirm', confirm: { title, copy, run: run || null, a: false, l: false, slider: 0 } });
   }
+  lockDurationCode(label) {
+    if (label === '5 minutes') return '5m';
+    if (label === '1 hour') return '1h';
+    if (label === 'Until I unlock it') return 'until-relocked';
+    return 'session';
+  }
+  refreshLocksAndAuth() {
+    const bridge = window.ytdlpStudio;
+    if (!bridge || !bridge.locks || !bridge.authenticator) return;
+    bridge.locks.list().then(locks => this.setState({ locks: locks || [] })).catch(() => {});
+    bridge.authenticator.list().then(entries => this.setState({ authEntries: entries || [] })).catch(() => {});
+    bridge.locks.recoveryPath().then(p => this.setState({ lockRecoveryPath: p })).catch(() => {});
+  }
   setApDraft(key, val) {
     this.setState(s => ({ apDraft: { ...(s.apDraft || {}), [key]: key === 'scale' ? Number(val) : (key === 'radius' || key === 'weight' ? Number(val) : val) } }));
   }
-  openAppearance(label) { this.setState({ dialog: 'appearance', appearanceTargetLabel: label, menu: null }); }
+  _hexToRgb(hex) {
+    const h = (hex || '#82d5cc').replace('#', '');
+    const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  _rgbToHsv([r, g, b]) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    let h = 0;
+    if (d !== 0) { if (max === r) h = ((g - b) / d) % 6; else if (max === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+    const s = max === 0 ? 0 : d / max;
+    return [Math.round(h), Math.round(s * 100), Math.round(max * 100)];
+  }
+  _rgbToCmyk([r, g, b]) {
+    r /= 255; g /= 255; b /= 255;
+    const k = 1 - Math.max(r, g, b);
+    if (k >= 1) return [0, 0, 0, 100];
+    const c = (1 - r - k) / (1 - k), m = (1 - g - k) / (1 - k), y = (1 - b - k) / (1 - k);
+    return [Math.round(c * 100), Math.round(m * 100), Math.round(y * 100), Math.round(k * 100)];
+  }
+  openAppearance(label) {
+    this.setState({ dialog: 'appearance', appearanceTargetLabel: label, apDraft: {}, menu: null });
+    if (!window.ytdlpStudio || !window.ytdlpStudio.appearance) return;
+    window.ytdlpStudio.appearance.getElementOverrides().then(all => {
+      const saved = (all || {})[label];
+      this.setState(st => (st.appearanceTargetLabel === label ? { apDraft: saved ? { ...saved } : {}, apElementOverrides: all } : {}));
+    }).catch(() => {});
+  }
 
   applyWizardChoice(c) {
     const a = c.act || '';
@@ -2863,8 +3326,8 @@ class Component extends DCLogic {
     if (lk) {
       this.setState({ menu: { title, items: [
         { glyph: '🔒', label: 'Locked — ' + (lk.method === 'totp' ? 'authenticator' : 'password') + ' · ' + lk.duration, run: () => {} },
-        { glyph: '🗝', label: 'Unlock this element…', run: () => this.setState({ lock: { target: title, step: 1, method: lk.method, mode: 'unlock', x: Math.min(x, window.innerWidth - 368), y: Math.min(y, window.innerHeight - 360) } }) },
-        { glyph: '?', label: 'Forgot it? The recovery path', run: () => this.toast('Recovery', 'Delete %APPDATA%\\yt-dlp-studio to clear every lock — a local ticket records the reset') },
+        { glyph: '🗝', label: 'Unlock this element…', run: () => this.setState({ lock: { target: title, id: lk.id, step: 1, method: lk.method, mode: 'unlock', x: Math.min(x, window.innerWidth - 368), y: Math.min(y, window.innerHeight - 360) } }) },
+        { glyph: '?', label: 'Forgot it? The recovery path', run: () => this.toast('Recovery', 'Delete ' + (this.state.lockRecoveryPath || '%APPDATA%\\yt-dlp-studio') + ' to clear every lock — this is a toy lock, not security, and there is no reset ticket') },
       ], x, y }, menuSearch: '' });
       return;
     }
@@ -2902,16 +3365,18 @@ class Component extends DCLogic {
     return String(bin % 1000000).padStart(6, '0');
   }
   refreshTotp() {
-    const secret = this.state.totpSecret;
+    const entryId = this.state.totpEntryId;
     const now = Math.floor(Date.now() / 1000);
-    const step = Math.floor(now / 30);
     this.setState({ totpRemaining: 30 - (now % 30) });
-    if (!secret) { if (this.state.totpValue) this.setState({ totpValue: '', totpError: '' }); return; }
-    if (this._totpStep === step && this.state.totpValue) return;
-    this._totpStep = step;
-    this.totpCode(secret, step)
-      .then(code => this.setState({ totpValue: code || '', totpError: code ? '' : 'That does not look like a base32 secret' }))
-      .catch(() => this.setState({ totpValue: '', totpError: 'Could not derive a code from that secret' }));
+    if (!entryId) { if (this.state.totpValue) this.setState({ totpValue: '', totpError: '' }); return; }
+    const bridge = window.ytdlpStudio;
+    if (!bridge || !bridge.authenticator) return;
+    bridge.authenticator.currentCode({ id: entryId })
+      .then(res => {
+        if (!res || !res.ok || !res.code) { this.setState({ totpValue: '', totpError: (res && res.error) || 'Could not derive a code' }); return; }
+        this.setState({ totpValue: res.code, totpError: res.clockSkewWarning ? 'This machine\'s clock looks off — codes may be refused elsewhere' : '', totpRemaining: res.secondsRemaining != null ? res.secondsRemaining : this.state.totpRemaining });
+      })
+      .catch(() => this.setState({ totpValue: '', totpError: 'Could not reach the authenticator' }));
   }
   repeatable(flag) {
     const spec = {
@@ -3972,7 +4437,15 @@ class Component extends DCLogic {
     const apHex = this.hslToHex(apH, apS, apL);
     const prefs = s.prefs || {};
     const pref = (k, d) => (prefs[k] !== undefined ? prefs[k] : d);
-    const setPref = (k, v) => this.setState(st => ({ prefs: { ...(st.prefs || {}), [k]: v } }));
+    const schoolActive = !!prefs.school;
+    const setPref = (k, v) => {
+      this.setState(st => ({ prefs: { ...(st.prefs || {}), [k]: v } }));
+      if (!window.ytdlpStudio || !window.ytdlpStudio.store) return;
+      clearTimeout(this._prefsSaveTimer);
+      this._prefsSaveTimer = setTimeout(() => {
+        window.ytdlpStudio.store.setPreferences({ ...(this.state.prefs || {}), [k]: v }).catch(() => {});
+      }, 200);
+    };
     const palette = [
       { label: 'Easy mode', hint: 'Paste a link and download', key: 'Ctrl+1', run: () => this.setState({ mode: 'easy', dialog: null }) },
       { label: 'Download queue', hint: 'Intake, queue, console', key: 'Ctrl+2', run: () => this.goto('download') },
@@ -3990,7 +4463,7 @@ class Component extends DCLogic {
       { label: 'Support tickets', hint: 'Local ticket file, searchable', run: () => this.setState({ dialog: 'notifications' }) },
       { label: 'What changed (changelog)', hint: 'Docs · release notes, offline', run: () => { this.setState({ docId: 'changelog', dialog: null }); this.goto('docs'); } },
       { label: 'School mode', hint: 'Settings · Language and voice', control: 'toggle', value: pref('school', false), apply: v => setPref('school', v), run: () => this.teleport('settings', 'School mode') },
-      { label: 'ADHD mode', hint: 'Settings · Accessibility', control: 'toggle', value: pref('adhd', false), apply: v => setPref('adhd', v), run: () => this.teleport('settings', 'ADHD mode') },
+      { label: 'ADHD: Focus', hint: 'Settings · Accessibility', control: 'toggle', value: pref('adhdFocus', false), apply: v => setPref('adhdFocus', v), run: () => this.teleport('settings', 'ADHD: Focus') },
       { label: 'Emoji in notices', hint: 'Settings · Language and voice', control: 'toggle', value: pref('emoji', false), apply: v => setPref('emoji', v), run: () => this.teleport('settings', 'Emoji in notices') },
       { label: 'Dim-sum surprise', hint: 'A small treat, on demand', run: () => { this.setState({ dialog: null }); this.settingAction('dimsum'); } },
       { label: 'Tabs, groups and safe closing', hint: 'Four searches, preview then authorize', run: () => this.setState({ dialog: 'tabs' }) },
@@ -4097,6 +4570,71 @@ class Component extends DCLogic {
       rootFontSize: Math.round(14 * (pref('scale', 1)) * (pref('density', 'Comfortable') === 'Compact' ? 0.93 : 1)) + 'px',
       rootWeight: String(pref('weight', 400)),
       rootFont: (pref('font', 'Roboto') === 'Roboto Mono' ? "'Roboto Mono',Consolas,monospace" : pref('font', 'Roboto') + ',Roboto,"Segoe UI",system-ui,sans-serif'),
+      focusChromeStyle: pref('adhdFocus', false) ? 'opacity:.45;filter:grayscale(.6);transition:opacity .15s' : '',
+      motionOffAttr: (pref('adhdLowStim', false) || pref('reducedMotion', false)) ? 'off' : 'on',
+      adhdTimeOn: pref('adhdTime', false), adhdOneThingOn: pref('adhdOneThing', false),
+      adhdFocusOn: pref('adhdFocus', false), adhdLowStimOn: pref('adhdLowStim', false),
+      adhdBarVisible: pref('adhdTime', false) || pref('adhdOneThing', false) || pref('adhdFocus', false) || pref('adhdLowStim', false),
+      elapsedSessionText: formatElapsedMs(Date.now() - ((s.modesState && s.modesState.sessionStartedAt) || Date.now())),
+      oneThingActionDraft: s.oneThingActionDraft || '',
+      setOneThingActionDraft: e => this.setState({ oneThingActionDraft: e.target.value }),
+      commitOneThingAction: () => {
+        if (window.ytdlpStudio && window.ytdlpStudio.modes) {
+          window.ytdlpStudio.modes.setOneThingAction(s.oneThingActionDraft || null).then(ms => this.setState({ modesState: ms, momentumNudgeDismissedAt: null })).catch(() => {});
+        }
+      },
+      momentumNudgeVisible: !!(
+        pref('adhdMomentum', false) && s.oneThingActionDraft &&
+        s.modesState && (!s.modesState.momentumSnoozedUntil || s.modesState.momentumSnoozedUntil < Date.now()) &&
+        (Date.now() - (s._oneThingSetAt || Date.now())) > 20 * 60 * 1000
+      ),
+      snoozeMomentum: () => {
+        const until = Date.now() + 60 * 60 * 1000;
+        if (window.ytdlpStudio && window.ytdlpStudio.modes) {
+          window.ytdlpStudio.modes.setMomentumSnooze(until).then(ms => this.setState({ modesState: ms })).catch(() => {});
+        } else {
+          this.setState(st => ({ modesState: { ...(st.modesState || {}), momentumSnoozedUntil: until } }));
+        }
+      },
+      dialogSchoolEnable: s.dialog === 'schoolEnable', dialogSchoolDisable: s.dialog === 'schoolDisable',
+      schoolNameDraft: (s.schoolNameDraft !== undefined ? s.schoolNameDraft : ((s.modesState && s.modesState.school.name) || 'School mode')),
+      setSchoolNameDraft: e => this.setState({ schoolNameDraft: e.target.value }),
+      schoolPassword: s.schoolPassword || '', setSchoolPassword: e => this.setState({ schoolPassword: e.target.value }),
+      schoolError: s.schoolError || '',
+      schoolDisplayName: (s.modesState && s.modesState.school.name) || 'School mode',
+      closeSchoolDialog: () => this.setState({ dialog: null, schoolPassword: '', schoolError: null }),
+      confirmSchoolEnable: () => {
+        if (!window.ytdlpStudio || !window.ytdlpStudio.modes) { this.toast('School mode', 'Not connected to the app shell.'); return; }
+        window.ytdlpStudio.modes.schoolEnable(s.schoolPassword || '').then(res => {
+          if (!res.ok) { this.setState({ schoolError: res.error }); return; }
+          const name = (s.schoolNameDraft || '').trim();
+          const applyRename = name && name !== res.state.school.name
+            ? window.ytdlpStudio.modes.schoolRename(name)
+            : Promise.resolve(res.state);
+          applyRename.then(finalState => {
+            this.setState(st => ({ modesState: finalState, prefs: { ...(st.prefs || {}), school: true }, dialog: null, schoolPassword: '', schoolError: null }));
+            this.toast(finalState.school.name + ' is on', 'English only; Cantonese, bilingual, and funny levels are hidden until you turn it off.');
+          });
+        }).catch(err => this.setState({ schoolError: (err && err.message) ? err.message : String(err) }));
+      },
+      confirmSchoolDisable: () => {
+        if (!window.ytdlpStudio || !window.ytdlpStudio.modes) { this.toast('School mode', 'Not connected to the app shell.'); return; }
+        window.ytdlpStudio.modes.schoolDisable(s.schoolPassword || '').then(res => {
+          if (!res.ok) { this.setState({ schoolError: res.error }); return; }
+          this.setState(st => ({ modesState: res.state, prefs: { ...(st.prefs || {}), school: false }, dialog: null, schoolPassword: '', schoolError: null }));
+          this.toast('School mode is off', 'Your prior language and funny-level choices are back.');
+        }).catch(err => this.setState({ schoolError: (err && err.message) ? err.message : String(err) }));
+      },
+      liveAppName: (() => {
+        const n = (s.renameState && s.renameState.active) ? s.renameState.displayName : 'yt-dlp Studio';
+        if (typeof document !== 'undefined' && document.title !== n) document.title = n;
+        return n;
+      })(),
+      rootTheme: pref('theme', 'dark'),
+      rootRadius: Math.round(pref('radius', 12)) + 'px',
+      rootMotion: pref('reducedMotion', false) ? 'true' : 'false',
+      rootAccent: (pref('accent', '#82d5cc') === '__dc_rainbow__') ? '#82d5cc' : pref('accent', '#82d5cc'),
+      rootAccentRainbow: pref('accent', '#82d5cc') === '__dc_rainbow__' ? 'true' : 'false',
       newTab: () => this.goto('download'),
       openTabManager: () => this.setState({ dialog: 'tabs' }),
       pageEyebrow: meta.eyebrow, pageTitle: meta.title, pageSubtitle: meta.sub,
@@ -4835,8 +5373,16 @@ class Component extends DCLogic {
         ['enFunny', 'English funny level', 'How playful the English copy and notices get.', 'range'],
         ['yueFunny', 'Cantonese funny level', 'How playful the Cantonese copy and notices get.', 'range'],
         ['emoji', 'Emoji in notices', 'Adds emoji beside toasts and notices. Off keeps them plain.', 'toggle'],
-        ['school', 'School mode', 'Classroom-safe plain copy everywhere; funny levels are ignored while it is on.', 'toggle'],
-        ['adhd', 'ADHD mode', 'One thing at a time: fewer moving parts, stronger focus states, progress as plain numbers.', 'toggle'],
+        ['narratorVoiceEn', 'Narrator voice (English)', 'Which installed voice speaks the English track. \'auto\' picks the first English voice this machine reports; a chosen voice that stops being installed falls back to auto rather than silently resetting.', 'select', this.narratorVoiceOptions('en')],
+        ['narratorVoiceYue', 'Narrator voice (Cantonese)', 'Which installed voice speaks the Cantonese/Yue track. \'auto\' picks the first zh voice this machine reports.', 'select', this.narratorVoiceOptions('yue')],
+        ['narratorRate', 'Narrator rate', 'How fast the narrator speaks (0.5x-2x).', 'range'],
+        ['narratorPitch', 'Narrator pitch', 'How high or low the narrator sounds (0-2).', 'range'],
+        ['school', 'School mode', 'Classroom-safe plain copy everywhere; funny levels are ignored while it is on. Recovery: delete this app’s local data folder.', 'toggle'],
+        ['adhdFocus', 'ADHD: Focus', 'Brings the current surface forward and dims the rest of the header. Nothing is ever hidden for good.', 'toggle'],
+        ['adhdLowStim', 'ADHD: Low stimulation', 'Turns off decorative motion everywhere, on top of your reduced-motion setting.', 'toggle'],
+        ['adhdTime', 'ADHD: Time awareness', 'Shows how long this session has been open, right in the header.', 'toggle'],
+        ['adhdOneThing', 'ADHD: One thing at a time', 'Pins a single current action you choose, visible in the header.', 'toggle'],
+        ['adhdMomentum', 'ADHD: Momentum', 'A gentle nudge if the pinned action sits untouched for 20 minutes. "Not now" is respected for an hour.', 'toggle'],
         ['theme', 'Theme', 'Dark is the default; light follows the same Material tokens.', 'select', ['Dark', 'Light']],
         ['followOS', 'Follow system settings', 'Theme and reduced motion track the operating system.', 'toggle'],
         ['density', 'Density', 'Comfortable or compact row heights across every surface.', 'select', ['Comfortable', 'Compact']],
@@ -4846,7 +5392,16 @@ class Component extends DCLogic {
         ['radius', 'Corner radius', 'Shape scale for cards, fields and menus.', 'range'],
         ['startMode', 'Open in', 'Which mode the application starts in.', 'select', ['Easy mode', 'Expert mode', 'Last used']],
         ['schedule', 'Quiet hours', 'Pause the queue and mute notices on a schedule.', 'select', ['Off', '22:00-07:00', '00:00-08:00', 'Custom']],
-        ['ollama', 'Local AI (Ollama)', 'Optional local model that summarises errors and drafts filters; fully offline.', 'select', ['Off', 'qwen3:4b', 'llama3.2:3b', 'Manage suite']],
+        ['ollama', 'Local AI (Ollama)', (s.ollamaState
+          ? (s.ollamaState.status === 'unreachable'
+              ? ('Ollama not detected: ' + s.ollamaState.error)
+              : (s.ollamaState.models.length === 0
+                  ? ('Ollama ' + (s.ollamaState.version || '') + ' is running with no models pulled yet.')
+                  : (s.ollamaState.models.length + ' model(s) installed. Fit is evidence-based from real host memory and each model\'s real reported size — never guessed from its name.')))
+          : 'Optional local model, fully offline. Probing 127.0.0.1:11434\u2026'),
+          'select', (s.ollamaState && s.ollamaState.status === 'reachable' && s.ollamaState.models.length > 0)
+            ? ['Off', ...s.ollamaState.models.map(m => m.name + ' (' + m.fit + ')')]
+            : ['Off']],
         ['confirmDestructive', 'Destructive-action gate', 'Deleting files or archives needs the two-key super-confirmation.', 'toggle'],
         ['autoWizard', 'Open the fix wizard automatically', 'A failing job opens its matching wizard instead of only offering it.', 'toggle'],
         ['keepHistory', 'Append every change to local history', 'Nothing leaves the machine; history is a local file.', 'toggle'],
@@ -4857,8 +5412,11 @@ class Component extends DCLogic {
         ['tickets', 'Support tickets', 'A local, searchable ticket file; nothing is sent anywhere.', 'action', 'Open tickets'],
         ['changelog', 'What changed', 'Release notes for the app and its yt-dlp engine, offline.', 'action', 'Open changelog'],
         ['dimsum', 'Dim-sum surprise', 'A small treat, on demand.', 'action', 'Surprise me'],
-      ].filter(r => this.match(r[1] + ' ' + r[2], s.settingsSearch)).map(r => {
-        const [key, label, help, type, options] = r;
+      ].filter(r => this.match(r[1] + ' ' + r[2], s.settingsSearch))
+        .filter(r => !schoolActive || !['narratorLanguage', 'enFunny', 'yueFunny'].includes(r[0]))
+        .map(r => {
+        const [key, label, help, type, rawOptions] = r;
+        const options = (key === 'mode' && schoolActive) ? ['English'] : rawOptions;
         if (!this._settingsActionsPolled && window.ytdlpStudio) {
           this._settingsActionsPolled = true;
           window.ytdlpStudio.vocabulary.getState().then(vs => this.setState({ vocabState: vs })).catch(() => {});
@@ -4873,8 +5431,8 @@ class Component extends DCLogic {
               ? ('Custom mark active (' + s.appMarkState.widthPx + 'x' + s.appMarkState.heightPx + 'px) in the title bar and tray. Display only — never changes installer or data identity.')
               : 'Using the shipped app mark. Replace it with your own PNG — title bar and tray only.')
           : help;
-        const store = { confirmDestructive: true, autoWizard: true, keepHistory: true, enFunny: 2, yueFunny: 3, scale: 1, weight: 400, radius: 12, ...(s.prefs || {}), ...(s.settings || {}) };
-        const val = store[key];
+        const store = { confirmDestructive: true, autoWizard: true, keepHistory: true, enFunny: 2, yueFunny: 3, scale: 1, weight: 400, radius: 12, narratorRate: 1, narratorPitch: 1, ...(s.prefs || {}), ...(s.settings || {}) };
+        const val = (key === 'mode' && schoolActive) ? 'English' : store[key];
         const on = val === true;
         return {
           label, help: liveHelp, isToggle: type === 'toggle', isSelect: type === 'select', isRange: type === 'range',
@@ -4883,10 +5441,17 @@ class Component extends DCLogic {
           value: type === 'range' ? String(val || 6) : String(val || ((type === 'select' && options) || [''])[0]),
           options: type === 'select' ? this.optionList(options, val) : [],
           switchBg: on ? '#324b48' : '#303636', knobLeft: on ? '22px' : '3px', knobColor: on ? '#82d5cc' : '#889391',
-          rangeMin: key === 'scale' ? 0.9 : key === 'weight' ? 300 : key === 'radius' ? 4 : 1,
-          rangeMax: key === 'scale' ? 1.3 : key === 'weight' ? 700 : key === 'radius' ? 28 : 5,
-          rangeStep: key === 'scale' ? 0.05 : key === 'weight' ? 100 : 1,
-          toggle: () => this.setState(st => ({ settings: { ...(st.settings || {}), [key]: !on }, prefs: { ...(st.prefs || {}), [key]: !on } })),
+          rangeMin: key === 'scale' ? 0.9 : key === 'weight' ? 300 : key === 'radius' ? 4 : key === 'narratorRate' ? 0.5 : key === 'narratorPitch' ? 0 : 1,
+          rangeMax: key === 'scale' ? 1.3 : key === 'weight' ? 700 : key === 'radius' ? 28 : key === 'narratorRate' ? 2 : key === 'narratorPitch' ? 2 : 5,
+          rangeStep: key === 'scale' ? 0.05 : key === 'weight' ? 100 : key === 'narratorRate' ? 0.1 : key === 'narratorPitch' ? 0.1 : 1,
+          toggle: () => {
+            if (key === 'school') { this.setState({ dialog: on ? 'schoolDisable' : 'schoolEnable', schoolPassword: '', schoolError: null }); return; }
+            const next = !on;
+            this.setState(st => ({ settings: { ...(st.settings || {}), [key]: next }, prefs: { ...(st.prefs || {}), [key]: next } }));
+            if (ADHD_PREF_TO_FLAG[key] && window.ytdlpStudio) {
+              window.ytdlpStudio.modes.setAdhdFlag(ADHD_PREF_TO_FLAG[key], next).catch(() => {});
+            }
+          },
           set: e => {
             const v = ['scale', 'weight', 'radius', 'enFunny', 'yueFunny'].includes(key) ? Number(e.target.value) : e.target.value;
             this.setState(st => ({ settings: { ...(st.settings || {}), [key]: v }, prefs: { ...(st.prefs || {}), [key]: v } }));
@@ -4972,11 +5537,52 @@ class Component extends DCLogic {
         set: e => this.setState({ [key]: e.target.value }),
         regex: () => this.setState({ dialog: 'regex', regexTarget: key }),
       })),
-      tabGroups: ['Ungrouped', 'Downloads', 'Options', 'Diagnostics'].map(v => ({ v })),
+      // Real groups (scripts/wire-palette-tabs.mjs): the union of every
+      // custom group ever created (state.customGroups), every group name a
+      // real tab already carries, and 'Ungrouped' as the permanent fallback
+      // — never a hardcoded sample list a user could not have produced.
+      tabGroups: (() => {
+        const names = new Set(['Ungrouped']);
+        (s.customGroups || []).forEach(g => names.add(g.name));
+        (s.tabs || []).forEach(t => names.add(t.group || 'Ungrouped'));
+        return Array.from(names).map(v => ({ v }));
+      })(),
       tabGroup: s.tabGroup || 'Ungrouped', setTabGroup: e => this.setState({ tabGroup: e.target.value }),
-      createGroup: () => this.toast('Group created', 'New tab group'),
-      renameGroup: () => this.toast('Group renamed', s.tabGroup || 'Ungrouped'),
-      collapseGroup: () => this.toast('Group collapsed', s.tabGroup || 'Ungrouped'),
+      createGroup: () => {
+        const name = (s.tabGroup || '').trim() || ('Group ' + ((s.customGroups || []).length + 1));
+        this.setState(st => {
+          if ((st.customGroups || []).some(g => g.name === name)) {
+            return { tabGroup: name };
+          }
+          const order = (st.customGroups || []).length;
+          return {
+            customGroups: [...(st.customGroups || []), { name, color: '#82d5cc', collapsed: false, order }],
+            tabGroup: name,
+          };
+        });
+        this.toast('Group created', name);
+      },
+      renameGroup: () => {
+        const from = s.tabGroup || 'Ungrouped';
+        if (from === 'Ungrouped') { this.toast('Cannot rename', "'Ungrouped' is the permanent fallback group"); return; }
+        const to = window.prompt ? (window.prompt('Rename group', from) || '').trim() : '';
+        if (!to || to === from) return;
+        this.setState(st => ({
+          customGroups: (st.customGroups || []).map(g => g.name === from ? { ...g, name: to } : g),
+          tabs: (st.tabs || []).map(t => (t.group || 'Ungrouped') === from ? { ...t, group: to } : t),
+          tabGroup: to,
+        }));
+        this.toast('Group renamed', from + ' → ' + to);
+      },
+      collapseGroup: () => {
+        const name = s.tabGroup || 'Ungrouped';
+        this.setState(st => ({
+          customGroups: (st.customGroups || []).some(g => g.name === name)
+            ? (st.customGroups || []).map(g => g.name === name ? { ...g, collapsed: !g.collapsed } : g)
+            : [...(st.customGroups || []), { name, color: '#82d5cc', collapsed: true, order: (st.customGroups || []).length }],
+        }));
+        this.toast('Group collapsed', name);
+      },
       tabManagerRows: s.tabs.filter(t => this.match(t.label, s.tabMasterSearch || s.tabStripSearch || '')).map(t => ({
         label: t.label, sub: t.view === 'group' ? 'CLI group · ' + t.groupId : 'surface · ' + t.view,
         group: t.group || 'Ungrouped',
@@ -4992,10 +5598,31 @@ class Component extends DCLogic {
       })),
       includePinned: !!s.includePinned, toggleIncludePinned: () => this.setState(st => ({ includePinned: !st.includePinned })),
       closePreview: s.closePreviewText || 'Enter one close query, then preview the exact visible-label match set before anything closes.',
+      tabCloseMode: s.tabCloseMode || 'containing',
+      closeModeContainingBg: (s.tabCloseMode || 'containing') === 'containing' ? '#324b48' : 'transparent',
+      closeModeContainingFg: (s.tabCloseMode || 'containing') === 'containing' ? '#cfe9e5' : '#82d5cc',
+      closeModeNotContainingBg: s.tabCloseMode === 'not-containing' ? '#324b48' : 'transparent',
+      closeModeNotContainingFg: s.tabCloseMode === 'not-containing' ? '#cfe9e5' : '#82d5cc',
+      setCloseModeContaining: () => this.setState({ tabCloseMode: 'containing', closeArmed: false, closePreviewText: 'Direction set to containing — preview again before authorizing.' }),
+      setCloseModeNotContaining: () => this.setState({ tabCloseMode: 'not-containing', closeArmed: false, closePreviewText: 'Direction set to NOT containing — preview again before authorizing.' }),
       previewClose: () => {
-        const q = s.tabCloseContaining || s.tabMasterSearch || '';
-        const hits = s.tabs.filter(t => q && this.match(t.label, q) && (s.includePinned || !t.pinned));
-        this.setState({ closePreviewText: hits.length ? hits.length + ' tab(s) match and would close: ' + hits.map(t => t.label).join(', ') : 'No tab matches that query — nothing would close.', closeArmed: hits.length > 0 });
+        const q = (s.tabCloseContaining || s.tabMasterSearch || '').trim();
+        const invert = s.tabCloseMode === 'not-containing';
+        if (!q) { this.setState({ closePreviewText: 'Enter one close query first — an empty query never runs.', closeArmed: false }); return; }
+        // this.match() itself falls back to a valid state on an invalid
+        // pattern (plain substring match), so guard invalidity explicitly
+        // here rather than trusting a fallback to mean "safe to run".
+        try { new RegExp(q); } catch (err) {
+          this.setState({ closePreviewText: 'Invalid pattern: ' + err.message + ' — nothing would close.', closeArmed: false });
+          return;
+        }
+        const eligible = s.tabs.filter(t => s.includePinned || !t.pinned);
+        const hits = eligible.filter(t => invert ? !this.match(t.label, q) : this.match(t.label, q));
+        const verb = invert ? 'NOT containing "' + q + '" match and would close: ' : 'containing "' + q + '" match and would close: ';
+        this.setState({
+          closePreviewText: hits.length ? hits.length + ' tab(s) ' + verb + hits.map(t => t.label).join(', ') : 'No tab matches that ' + (invert ? 'inverse ' : '') + 'query — nothing would close.',
+          closeArmed: hits.length > 0,
+        });
       },
       authorizeBg: s.closeArmed ? '#ffb4ab' : '#252b2b', authorizeFg: s.closeArmed ? '#690005' : '#889391',
       authorizeClose: () => s.closeArmed
@@ -5005,9 +5632,43 @@ class Component extends DCLogic {
       dialogAppearance: s.dialog === 'appearance',
       appearanceTarget: 'Target: ' + (s.appearanceTargetLabel || 'this element'),
       apTheme: (s.apDraft || {}).theme || 'dark', setApTheme: e => this.setApDraft('theme', e.target.value),
+      shippedAppName: 'yt-dlp Studio',
+      renamePlaceholder: (s.renameState && s.renameState.displayName) || 'yt-dlp Studio',
+      renameDraft: s.renameDraft != null ? s.renameDraft : ((s.renameState && s.renameState.active) ? s.renameState.displayName : ''),
+      setRenameDraft: e => this.setState({ renameDraft: e.target.value }),
+      saveRename: () => {
+        if (!window.ytdlpStudio || !window.ytdlpStudio.appearance) { this.toast('App name', 'Not connected to the app shell.'); return; }
+        const name = (s.renameDraft || '').trim();
+        if (!name) { this.toast('App name', 'Enter a name first.'); return; }
+        window.ytdlpStudio.appearance.setRename(name).then(res => {
+          if (!res.ok) { this.toast('App name rejected', res.error || 'Could not save that name.'); return; }
+          this.setState({ renameState: res.state, renameDraft: null });
+          this.toast('App name saved', 'Now shown as \'' + res.state.displayName + '\'');
+        }).catch(err => this.toast('App name', 'Could not save: ' + (err && err.message ? err.message : String(err))));
+      },
+      resetRenameAction: () => {
+        if (!window.ytdlpStudio || !window.ytdlpStudio.appearance) return;
+        window.ytdlpStudio.appearance.resetRename().then(res => {
+          this.setState({ renameState: res, renameDraft: null });
+          this.toast('App name reset', 'Back to \'' + res.displayName + '\'');
+        }).catch(() => {});
+      },
       apFont: (s.apDraft || {}).font || 'Roboto', setApFont: e => this.setApDraft('font', e.target.value),
       apHue: apH, apSat: apS, apLight: apL,
       apColor: apHex, apHex: apHex.toUpperCase(),
+      apHex8: apHex.toUpperCase() + 'FF',
+      apRgb: (() => { const rgb = this.hslToRgb ? this.hslToRgb(apH, apS, apL) : this._hexToRgb(apHex); return 'rgb(' + rgb.join(', ') + ')'; })(),
+      apHsl: 'hsl(' + Math.round(apH) + 'deg, ' + Math.round(apS) + '%, ' + Math.round(apL) + '%)',
+      apHsv: (() => { const v = this._rgbToHsv(this._hexToRgb(apHex)); return 'hsv(' + v[0] + 'deg, ' + v[1] + '%, ' + v[2] + '%)'; })(),
+      apCmyk: (() => { const c = this._rgbToCmyk(this._hexToRgb(apHex)); return 'cmyk(' + c.join('%, ') + '%)'; })(),
+      isRainbowAccent: (s.apDraft || {}).accent === '__dc_rainbow__',
+      rainbowSwatchBg: (s.apDraft || {}).accent === '__dc_rainbow__' ? 'conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)' : '#252b2b',
+      rainbowSwatchBorder: (s.apDraft || {}).accent === '__dc_rainbow__' ? '#82d5cc' : 'transparent',
+      rainbowStatusLabel: (s.apDraft || {}).accent === '__dc_rainbow__' ? 'Rainbow accent — animates the hue continuously; settles to one hue under Reduced motion.' : '',
+      toggleRainbowAccent: () => {
+        const cur = (s.apDraft || {}).accent;
+        this.setApDraft('accent', cur === '__dc_rainbow__' ? apHex : '__dc_rainbow__');
+      },
       apHueColor: 'hsl(' + apH + ',100%,50%)',
       apPureColor: 'hsl(' + apH + ',' + apS + '%,50%)',
       apGraySwatch: 'hsl(' + apH + ',0%,' + apL + '%)',
@@ -5039,8 +5700,37 @@ class Component extends DCLogic {
         set: e => this.setApDraft(key, e.target.value),
       })),
       saveNamedTheme: () => this.toast('Theme saved', 'Named theme stored in local preferences'),
-      resetAppearance: () => { this.setState({ apDraft: {}, dialog: null }); this.toast('Reset', 'Element returned to the app defaults'); },
-      applyAppearance: () => { this.setState({ dialog: null }); this.toast('Appearance applied', s.appearanceTargetLabel || 'element'); },
+      resetAppearance: () => {
+        const label = s.appearanceTargetLabel || 'this element';
+        this.setState({ apDraft: {}, dialog: null });
+        if (window.ytdlpStudio && window.ytdlpStudio.appearance) {
+          window.ytdlpStudio.appearance.resetElementOverride(label).catch(() => {});
+        }
+        this.toast('Reset', label + ' returned to the app defaults');
+      },
+      applyAppearance: () => {
+        const label = s.appearanceTargetLabel || 'this element';
+        const draft = s.apDraft || {};
+        this.setState({ dialog: null });
+        if (window.ytdlpStudio && window.ytdlpStudio.appearance) {
+          window.ytdlpStudio.appearance.setElementOverride(label, {
+            theme: draft.theme, font: draft.font, accent: draft.accent,
+            scale: draft.scale, weight: draft.weight, radius: draft.radius,
+          }).catch(() => {});
+        }
+        if (window.ytdlpStudio && window.ytdlpStudio.store) {
+          const nextPrefs = { ...(s.prefs || {}) };
+          if (draft.theme) nextPrefs.theme = draft.theme;
+          if (draft.font) nextPrefs.font = draft.font;
+          if (draft.accent) nextPrefs.accent = draft.accent;
+          if (draft.scale != null) nextPrefs.scale = draft.scale;
+          if (draft.weight != null) nextPrefs.weight = draft.weight;
+          if (draft.radius != null) nextPrefs.radius = draft.radius;
+          this.setState({ prefs: nextPrefs });
+          window.ytdlpStudio.store.setPreferences(nextPrefs).catch(() => {});
+        }
+        this.toast('Applied', 'Saved to ' + label + '\'s appearance');
+      },
 
       dialogConfirm: s.dialog === 'confirm',
       confirmTitle: (s.confirm || {}).title || 'Confirm action',
@@ -5136,19 +5826,47 @@ class Component extends DCLogic {
 
       dialogAuth: s.dialog === 'auth',
       totpSecret: s.totpSecret || '',
+      totpEntryId: s.totpEntryId || '',
+      setTotpSecretReal: input => {
+        const bridge = window.ytdlpStudio;
+        if (!bridge || !bridge.authenticator) { this.toast('Not connected', 'window.ytdlpStudio.authenticator is missing'); return; }
+        bridge.authenticator.register({ input, issuer: 'yt-dlp Studio', account: '--twofactor' }).then(res => {
+          if (!res || !res.ok || !res.entry) { this.setState({ totpValue: '', totpError: (res && res.error) || 'Could not derive a code from that secret' }); return; }
+          this.setState({ totpEntryId: res.entry.id, totpValue: '', totpError: '' });
+          return bridge.authenticator.currentCode({ id: res.entry.id }).then(code => {
+            if (code && code.ok && code.code) {
+              return bridge.authenticator.confirmPairing({ id: res.entry.id, code: code.code });
+            }
+          });
+        }).catch(err => this.setState({ totpValue: '', totpError: String(err && err.message ? err.message : err) }));
+      },
       setTotpSecret: e => {
         const raw = e.target.value;
         const m = /[?&]secret=([^&\s]+)/i.exec(raw);
-        this.setState({ totpSecret: m ? m[1] : raw, totpValue: '' });
+        const value = m ? m[1] : raw;
+        this.setState({ totpSecret: value, totpValue: '', totpEntryId: '' });
         this._totpStep = null;
+        this.setTotpSecretReal(value);
       },
-      pasteTotp: () => { this.setState({ totpSecret: 'JBSWY3DPEHPK3PXP', totpValue: '' }); this._totpStep = null; },
+      pasteTotp: () => {
+        this.setState({ totpSecret: 'JBSWY3DPEHPK3PXP', totpValue: '', totpEntryId: '' });
+        this._totpStep = null;
+        this.setTotpSecretReal('JBSWY3DPEHPK3PXP');
+      },
       totpDisplay: s.totpValue ? s.totpValue.slice(0, 3) + ' ' + s.totpValue.slice(3) : '— — —  — — —',
       totpColor: s.totpError ? '#ffb4ab' : s.totpValue ? '#82d5cc' : '#889391',
       totpStatus: s.totpError || (s.totpValue ? 'Refreshes automatically every 30 seconds' : 'Waiting for a secret'),
       totpRemaining: s.totpRemaining == null ? 30 : s.totpRemaining,
       totpSweep: Math.round(((s.totpRemaining == null ? 30 : s.totpRemaining) / 30) * 360) + 'deg',
-      forgetTotp: () => { this.setState({ totpSecret: '', totpValue: '' }); this.toast('Forgotten', 'The secret was removed from this machine'); },
+      forgetTotp: () => {
+        const bridge = window.ytdlpStudio;
+        const id = s.totpEntryId;
+        this.setState({ totpSecret: '', totpValue: '', totpEntryId: '' });
+        if (bridge && bridge.authenticator && id) {
+          bridge.authenticator.remove(id).catch(() => {});
+        }
+        this.toast('Forgotten', 'The secret was removed from this machine');
+      },
       useTotp: () => {
         if (!s.totpValue) { this.toast('No code yet', 'Paste a valid base32 secret first'); return; }
         this.setV('--twofactor', s.totpValue);
@@ -5217,7 +5935,17 @@ class Component extends DCLogic {
       ].map(([id, glyph, label, help]) => {
         const on = (s.lock || {}).method === id;
         return { glyph, label, help, bg: on ? '#324b48' : '#252b2b', border: on ? '#82d5cc' : 'transparent', fg: on ? '#cfe9e5' : '#dee4e3',
-          pick: () => this.setState(st => ({ lock: { ...st.lock, method: id, step: 1 } })) };
+          pick: () => {
+            this.setState(st => ({ lock: { ...st.lock, method: id, step: 1 } }));
+            if (id === 'totp') {
+              const bridge = window.ytdlpStudio;
+              if (!bridge || !bridge.authenticator) { this.toast('Not connected', 'window.ytdlpStudio.authenticator is missing'); return; }
+              bridge.authenticator.register({ input: '', issuer: 'yt-dlp Studio', account: (this.state.lock || {}).target || 'element' }).then(res => {
+                if (!res || !res.ok || !res.entry) { this.toast('Could not pair', (res && res.error) || 'Unknown error'); return; }
+                this.setState(st => ({ lock: { ...st.lock, authEntryId: res.entry.id, manualSecret: res.manualSecret || '', qrSvg: res.qrSvg || '' } }));
+              }).catch(err => this.toast('Could not pair', String(err && err.message ? err.message : err)));
+            }
+          } };
       }),
       lockIsPassword: ((s.lock || {}).method || 'password') === 'password',
       lockIsTotp: (s.lock || {}).method === 'totp',
@@ -5230,7 +5958,8 @@ class Component extends DCLogic {
       lockStrengthW: Math.min(100, ((s.lock || {}).password || '').length * 12) + '%',
       lockStrengthColor: ((s.lock || {}).password || '').length > 9 ? '#82d5cc' : ((s.lock || {}).password || '').length > 5 ? '#febc2e' : '#ffb4ab',
       lockStrengthLabel: ((s.lock || {}).password || '').length > 9 ? 'Strong enough for a toy lock' : ((s.lock || {}).password || '').length ? 'Short — fine, it is only for fun' : 'Nothing typed yet',
-      lockSecret: 'JBSWY3DPEHPK3PXP · yt-dlp Studio (' + ((s.lock || {}).target || 'element') + ')',
+      lockSecret: (s.lock || {}).manualSecret || 'Preparing a secret and QR code…',
+      lockQrBg: (s.lock || {}).qrSvg ? 'url("data:image/svg+xml;base64,' + (typeof btoa === 'function' ? btoa(unescape(encodeURIComponent((s.lock || {}).qrSvg))) : '') + '")' : 'none',
       lockDurations: ['Until the app closes', '5 minutes', '1 hour', 'Until I unlock it'].map(label => {
         const on = ((s.lock || {}).duration || 'Until the app closes') === label;
         return { label, bg: on ? '#324b48' : 'transparent', border: on ? '#82d5cc' : '#3f4948', fg: on ? '#cfe9e5' : '#bec9c7',
@@ -5240,16 +5969,26 @@ class Component extends DCLogic {
       lockBack: () => this.setState(st => ({ lock: { ...st.lock, step: Math.max(0, (st.lock.step || 0) - 1) } })),
       lockNext: () => {
         const l = s.lock || {};
+        const bridge = window.ytdlpStudio;
+        if (!bridge || !bridge.locks) { this.toast('Not connected', 'window.ytdlpStudio.locks is missing'); return; }
         if (l.mode === 'unlock') {
           if (!(l.password || '').length) { this.toast('Still locked', 'Type the credential first'); return; }
-          this.setState(st => ({ locks: (st.locks || []).filter(x => x.target !== l.target), lock: null }));
-          this.toast('Unlocked', l.target);
+          bridge.locks.unlock({ id: l.id, credential: l.password }).then(res => {
+            if (!res || !res.ok) { this.toast('Still locked', (res && res.error) || 'That did not match'); return; }
+            this.setState({ lock: null });
+            this.refreshLocksAndAuth();
+            this.toast('Unlocked', l.target);
+          }).catch(err => this.toast('Unlock failed', String(err && err.message ? err.message : err)));
         } else if ((l.step || 0) >= 2) {
-          this.setState(st => ({
-            locks: [...(st.locks || []), { target: l.target, method: l.method || 'password', duration: l.duration || 'Until the app closes' }],
-            lock: null,
-          }));
-          this.toast('Element locked', l.target + ' — ' + (l.method === 'totp' ? 'authenticator' : 'password'));
+          const req = { target: l.target, method: l.method || 'password', duration: this.lockDurationCode(l.duration) };
+          if ((l.method || 'password') === 'password') req.password = l.password || '';
+          else req.authenticatorEntryId = l.authEntryId || '';
+          bridge.locks.create(req).then(res => {
+            if (!res || !res.ok) { this.toast('Could not lock', (res && res.error) || 'Unknown error'); return; }
+            this.setState({ lock: null });
+            this.refreshLocksAndAuth();
+            this.toast('Element locked', l.target + ' — ' + (l.method === 'totp' ? 'authenticator' : 'password'));
+          }).catch(err => this.toast('Could not lock', String(err && err.message ? err.message : err)));
         } else this.setState(st => ({ lock: { ...st.lock, step: (st.lock.step || 0) + 1 } }));
       },
       closeLock: () => this.setState({ lock: null }),

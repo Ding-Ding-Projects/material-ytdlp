@@ -56,6 +56,11 @@ import { wireProbes } from './wire-probes.mjs'
 import { wireExports } from './wire-exports.mjs'
 import { wireTruth } from './wire-truth.mjs'
 import { wireStubs } from './wire-stubs.mjs'
+import { wireLanguage } from './wire-language.mjs'
+import { wireAppearance } from './wire-appearance.mjs'
+import { wirePaletteTabs } from './wire-palette-tabs.mjs'
+import { wireLocksAuth } from './wire-locks-auth.mjs'
+import { wireToolsModes } from './wire-tools-modes.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(__dirname, '..')
@@ -226,6 +231,17 @@ function main() {
 
   // Stubs pass: closes the gaps the design admitted to in its own copy.
   html = wireStubs(html, replaceExact)
+
+  // The feature-contract lanes. Each closes a set of controls that rendered
+  // convincingly and called nothing. They are ordered so that a lane whose
+  // needles come from the raw design runs before lanes that rewrite that same
+  // text, and every replacement is asserted, so a needle that has moved fails
+  // the build loudly rather than half-wiring a feature.
+  html = wireLocksAuth(html, replaceExact)
+  html = wirePaletteTabs(html, replaceExact)
+  html = wireLanguage(html, replaceExact)
+  html = wireAppearance(html, replaceExact)
+  html = wireToolsModes(html, replaceExact)
 
   writeFileSync(OUT_HTML_PATH, html, 'utf8')
   console.log(`build-renderer-from-design: wrote ${OUT_HTML_PATH}`)

@@ -27,6 +27,8 @@ import {
 } from './dialogs'
 import { resolveAllBinaries, probeVersion } from './resolve-binaries'
 import { getStore } from './store'
+import { TabsStateIpcChannel, type TabsState } from '../shared/tabs-contract'
+import { getTabsState, setTabsState } from './tabs-state'
 import { getHistoryStore } from './history'
 import { YtDlpManager } from './ytdlp'
 import { VocabularyIpcChannel } from '../shared/vocabulary-contract'
@@ -34,8 +36,30 @@ import { clearVocabularyCache, loadVocabularyFromDisk, pickAndLoadVocabulary } f
 import { ProbesIpcChannel, type ProbeUrlRequest } from '../shared/probes-contract'
 import { cancelProbe, extractorCount, listFormats, listSubtitles, listThumbnails, probeUrl } from './probes'
 import { AppMarkIpcChannel, SupportTicketsIpcChannel, type TicketCreateRequest } from '../shared/settings-actions-contract'
+import { ModesIpcChannel, OllamaIpcChannel, type AdhdFlags } from '../shared/tools-contract'
+import {
+  getModesState,
+  schoolDisable,
+  schoolEnable,
+  schoolRename,
+  schoolReset,
+  setAdhdFlag,
+  setMomentumSnooze,
+  setOneThingAction,
+} from './modes'
+import { probeOllama } from './ollama'
 import { getAppMarkState, pickAndApplyAppMark, resetAppMark } from './app-mark'
 import { createSupportTicket, listSupportTickets, openSupportDataFolder } from './support-tickets'
+import { AppearanceIpcChannel, type ElementAppearanceOverride } from '../shared/appearance-contract'
+import {
+  getElementOverrides,
+  getRenameState,
+  resetAllElementOverrides,
+  resetElementOverride,
+  resetRenameDisplayName,
+  setElementOverride,
+  setRenameDisplayName,
+} from './appearance'
 import { FileOpsIpcChannel, type ConfigFileId, type ExportContentRequest, type OpenInEditorRequest, type RevealPathRequest } from '../shared/fileops-contract'
 import {
   compactArchive,
@@ -50,6 +74,25 @@ import {
 } from './fileops'
 import { CookiesIpcChannel } from '../shared/stubs-contract'
 import { validateCookiesFile } from './cookies'
+import {
+  AuthenticatorIpcChannel,
+  LocksIpcChannel,
+  type ConfirmPairingRequest,
+  type CreateLockRequest,
+  type CurrentCodeRequest,
+  type RegisterAuthenticatorRequest,
+  type UnlockRequest,
+} from '../shared/locks-contract'
+import { createLock, listLocks, recoveryPath, removeLock, unlock } from './locks'
+import {
+  confirmAuthenticatorPairing,
+  currentAuthenticatorCode,
+  listAuthenticatorEntries,
+  registerAuthenticatorEntry,
+  removeAuthenticatorEntry,
+  runTotpTestVectors,
+} from './authenticator'
+import { sanitizeLanguagePrefs } from './language'
 
 // ---------------------------------------------------------------------------
 // History auto-recording.
@@ -276,10 +319,34 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): YtDl
 
   ipcMain.handle(CookiesIpcChannel.ValidateFile, (_event, path: string) => validateCookiesFile(path))
 
+  // -- Per-element toy locks (for-fun UX locks, never a security boundary) --
+
+  ipcMain.handle(LocksIpcChannel.List, () => listLocks())
+  ipcMain.handle(LocksIpcChannel.Create, (_event, req: CreateLockRequest) => createLock(req))
+  ipcMain.handle(LocksIpcChannel.Unlock, (_event, req: UnlockRequest) => unlock(req))
+  ipcMain.handle(LocksIpcChannel.Remove, (_event, id: string) => removeLock(id))
+  ipcMain.handle(LocksIpcChannel.RecoveryPath, () => recoveryPath())
+
+  // -- Built-in TOTP authenticator (RFC 6238 / RFC 4226) ---------------------
+
+  ipcMain.handle(AuthenticatorIpcChannel.List, () => listAuthenticatorEntries())
+  ipcMain.handle(AuthenticatorIpcChannel.Register, (_event, req: RegisterAuthenticatorRequest) => registerAuthenticatorEntry(req))
+  ipcMain.handle(AuthenticatorIpcChannel.ConfirmPairing, (_event, req: ConfirmPairingRequest) => confirmAuthenticatorPairing(req))
+  ipcMain.handle(AuthenticatorIpcChannel.CurrentCode, (_event, req: CurrentCodeRequest) => currentAuthenticatorCode(req))
+  ipcMain.handle(AuthenticatorIpcChannel.Remove, (_event, id: string) => removeAuthenticatorEntry(id))
+  ipcMain.handle(AuthenticatorIpcChannel.RunTestVectors, () => runTotpTestVectors())
+
   // -- Store / preferences ---------------------------------------------------
 
   ipcMain.handle(IpcChannel.StoreGetPreferences, () => store.getPreferences())
-  ipcMain.handle(IpcChannel.StoreSetPreferences, (_event, prefs: Preferences) => store.setPreferences(prefs))
+  ipcMain.handle(IpcChannel.StoreSetPreferences, (_event, prefs: Preferences) =>
+    // Every field the language/voice feature owns (languageMode, funnyLevelEn/
+    // Yue, and the narrator/emoji/voice extras it stores on this same object)
+    // is clamped/validated here before it ever reaches disk — see
+    // `sanitizeLanguagePrefs` in `./language.ts` for why. Every other field on
+    // `prefs` (owned by other lanes) passes through untouched.
+    store.setPreferences(sanitizeLanguagePrefs(prefs)),
+  )
   ipcMain.handle(IpcChannel.StoreGetJobHistory, () => store.getJobHistory())
   ipcMain.handle(IpcChannel.StoreAppendJobHistory, (_event, entry: JobHistoryEntry) =>
     store.appendJobHistory(entry),
@@ -342,6 +409,21 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): YtDl
   ipcMain.handle(SupportTicketsIpcChannel.List, () => listSupportTickets())
   ipcMain.handle(SupportTicketsIpcChannel.OpenDataFolder, () => openSupportDataFolder())
 
+  // -- Appearance: app display-name rename + per-element overrides ----------
+  // (display-only; never touches userData/installer/update-feed identity) --
+
+  ipcMain.handle(AppearanceIpcChannel.GetRename, () => getRenameState())
+  ipcMain.handle(AppearanceIpcChannel.SetRename, (_event, name: string) => setRenameDisplayName(name))
+  ipcMain.handle(AppearanceIpcChannel.ResetRename, () => resetRenameDisplayName())
+  ipcMain.handle(AppearanceIpcChannel.GetElementOverrides, () => getElementOverrides())
+  ipcMain.handle(
+    AppearanceIpcChannel.SetElementOverride,
+    (_event, targetId: string, override: Partial<ElementAppearanceOverride>) =>
+      setElementOverride(targetId, override),
+  )
+  ipcMain.handle(AppearanceIpcChannel.ResetElementOverride, (_event, targetId: string) => resetElementOverride(targetId))
+  ipcMain.handle(AppearanceIpcChannel.ResetAllElementOverrides, () => resetAllElementOverrides())
+
   // -- Probes (one-shot, informational yt-dlp queries) ---------------------
 
   ipcMain.handle(ProbesIpcChannel.ExtractorCount, () => extractorCount())
@@ -356,6 +438,26 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): YtDl
   )
   ipcMain.handle(ProbesIpcChannel.ProbeUrl, (_event, req: ProbeUrlRequest) => probeUrl(req.url, req.requestId))
   ipcMain.handle(ProbesIpcChannel.Cancel, (_event, requestId: string) => cancelProbe(requestId))
+
+  // -- Tab strip / command palette persistence -------------------------------
+
+  ipcMain.handle(TabsStateIpcChannel.Get, () => getTabsState())
+  ipcMain.handle(TabsStateIpcChannel.Set, (_event, state: TabsState) => setTabsState(state))
+
+  // -- ADHD modes + School mode (persisted; off by default) -----------------
+
+  ipcMain.handle(ModesIpcChannel.GetState, () => getModesState())
+  ipcMain.handle(ModesIpcChannel.SetAdhdFlag, (_event, flag: keyof AdhdFlags, value: boolean) => setAdhdFlag(flag, value))
+  ipcMain.handle(ModesIpcChannel.SetOneThingAction, (_event, text: string | null) => setOneThingAction(text))
+  ipcMain.handle(ModesIpcChannel.SetMomentumSnooze, (_event, untilMs: number | null) => setMomentumSnooze(untilMs))
+  ipcMain.handle(ModesIpcChannel.SchoolEnable, (_event, password: string) => schoolEnable(password))
+  ipcMain.handle(ModesIpcChannel.SchoolDisable, (_event, password: string) => schoolDisable(password))
+  ipcMain.handle(ModesIpcChannel.SchoolRename, (_event, name: string) => schoolRename(name))
+  ipcMain.handle(ModesIpcChannel.SchoolReset, () => schoolReset())
+
+  // -- Local Ollama model-suite probe (local HTTP API only) -----------------
+
+  ipcMain.handle(OllamaIpcChannel.Probe, () => probeOllama())
 
   return manager
 }

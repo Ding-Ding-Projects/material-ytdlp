@@ -29,6 +29,13 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          # Create the Pages site if it does not exist yet, instead of failing
+          # with "Get Pages site failed" on a repository where Pages was never
+          # turned on. Without this the very first deploy of a new repository
+          # always fails, which reads as a broken workflow rather than a
+          # one-time repository setting.
+          enablement: true
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3

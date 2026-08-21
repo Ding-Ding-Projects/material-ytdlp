@@ -48,15 +48,15 @@ jobs:
 
       - name: Download dependencies
         shell: cmd
-        run: download-dependencies.bat /s
+        run: .\download-dependencies.bat /s
 
       - name: Build yt-dlp from pinned source
         shell: cmd
-        run: build-ytdlp.bat /s
+        run: .\build-ytdlp.bat /s
 
       - name: Build installer
         shell: cmd
-        run: build-installer.bat /s
+        run: .\build-installer.bat /s
 
       - name: Compute release tag
         id: tag

@@ -13,7 +13,8 @@
        * available to vendor in this pass (no network fetch tool for binary
        * assets in this environment). Rather than silently linking the CDN,
        * this falls back to system fonts. Material Symbols ligature icons
-       * (the "msym" class) WILL NOT RENDER until
+       * (the "msym" class) render through the vendored font below. Before it
+       * was vendored they rendered as plain English words. Kept as a note: until
        * app/src/renderer/assets/fonts/MaterialSymbolsOutlined.woff2 (or
        * similar) is vendored and an @font-face rule below is pointed at it
        * — see the TODO below. Every <i class="msym"> currently falls back
@@ -26,14 +27,21 @@
         src: local('Segoe UI');
         font-weight: 400 700;
       }
-      /* TODO(fonts): vendor Material Symbols Outlined locally and add:
-         @font-face {
-           font-family: 'Material Symbols Outlined';
-           src: url('./assets/fonts/MaterialSymbolsOutlined.woff2') format('woff2');
-           font-weight: 100 700;
-         }
-         Until then .msym intentionally has no @font-face and renders its
-         text content (the icon's English name) as plain text. */
+      /* Material Symbols Outlined, vendored locally. It is loaded from the
+         bundle and never from a font CDN, so the application works with the
+         network unplugged.
+
+         Without this rule every <i class="msym"> renders the icon's English
+         name as literal text - "download Download", "folder_open Browse" -
+         because a ligature font addresses its glyphs by name. That is the
+         honest failure mode rather than a blank square, but it reads as a
+         broken interface, so the font is a requirement and not a nicety. */
+      @font-face {
+        font-family: 'Material Symbols Outlined';
+        src: url('./assets/fonts/MaterialSymbolsOutlined.ttf') format('truetype');
+        font-weight: 100 700;
+        font-display: block;
+      }
       html,
       body {
         margin: 0;

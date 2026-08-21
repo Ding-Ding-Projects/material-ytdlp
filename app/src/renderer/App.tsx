@@ -7,6 +7,7 @@ import { ExpertPanel } from './components/ExpertPanel'
 import { PlainPanel } from './components/PlainPanel'
 import { CommandPreview } from './components/CommandPreview'
 import { QueuePanel, type JobLogLine } from './components/QueuePanel'
+import { HistoryPanel } from './components/HistoryPanel'
 import { Icon } from './components/Icon'
 import { palette } from './theme'
 import {
@@ -161,7 +162,11 @@ export function App() {
             />
           )}
 
-          {destination !== 'download' && destination !== 'queue' && <UnimplementedDestination id={destination} />}
+          {destination === 'history' && <HistoryPanel />}
+
+          {destination !== 'download' && destination !== 'queue' && destination !== 'history' && (
+            <UnimplementedDestination id={destination} />
+          )}
         </main>
       </div>
       <StatusBar jobCount={jobs.length} argvPreview={argv} />

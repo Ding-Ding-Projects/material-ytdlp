@@ -13,6 +13,16 @@ import {
   type SaveFileOptions,
   type StartJobRequest,
 } from '../shared/ipc-contract'
+import {
+  HistoryIpcChannel,
+  type HistoryCommit,
+  type HistoryDiffResult,
+  type HistoryExportFormat,
+  type HistoryFilterState,
+  type HistoryRetentionSetting,
+  type HistorySnapshot,
+  type HistoryStatus,
+} from '../shared/history-contract'
 
 // ---------------------------------------------------------------------------
 // Deadline-enforced invoke.
@@ -130,6 +140,41 @@ const bridge = {
       invokeWithDeadline<JobHistoryEntry[]>(IpcChannel.StoreAppendJobHistory, SHORT, entry),
     getLastPaths: () => invokeWithDeadline<LastPaths>(IpcChannel.StoreGetLastPaths, SHORT),
     setLastPaths: (paths: LastPaths) => invokeWithDeadline<void>(IpcChannel.StoreSetLastPaths, SHORT, paths),
+  },
+
+  history: {
+    status: () => invokeWithDeadline<HistoryStatus>(HistoryIpcChannel.Status, SHORT),
+    getFullSnapshot: () => invokeWithDeadline<HistorySnapshot>(HistoryIpcChannel.GetSnapshot, SHORT),
+    listCommits: () => invokeWithDeadline<HistoryCommit[]>(HistoryIpcChannel.ListCommits, MEDIUM),
+    getDiff: (sha: string) => invokeWithDeadline<HistoryDiffResult | null>(HistoryIpcChannel.GetDiff, MEDIUM, sha),
+    restoreEntry: (id: string, fromCommitSha: string) =>
+      invokeWithDeadline<{ ok: boolean; sha: string | null }>(HistoryIpcChannel.RestoreEntry, MEDIUM, id, fromCommitSha),
+    restoreList: (fromCommitSha: string) =>
+      invokeWithDeadline<{ ok: boolean; sha: string | null }>(HistoryIpcChannel.RestoreList, MEDIUM, fromCommitSha),
+    bulkRemove: (ids: string[]) =>
+      invokeWithDeadline<{ ok: boolean; sha: string | null }>(HistoryIpcChannel.BulkRemove, MEDIUM, ids),
+    exportEntries: (req: { format: HistoryExportFormat; ids: string[] | null; scopeDescription: string }) =>
+      invokeWithDeadline<{ content: string; suggestedFilename: string; mimeType: string }>(
+        HistoryIpcChannel.Export,
+        MEDIUM,
+        req,
+      ),
+    getRetention: () => invokeWithDeadline<HistoryRetentionSetting>(HistoryIpcChannel.GetRetention, SHORT),
+    setRetention: (setting: HistoryRetentionSetting) =>
+      invokeWithDeadline<void>(HistoryIpcChannel.SetRetention, SHORT, setting),
+    getFilters: () => invokeWithDeadline<HistoryFilterState>(HistoryIpcChannel.GetFilters, SHORT),
+    setFilters: (filters: HistoryFilterState) => invokeWithDeadline<void>(HistoryIpcChannel.SetFilters, SHORT, filters),
+    /**
+     * Pure, local, synchronous view filter — never a rewrite of the
+     * underlying append-only commit log. Kept here (not round-tripped
+     * through IPC) since it is cheap and has no side effects.
+     */
+    applyRetentionView: (commits: HistoryCommit[], retention: HistoryRetentionSetting): HistoryCommit[] => {
+      if (retention.mode === 'keep-everything') return commits
+      if (retention.mode === 'prune-by-count') return commits.slice(0, Math.max(0, retention.maxEntries))
+      const cutoff = Date.now() - retention.maxAgeDays * 24 * 60 * 60 * 1000
+      return commits.filter((c) => c.timestamp >= cutoff)
+    },
   },
 }
 

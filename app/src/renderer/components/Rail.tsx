@@ -22,7 +22,7 @@ export interface RailItem {
 export const RAIL_ITEMS: RailItem[] = [
   { id: 'download', label: 'Download', glyph: 'download', implemented: true },
   { id: 'queue', label: 'Queue & Console', glyph: 'list_alt', implemented: true },
-  { id: 'history', label: 'History', glyph: 'history', implemented: false },
+  { id: 'history', label: 'History', glyph: 'history', implemented: true },
   { id: 'appearance', label: 'Appearance', glyph: 'palette', implemented: false },
   { id: 'command-palette', label: 'Command Palette', glyph: 'keyboard_command_key', implemented: false },
   { id: 'locks', label: 'Locks', glyph: 'lock', implemented: false },

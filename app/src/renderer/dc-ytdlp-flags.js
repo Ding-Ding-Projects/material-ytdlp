@@ -1,56 +1,8 @@
-/**
- * Typed copy of design/ytdlp-flags.js.
- *
- * This is a COPY, not an import across the design boundary — the design
- * folder is read-only reference material and is never loaded by the product
- * UI. Every value below (groups, flags, presets, template fields) is
- * transcribed verbatim from the design file; only TypeScript types were
- * added. Keeping the two in sync is enforced by
- * scripts/check-catalog-drift.mjs, which parses both files and fails when
- * the flag sets diverge.
- *
- * f = flag, s = short flag, a = argument placeholder, t = control type,
- * h = one-line help, rx = takes a regular expression, o = choices for
- * select controls, d = this is yt-dlp's own default behavior.
- */
+// Every yt-dlp CLI option, transcribed from README.md "USAGE AND OPTIONS" (lines 306-1184).
+// f = flag, s = short flag, a = argument placeholder, t = control type, h = one-line help,
+// rx = takes a regular expression, o = choices for select controls.
 
-export type FlagControlType =
-  | 'bool'
-  | 'text'
-  | 'int'
-  | 'path'
-  | 'select'
-  | 'password'
-
-export interface FlagDef {
-  /** Long flag, e.g. "--proxy". */
-  f: string
-  /** Short flag, e.g. "-p". */
-  s?: string
-  /** Argument placeholder shown in the control, e.g. "URL". */
-  a?: string
-  /** Control type used to render this flag. */
-  t: FlagControlType
-  /** One-line help text. */
-  h: string
-  /** True when this is yt-dlp's own default behavior. */
-  d?: true
-  /** Choices, for select controls. */
-  o?: string[]
-  /** True when the argument accepts a regular expression. */
-  rx?: true
-}
-
-export interface FlagGroup {
-  id: string
-  label: string
-  /** Material Symbols ligature name for the group's rail/tab icon. */
-  glyph: string
-  blurb: string
-  flags: FlagDef[]
-}
-
-export const GROUPS: FlagGroup[] = [
+export const GROUPS = [
   {
     id: 'general', label: 'General', glyph: 'terminal',
     blurb: 'Program behaviour, update channel, extractor selection, config loading, aliases and presets.',
@@ -397,27 +349,17 @@ export const GROUPS: FlagGroup[] = [
       { f: '--extractor-args', a: 'IE_KEY:ARGS', t: 'text', h: 'Pass ARGS to the IE_KEY extractor; see EXTRACTOR ARGUMENTS. Repeatable' },
     ],
   },
-]
+];
 
-export interface PresetDef {
-  name: string
-  expands: string
-}
-
-export const PRESETS: PresetDef[] = [
+export const PRESETS = [
   { name: 'mp3', expands: "-f 'ba[acodec^=mp3]/ba/b' -x --audio-format mp3" },
   { name: 'aac', expands: "-f 'ba[acodec^=aac]/ba[acodec^=mp4a.40.]/ba/b' -x --audio-format aac" },
   { name: 'mp4', expands: '--merge-output-format mp4 --remux-video mp4 -S vcodec:h264,lang,quality,res,fps,hdr:12,acodec:aac' },
   { name: 'mkv', expands: '--merge-output-format mkv --remux-video mkv' },
   { name: 'sleep', expands: '--sleep-subtitles 5 --sleep-requests 0.75 --sleep-interval 10 --max-sleep-interval 20' },
-]
+];
 
-export interface TemplateFieldGroup {
-  g: string
-  items: string[]
-}
-
-export const TEMPLATE_FIELDS: TemplateFieldGroup[] = [
+export const TEMPLATE_FIELDS = [
   { g: 'Identity', items: ['id', 'title', 'fulltitle', 'ext', 'alt_title', 'display_id', 'webpage_url', 'webpage_url_domain', 'original_url', 'extractor', 'extractor_key', 'epoch', 'autonumber'] },
   { g: 'People', items: ['uploader', 'uploader_id', 'uploader_url', 'channel', 'channel_id', 'channel_url', 'channel_follower_count', 'channel_is_verified', 'creators', 'license'] },
   { g: 'Time', items: ['timestamp', 'upload_date', 'release_timestamp', 'release_date', 'release_year', 'modified_timestamp', 'modified_date', 'duration', 'duration_string'] },
@@ -427,17 +369,10 @@ export const TEMPLATE_FIELDS: TemplateFieldGroup[] = [
   { g: 'Music', items: ['track', 'track_number', 'track_id', 'artists', 'genres', 'album', 'album_type', 'album_artists', 'disc_number'] },
   { g: 'Playlist', items: ['playlist', 'playlist_id', 'playlist_title', 'playlist_uploader', 'playlist_uploader_id', 'playlist_index', 'playlist_autonumber', 'playlist_count', 'n_entries'] },
   { g: 'Format', items: ['format', 'format_id', 'format_note', 'width', 'height', 'aspect_ratio', 'resolution', 'fps', 'dynamic_range', 'vcodec', 'vbr', 'acodec', 'abr', 'asr', 'audio_channels', 'filesize', 'filesize_approx', 'tbr', 'protocol', 'language'] },
-]
+];
 
-export const OUTPUT_TYPES: string[] = ['default', 'thumbnail', 'description', 'annotation', 'subtitle', 'infojson', 'link', 'pl_thumbnail', 'pl_description', 'pl_infojson', 'chapter', 'pl_video']
+export const OUTPUT_TYPES = ['default', 'thumbnail', 'description', 'annotation', 'subtitle', 'infojson', 'link', 'pl_thumbnail', 'pl_description', 'pl_infojson', 'chapter', 'pl_video'];
 
-export const SORT_FIELDS: string[] = ['hasvid', 'hasaud', 'ie_pref', 'lang', 'quality', 'source', 'proto', 'vcodec', 'acodec', 'codec', 'ext', 'filesize', 'fs_approx', 'size', 'height', 'width', 'res', 'fps', 'hdr', 'channels', 'tbr', 'vbr', 'abr', 'br', 'asr', 'vext', 'aext', 'id']
+export const SORT_FIELDS = ['hasvid', 'hasaud', 'ie_pref', 'lang', 'quality', 'source', 'proto', 'vcodec', 'acodec', 'codec', 'ext', 'filesize', 'fs_approx', 'size', 'height', 'width', 'res', 'fps', 'hdr', 'channels', 'tbr', 'vbr', 'abr', 'br', 'asr', 'vext', 'aext', 'id'];
 
-export const FILTER_OPS: string[] = ['<', '<=', '>', '>=', '=', '!=', '^=', '$=', '*=', '~=']
-
-/** Every long flag across every group, for lookup by name. */
-export const ALL_FLAGS: FlagDef[] = GROUPS.flatMap((g) => g.flags)
-
-export function findFlag(f: string): FlagDef | undefined {
-  return ALL_FLAGS.find((flag) => flag.f === f)
-}
+export const FILTER_OPS = ['<', '<=', '>', '>=', '=', '!=', '^=', '$=', '*=', '~='];

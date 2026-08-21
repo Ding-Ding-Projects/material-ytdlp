@@ -12,7 +12,8 @@
     "dist": "electron-vite build && electron-builder --win squirrel",
     "design": "node ../scripts/design-reference-server.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "check:catalog": "node ../scripts/check-catalog-drift.mjs"
+    "prebuild": "node ../scripts/build-renderer-from-design.mjs",
+    "predev": "node ../scripts/build-renderer-from-design.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

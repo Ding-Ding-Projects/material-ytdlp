@@ -62,6 +62,7 @@ import {
   type ValidateConfigTextResult,
   type WriteConfigFileResult,
 } from '../shared/fileops-contract'
+import { CookiesIpcChannel, type ValidateCookiesFileResult } from '../shared/stubs-contract'
 
 // ---------------------------------------------------------------------------
 // Deadline-enforced invoke.
@@ -264,6 +265,11 @@ const bridge = {
       invokeWithDeadline<ReadArchiveResult>(FileOpsIpcChannel.ReadArchive, SHORT, explicitPath),
     compactArchive: (explicitPath: string | null) =>
       invokeWithDeadline<CompactArchiveResult>(FileOpsIpcChannel.CompactArchive, MEDIUM, explicitPath),
+  },
+
+  cookies: {
+    validateFile: (path: string) =>
+      invokeWithDeadline<ValidateCookiesFileResult>(CookiesIpcChannel.ValidateFile, SHORT, path),
   },
   probes: {
     extractorCount: () => invokeWithDeadline<ProbeResult<ExtractorCountResult>>(ProbesIpcChannel.ExtractorCount, MEDIUM),

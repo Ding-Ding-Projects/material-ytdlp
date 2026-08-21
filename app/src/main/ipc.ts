@@ -48,6 +48,8 @@ import {
   validateConfigText,
   writeConfigFile,
 } from './fileops'
+import { CookiesIpcChannel } from '../shared/stubs-contract'
+import { validateCookiesFile } from './cookies'
 
 // ---------------------------------------------------------------------------
 // History auto-recording.
@@ -269,6 +271,10 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): YtDl
   ipcMain.handle(IpcChannel.DialogPickInfoJson, () => pickInfoJson())
   ipcMain.handle(IpcChannel.DialogPickCookiesFile, () => pickCookiesFile())
   ipcMain.handle(IpcChannel.DialogSaveFile, (_event, options) => saveFile(options))
+
+  // -- Cookies (real Netscape-format validation for a picked jar) --------
+
+  ipcMain.handle(CookiesIpcChannel.ValidateFile, (_event, path: string) => validateCookiesFile(path))
 
   // -- Store / preferences ---------------------------------------------------
 

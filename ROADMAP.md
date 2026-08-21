@@ -42,8 +42,8 @@ verification status of everything in this repository.
 - [ ] Non-blocking notification center with history
 - [ ] Two-key + slider destructive-action confirmation gate
 - [ ] Local, Git-backed version history for user-owned records
-- [ ] Changelog viewer (date filter, search, commit links, export)
-- [ ] Export in every applicable format on every list/record
+- [ ] Changelog viewer (date filter, search, commit links, export) *(currently shows an invented version history and must be emptied — no release exists yet.)*
+- [ ] Export in every applicable format on every list/record *(host-side export writes real files atomically; the individual call sites are being wired now.)*
 - [ ] Bulk actions on every list
 
 ## Phase 3 — Security and locks (not started)
@@ -58,7 +58,7 @@ verification status of everything in this repository.
 - [ ] Universal local file converter
 - [ ] Local Ollama suite manager
 - [ ] Local version history manager (full UI: diff, restore, retention, export)
-- [ ] Personal-vocabulary JSON upload
+- [ ] Personal-vocabulary JSON upload *(built and wired: 11 validation rules, local-only storage, real entry count. Not yet exercised in the packaged app, so not ticked.)*
 - [ ] App-mark / logo customization
 - [ ] Browser companion extension (Chrome) — popup, injected page controls, options page, and
       its own full feature contract independent of the desktop app
@@ -71,3 +71,15 @@ verification status of everything in this repository.
 - [ ] Automated test coverage (this release pass deliberately shipped without one)
 - [ ] Screenshot/capture evidence from the real built application (this release pass
       deliberately shipped without one)
+
+## Landed since this list was written
+
+Not ticked above because none has been exercised in the packaged application yet, which is the
+bar this project uses for a tick. All are implemented and type-check clean.
+
+- [ ] External-editor handoff *(detects a real editor: `code` on PATH, then known install paths, then the OS default; reports which route worked or fails out loud)*
+- [ ] Application-mark customization *(verifies real image bytes and dimensions before writing; display only — never touches data directory, installer identity or update feed)*
+- [ ] Support tickets *(local only. Currently broken: it collects input with `window.prompt()`, which Electron does not implement)*
+- [ ] yt-dlp informational probes *(subtitles, thumbnails, URL probe, and a real extractor count — 1753, not the 1908 the design showed)*
+- [ ] Config file read/write/validate *(atomic writes, a real parse rather than a blank check, across the five standard locations)*
+- [ ] Download-archive read and compaction *(operates on the real archive file)*

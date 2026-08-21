@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet" />
+<style>
+  html,body{margin:0;padding:0;background:#0f1414;color:#dee4e3;font:13px/1.43 Roboto,"Segoe UI",system-ui,sans-serif;letter-spacing:.1px}
+  *{box-sizing:border-box}
+  a{color:#82d5cc;text-decoration:none}
+  a:hover{color:#a8e6de;text-decoration:underline}
+  button,input,select,textarea{font:inherit}
+  button{border:0;color:inherit;cursor:pointer}
+  button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #82d5cc;outline-offset:2px}
+  .msym{font-family:'Material Symbols Outlined';font-weight:400;font-style:normal;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;font-variation-settings:'opsz' 24}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#303636;border-radius:8px}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#0b0e0f;padding:20px;display:flex;flex-direction:column;gap:18px">
+
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div style="width:22px;height:22px;display:grid;place-items:center;border-radius:6px;background:#82d5cc;color:#003733;font-weight:800;font-size:12px">Y</div>
+    <b style="font-size:13px">yt-dlp Companion — Chrome extension</b>
+    <span style="color:#889391;font-size:11.5px">talks to yt-dlp Studio over native messaging</span>
+    <div style="display:flex;gap:5px;margin-left:auto">
+      <sc-for list="{{ surfaceTabs }}" as="t" hint-placeholder-count="3">
+        <button onClick="{{ t.pick }}" style="padding:5px 12px;border-radius:6px;background:{{ t.bg }};color:{{ t.fg }};font-size:11.5px;font-weight:700">{{ t.label }}</button>
+      </sc-for>
+    </div>
+  </div>
+
+  <sc-if value="{{ showPopup }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;gap:22px;align-items:start;flex-wrap:wrap">
+
+      <div style="flex:0 0 auto">
+        <div style="color:#889391;font-size:10px;font-weight:800;letter-spacing:1.1px;margin-bottom:7px">BROWSER ACTION POPUP · 380×540</div>
+        <div style="width:380px;background:#1b2121;border:1px solid #2a3130;border-radius:9px;overflow:hidden;box-shadow:0 18px 50px #000a">
+          <div style="height:38px;background:#0a0f0f;border-bottom:1px solid #2a3130;display:flex;align-items:center;gap:8px;padding:0 11px">
+            <div style="width:18px;height:18px;display:grid;place-items:center;border-radius:5px;background:#82d5cc;color:#003733;font-weight:800;font-size:10px">Y</div>
+            <b style="font-size:12px">yt-dlp Companion</b>
+            <span onContextMenu="{{ statusMenu }}" style="margin-left:auto;display:flex;align-items:center;gap:5px;font-size:10.5px;color:{{ hostColor }};font-family:'Roboto Mono',Consolas,monospace">
+              <span style="width:7px;height:7px;border-radius:50%;background:{{ hostColor }}"></span>{{ hostState }}
+            </span>
+          </div>
+
+          <div style="padding:11px">
+            <div onContextMenu="{{ pageMenu }}" style="display:flex;gap:9px;align-items:center;padding:9px;border-radius:6px;background:#252b2b;border-left:3px solid #82d5cc">
+              <div style="width:56px;height:32px;border-radius:4px;background:repeating-linear-gradient(135deg,#1d2426 0 6px,#1b2121 6px 12px);flex:0 0 auto"></div>
+              <div style="min-width:0">
+                <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ pageTitle }}</div>
+                <div style="font-size:10.5px;color:#889391;font-family:'Roboto Mono',Consolas,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ pageUrl }}</div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:5px;margin-top:9px">
+              <sc-for list="{{ scopeTabs }}" as="t" hint-placeholder-count="3">
+                <button onClick="{{ t.pick }}" style="flex:1;padding:5px 0;border-radius:5px;background:{{ t.bg }};color:{{ t.fg }};font-size:11px;font-weight:700">{{ t.label }}</button>
+              </sc-for>
+              <button onClick="{{ toggleAuto }}" onContextMenu="{{ autoMenu }}" title="Auto-download mode — queues matching media on page load" style="flex:0 0 auto;padding:5px 9px;border-radius:5px;background:{{ autoChipBg }};color:{{ autoChipFg }};font-size:10px;font-weight:800;letter-spacing:.5px">{{ autoChipLabel }}</button>
+            </div>
+
+            <div style="margin-top:11px">
+              <div style="color:#889391;font-size:10px;font-weight:800;letter-spacing:1px;margin-bottom:6px">PRESET</div>
+              <div style="display:grid;gap:4px">
+                <sc-for list="{{ presets }}" as="p" hint-placeholder-count="4">
+                  <button onClick="{{ p.pick }}" onContextMenu="{{ p.menu }}" style="display:flex;align-items:center;gap:9px;text-align:left;padding:8px 10px;border-radius:6px;background:{{ p.bg }};border:1px solid {{ p.border }}">
+                    <span style="width:13px;color:{{ p.fg }};font-size:11px">{{ p.tick }}</span>
+                    <b style="font-size:12px;font-weight:700;color:{{ p.fg }}">{{ p.label }}</b>
+                    <small style="margin-left:auto;color:#889391;font-size:10px;font-family:'Roboto Mono',Consolas,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.flags }}</small>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:5px;align-items:center;margin-top:10px">
+              <input value="{{ mediaSearch }}" onChange="{{ setMediaSearch }}" placeholder="Search sniffed media on this page" style="flex:1;min-width:0;background:#252b2b;border:1px solid #3f4948;border-radius:6px;color:#dee4e3;padding:6px 8px;font-size:11.5px" />
+              <button onClick="{{ openRegexMedia }}" title="Regex builder" style="height:27px;min-width:27px;background:#303636;border-radius:6px;color:#82d5cc;font-weight:800;font-size:10.5px">.*</button>
+            </div>
+            <div style="display:grid;gap:3px;margin-top:7px;max-height:110px;overflow:auto">
+              <sc-for list="{{ mediaRows }}" as="m" hint-placeholder-count="3">
+                <div onContextMenu="{{ m.menu }}" style="display:grid;grid-template-columns:52px minmax(0,1fr) 58px;gap:8px;align-items:center;padding:6px 8px;border-radius:5px;background:#252b2b;font-family:'Roboto Mono',Consolas,monospace;font-size:10.5px">
+                  <span style="color:#82d5cc;font-weight:700">{{ m.kind }}</span>
+                  <span style="color:#bec9c7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.label }}</span>
+                  <span style="color:#889391">{{ m.size }}</span>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="color:#889391;font-size:10px;font-weight:800;letter-spacing:1px;margin:11px 0 6px">DOWNLOADS · START, PROGRESS, COMPLETION</div>
+            <div style="display:grid;gap:4px;max-height:170px;overflow:auto">
+              <sc-for list="{{ jobRows }}" as="j" hint-placeholder-count="4">
+                <div onContextMenu="{{ j.menu }}" style="padding:7px 9px;border-radius:6px;background:#252b2b">
+                  <div style="display:flex;gap:7px;align-items:center">
+                    <span style="width:7px;height:7px;border-radius:50%;background:{{ j.color }};flex:0 0 auto"></span>
+                    <span style="flex:1;min-width:0;font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ j.title }}</span>
+                    <button onClick="{{ j.act }}" style="width:22px;height:22px;border-radius:11px;background:#303636;display:grid;place-items:center;flex:0 0 auto"><i class="msym" style="font-size:14px;color:#bec9c7">{{ j.actGlyph }}</i></button>
+                  </div>
+                  <div style="height:4px;background:#0a0f0f;border-radius:2px;margin-top:6px;overflow:hidden"><div style="height:100%;width:{{ j.width }};background:{{ j.color }}"></div></div>
+                  <div style="font-family:'Roboto Mono',Consolas,monospace;font-size:9.5px;color:#889391;margin-top:4px">{{ j.meta }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <button onClick="{{ send }}" style="width:100%;margin-top:11px;padding:9px;border-radius:6px;background:#82d5cc;color:#003733;font-weight:700;font-size:12.5px">{{ sendLabel }}</button>
+            <div style="display:flex;gap:5px;margin-top:6px">
+              <button onClick="{{ openStudio }}" style="flex:1;padding:6px;border-radius:6px;background:#252b2b;color:#bec9c7;font-size:11px;font-weight:600">Open Studio</button>
+              <button onClick="{{ copyCmd }}" style="flex:1;padding:6px;border-radius:6px;background:#252b2b;color:#bec9c7;font-size:11px;font-weight:600">Copy command</button>
+              <button onClick="{{ goOptions }}" style="flex:1;padding:6px;border-radius:6px;background:#252b2b;color:#bec9c7;font-size:11px;font-weight:600">Options</button>
+            </div>
+            <div style="margin-top:8px;font-family:'Roboto Mono',Consolas,monospace;font-size:10px;color:#889391;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ command }}</div>
+          </div>
+
+          <div style="border-top:1px solid #2a3130;background:#0a0f0f;padding:7px 11px;display:flex;align-items:center;gap:8px;font-family:'Roboto Mono',Consolas,monospace;font-size:10px;color:#889391">
+            <span style="color:#82d5cc">↓ 3 active</span><span>·</span><span>14.6MiB/s</span><span style="margin-left:auto">v2026.08.14</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:380px">
+        <div style="color:#889391;font-size:10px;font-weight:800;letter-spacing:1.1px;margin-bottom:7px">CONTENT SCRIPT · BUTTONS INJECTED ON VIDEO PAGES</div>
+        <div style="background:#1b2121;border:1px solid #2a3130;border-radius:9px;overflow:hidden">
+          <div style="height:32px;background:#0a0f0f;border-bottom:1px solid #2a3130;display:flex;align-items:center;gap:7px;padding:0 10px">
+            <span style="width:9px;height:9px;border-radius:50%;background:#ff5f57"></span>
+            <span style="width:9px;height:9px;border-radius:50%;background:#febc2e"></span>
+            <span style="width:9px;height:9px;border-radius:50%;background:#28c840"></span>
+            <div style="flex:1;margin-left:8px;background:#252b2b;border-radius:5px;padding:3px 8px;font-family:'Roboto Mono',Consolas,monospace;font-size:10.5px;color:#889391;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ pageUrl }}</div>
+          </div>
+          <div style="padding:14px">
+            <div style="background:#0a0f0f;border-radius:6px;height:180px;background-image:repeating-linear-gradient(135deg,#141a1b 0 10px,#0a0f0f 10px 20px);display:grid;place-items:center;color:#3f4948;font-family:'Roboto Mono',Consolas,monospace;font-size:11px;position:relative">
+              host page video player
+              <div onContextMenu="{{ overlayMenu }}" style="position:absolute;top:9px;right:9px;display:flex;gap:5px">
+                <sc-if value="{{ watchEnabled }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ startWatch }}" onContextMenu="{{ watchMenu }}" style="padding:5px 10px;border-radius:5px;background:#1b2121dd;border:1px solid #82d5cc;color:#82d5cc;font-size:11px;font-weight:700">▶ Watch in app</button>
+                </sc-if>
+                <button onClick="{{ send }}" style="padding:5px 10px;border-radius:5px;background:#82d5cc;color:#003733;font-size:11px;font-weight:700">↓ yt-dlp</button>
+                <button onClick="{{ openFormats }}" style="padding:5px 9px;border-radius:5px;background:#1b2121dd;border:1px solid #3f4948;color:#82d5cc;font-size:11px;font-weight:700">▾</button>
+              </div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:9px;align-items:center">
+              <div style="width:34px;height:34px;border-radius:50%;background:#2a3130;flex:0 0 auto"></div>
+              <div style="flex:1;min-width:0">
+                <div style="height:9px;width:56%;background:#2a3130;border-radius:3px"></div>
+                <div style="height:8px;width:34%;background:#1b2223;border-radius:3px;margin-top:6px"></div>
+              </div>
+              <button onClick="{{ send }}" style="padding:6px 11px;border-radius:99px;background:#274946;color:#82d5cc;font-size:11.5px;font-weight:700;flex:0 0 auto">↓ Download with yt-dlp</button>
+            </div>
+            <div style="margin-top:12px;color:#889391;font-size:11px">Injected controls: an overlay button on the player, a row button beside the channel actions, one per item in list/grid pages, and a right-click context-menu entry registered on links, videos and pages.</div>
+            <div style="display:grid;gap:4px;margin-top:9px">
+              <sc-for list="{{ contextEntries }}" as="c" hint-placeholder-count="4">
+                <div style="display:flex;gap:9px;align-items:center;padding:6px 9px;border-radius:5px;background:#252b2b;font-size:11.5px">
+                  <i class="msym" style="color:#82d5cc;width:18px;font-size:18px">{{ c.glyph }}</i>
+                  <span>{{ c.label }}</span>
+                  <span style="margin-left:auto;color:#889391;font-family:'Roboto Mono',Consolas,monospace;font-size:10.5px">{{ c.ctx }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showOptions }}" hint-placeholder-val="{{ false }}">
+    <div>
+      <div style="color:#889391;font-size:10px;font-weight:800;letter-spacing:1.1px;margin-bottom:7px">OPTIONS PAGE · chrome-extension://…/options.html</div>
+      <div style="background:#1b2121;border:1px solid #2a3130;border-radius:9px;overflow:hidden;max-width:1080px">
+        <div style="height:36px;background:#0a0f0f;border-bottom:1px solid #2a3130;display:flex;align-items:center;gap:9px;padding:0 12px">
+          <b style="font-size:12px">yt-dlp Companion options</b>
+          <div style="display:flex;gap:5px;margin-left:auto">
+            <input value="{{ optionSearch }}" onChange="{{ setOptionSearch }}" placeholder="Search every setting" style="width:250px;background:#252b2b;border:1px solid #3f4948;border-radius:6px;color:#dee4e3;padding:4px 8px;font-size:11.5px" />
+            <button onClick="{{ openRegexOptions }}" title="Regex builder" style="height:25px;min-width:25px;background:#303636;border-radius:6px;color:#82d5cc;font-weight:800;font-size:10.5px">.*</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:168px minmax(0,1fr)">
+          <div style="background:#171d1d;border-right:1px solid #2a3130;padding:10px 8px;display:grid;gap:2px;align-content:start">
+            <sc-for list="{{ optionSections }}" as="sec" hint-placeholder-count="5">
+              <button onClick="{{ sec.pick }}" onContextMenu="{{ sec.menu }}" style="text-align:left;padding:7px 9px;border-radius:6px;background:{{ sec.bg }};color:{{ sec.fg }};font-size:11.5px;font-weight:600">{{ sec.label }}</button>
+            </sc-for>
+          </div>
+          <div style="padding:14px 16px;min-height:340px">
+            <sc-for list="{{ optionRows }}" as="row" hint-placeholder-count="7">
+              <div onContextMenu="{{ row.menu }}" style="display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:18px;align-items:center;padding:10px 2px;border-bottom:1px solid #1f2627">
+                <div style="min-width:0">
+                  <b style="font-size:12.5px;font-weight:600">{{ row.label }}</b>
+                  <div style="color:#889391;font-size:11px;margin-top:2px;text-wrap:pretty">{{ row.help }}</div>
+                </div>
+                <div style="display:flex;justify-content:end;gap:6px;align-items:center">
+                  <sc-if value="{{ row.isToggle }}" hint-placeholder-val="{{ true }}">
+                    <button onClick="{{ row.toggle }}" style="width:44px;height:25px;border-radius:99px;background:{{ row.switchBg }};position:relative;flex:0 0 auto">
+                      <span style="position:absolute;top:3px;left:{{ row.knobLeft }};width:19px;height:19px;border-radius:50%;background:{{ row.knobColor }}"></span>
+                    </button>
+                  </sc-if>
+                  <sc-if value="{{ row.isText }}" hint-placeholder-val="{{ false }}">
+                    <input value="{{ row.value }}" onChange="{{ row.set }}" style="width:230px;background:#252b2b;border:1px solid #3f4948;border-radius:6px;color:#dee4e3;padding:6px 9px;font-family:'Roboto Mono',Consolas,monospace;font-size:11.5px" />
+                  </sc-if>
+                  <sc-if value="{{ row.rx }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ row.openRegex }}" title="Regex builder" style="height:27px;min-width:27px;background:#303636;border-radius:6px;color:#82d5cc;font-weight:800;font-size:10.5px;flex:0 0 auto">.*</button>
+                  </sc-if>
+                  <sc-if value="{{ row.isSelect }}" hint-placeholder-val="{{ false }}">
+                    <select value="{{ row.value }}" onChange="{{ row.set }}" style="width:230px;background:#252b2b;border:1px solid #3f4948;border-radius:6px;color:#dee4e3;padding:6px 9px;font-size:11.5px">
+                      <sc-for list="{{ row.options }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.v }}</option></sc-for>
+                    </select>
+                  </sc-if>
+                  <sc-if value="{{ row.isRange }}" hint-placeholder-val="{{ false }}">
+                    <b style="font-family:'Roboto Mono',Consolas,monospace;font-size:11px;color:#82d5cc;min-width:22px;text-align:right">{{ row.value }}</b>
+                    <input type="range" min="{{ row.rangeMin }}" max="{{ row.rangeMax }}" step="{{ row.rangeStep }}" value="{{ row.value }}" onChange="{{ row.set }}" style="width:180px;accent-color:#82d5cc" />
+                  </sc-if>
+                  <sc-if value="{{ row.isAction }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ row.act }}" style="height:28px;padding:0 13px;border-radius:14px;background:#324b48;color:#cfe9e5;font-size:11.5px;font-weight:600">{{ row.actionLabel }}</button>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ dialogRegex }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeDialog }}" style="position:fixed;inset:0;background:#0009;backdrop-filter:blur(3px);display:grid;place-items:center;z-index:40">
+      <form onClick="{{ stop }}" style="width:min(560px,calc(100vw - 40px));background:#1b2121;border:1px solid #3f4948;border-radius:9px;padding:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2a3130;padding-bottom:10px;margin-bottom:12px">
+          <b style="font-size:12.5px">Regex builder · {{ regexTargetLabel }}</b>
+          <button type="button" onClick="{{ closeDialog }}" style="background:transparent;font-size:17px;color:#bec9c7">×</button>
+        </div>
+        <input value="{{ regexPattern }}" onChange="{{ setRegexPattern }}" spellcheck="false" style="width:100%;background:#252b2b;border:1px solid #3f4948;border-radius:6px;color:#dee4e3;padding:9px 11px;font-family:'Roboto Mono',Consolas,monospace;font-size:12.5px" />
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin:9px 0">
+          <sc-for list="{{ regexAtoms }}" as="a" hint-placeholder-count="8">
+            <button type="button" onClick="{{ a.insert }}" title="{{ a.help }}" style="border-radius:99px;background:#303636;color:#82d5cc;padding:4px 9px;font-size:10.5px;font-weight:700;font-family:'Roboto Mono',Consolas,monospace">{{ a.token }}</button>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:8px">
+          <input value="{{ regexFlags }}" onChange="{{ setRegexFlags }}" style="width:100%;background:#252b2b;border:1px solid #3f4948;border-radius:6px;color:#dee4e3;padding:8px 10px;font-family:'Roboto Mono',Consolas,monospace;font-size:12px" />
+          <input value="{{ regexSample }}" onChange="{{ setRegexSample }}" style="width:100%;background:#252b2b;border:1px solid #3f4948;border-radius:6px;color:#dee4e3;padding:8px 10px;font-size:12px" />
+        </div>
+        <div style="padding:8px 10px;border-radius:6px;background:#252b2b;margin-top:10px;color:{{ regexFeedbackColor }};font-size:11.5px">{{ regexFeedback }}</div>
+        <div style="padding:10px;background:#0a0f0f;border-radius:6px;margin-top:8px;font-family:'Roboto Mono',Consolas,monospace;font-size:11.5px;white-space:pre-wrap">{{ regexPreview }}</div>
+        <div style="display:flex;justify-content:end;gap:7px;margin-top:14px">
+          <button type="button" onClick="{{ closeDialog }}" style="padding:6px 12px;border-radius:6px;background:#252b2b;color:#bec9c7;font-size:11.5px;font-weight:600">Cancel</button>
+          <button type="button" onClick="{{ applyRegex }}" style="padding:6px 12px;border-radius:6px;background:#82d5cc;color:#003733;font-size:11.5px;font-weight:700">Apply</button>
+        </div>
+      </form>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isWatching }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeWatch }}" style="position:fixed;inset:0;background:#000c;backdrop-filter:blur(4px);display:grid;place-items:center;z-index:44">
+      <div onClick="{{ stop }}" style="width:min(760px,calc(100vw - 40px));background:#0a0f0f;border:1px solid #3f4948;border-radius:9px;overflow:hidden">
+        <div style="height:36px;background:#1b2121;border-bottom:1px solid #2a3130;display:flex;align-items:center;gap:8px;padding:0 12px">
+          <span style="width:7px;height:7px;border-radius:50%;background:#82d5cc"></span>
+          <b style="font-size:12px">{{ pageTitle }}</b>
+          <span style="color:#889391;font-size:10.5px;font-family:'Roboto Mono',Consolas,monospace">watch in app · stream handed off by yt-dlp, the site player never loads</span>
+          <button onClick="{{ closeWatch }}" style="margin-left:auto;background:transparent;font-size:17px;color:#bec9c7">×</button>
+        </div>
+        <div style="height:340px;background-image:repeating-linear-gradient(135deg,#141a1b 0 10px,#0a0f0f 10px 20px);display:grid;place-items:center;color:#3f4948;font-family:'Roboto Mono',Consolas,monospace;font-size:11px">in-app player · bv*[height<=1080]+ba over the native host</div>
+        <div style="display:flex;align-items:center;gap:9px;padding:9px 12px;background:#1b2121;border-top:1px solid #2a3130">
+          <button onClick="{{ closeWatch }}" title="Play/pause" style="width:30px;height:30px;border-radius:15px;background:#82d5cc;color:#003733;display:grid;place-items:center"><i class="msym" style="font-size:17px">pause</i></button>
+          <span style="font-family:'Roboto Mono',Consolas,monospace;font-size:10.5px;color:#889391">03:12 / 10:34</span>
+          <div style="flex:1;height:4px;background:#0a0f0f;border-radius:2px;overflow:hidden"><div style="height:100%;width:30%;background:#82d5cc"></div></div>
+          <i class="msym" style="font-size:16px;color:#bec9c7">volume_up</i>
+          <i class="msym" style="font-size:16px;color:#bec9c7">high_quality</i>
+          <i class="msym" style="font-size:16px;color:#bec9c7">fullscreen</i>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasConfirm }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ cancelConfirm }}" style="position:fixed;inset:0;background:#0009;backdrop-filter:blur(3px);display:grid;place-items:center;z-index:45">
+      <div onClick="{{ stop }}" style="width:min(420px,calc(100vw - 40px));background:#1b2121;border:1px solid #713b3b;border-radius:9px;padding:16px">
+        <b style="font-size:13px;color:#ffb4ab">{{ confirmTitle }}</b>
+        <div style="color:#bec9c7;font-size:11.5px;margin-top:6px;line-height:1.5;text-wrap:pretty">{{ confirmCopy }}</div>
+        <div style="display:flex;gap:6px;margin-top:12px">
+          <button onClick="{{ toggleKeyA }}" style="flex:1;padding:8px;border-radius:6px;background:{{ keyABg }};color:#dee4e3;font-size:11px;font-weight:700">Key A</button>
+          <button onClick="{{ toggleKeyL }}" style="flex:1;padding:8px;border-radius:6px;background:{{ keyLBg }};color:#dee4e3;font-size:11px;font-weight:700">Key L</button>
+        </div>
+        <input type="range" min="0" max="100" value="{{ confirmSlider }}" onChange="{{ setConfirmSlider }}" style="width:100%;margin-top:10px;accent-color:#ffb4ab" />
+        <div style="color:#889391;font-size:10.5px;margin-top:4px">{{ confirmHint }}</div>
+        <div style="display:flex;justify-content:end;gap:7px;margin-top:12px">
+          <button onClick="{{ cancelConfirm }}" style="padding:6px 12px;border-radius:6px;background:#252b2b;color:#bec9c7;font-size:11.5px;font-weight:600">Cancel</button>
+          <button onClick="{{ authorize }}" style="padding:6px 12px;border-radius:6px;background:{{ authorizeBg }};color:{{ authorizeFg }};font-size:11.5px;font-weight:700">Authorize</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasMenu }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeMenu }}" onContextMenu="{{ closeMenuEvent }}" style="position:fixed;inset:0;z-index:50">
+      <div onClick="{{ stop }}" style="position:fixed;top:{{ menuTop }};left:{{ menuLeft }};min-width:236px;padding:5px;background:#1b2121;border:1px solid #3f4948;border-radius:8px;box-shadow:0 14px 40px #000b;display:grid;gap:1px">
+        <div style="padding:7px 10px 6px;color:#889391;font-size:10px;letter-spacing:1px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ menuTitle }}</div>
+        <div style="display:flex;gap:4px;padding:0 5px 6px">
+          <input value="{{ menuSearch }}" onChange="{{ setMenuSearch }}" placeholder="Search actions" style="flex:1;min-width:0;background:#252b2b;border:1px solid #3f4948;border-radius:6px;color:#dee4e3;padding:5px 8px;font-size:11.5px" />
+          <button onClick="{{ openRegexMenu }}" style="height:27px;min-width:27px;background:#303636;border-radius:6px;color:#82d5cc;font-weight:800;font-size:10.5px">.*</button>
+        </div>
+        <sc-for list="{{ menuItems }}" as="mi" hint-placeholder-count="4">
+          <button onClick="{{ mi.run }}" style="background:transparent;text-align:left;padding:8px 10px;border-radius:6px;display:flex;gap:9px;align-items:center;color:{{ mi.color }}">
+            <i class="msym" style="width:18px;font-size:18px">{{ mi.glyph }}</i>
+            <b style="font-weight:600;font-size:12px">{{ mi.label }}</b>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="position:fixed;right:18px;bottom:18px;width:320px;display:grid;gap:7px;z-index:30">
+    <sc-for list="{{ toasts }}" as="t" hint-placeholder-count="0">
+      <div style="background:#252b2b;border:1px solid #82d5cc;border-radius:8px;padding:9px 11px">
+        <strong style="display:block;font-size:12px">{{ t.title }}</strong>
+        <small style="color:#bec9c7;font-size:11px">{{ t.body }}</small>
+      </div>
+    </sc-for>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1320,&quot;height&quot;:860},&quot;surface&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;popup&quot;,&quot;options&quot;],&quot;default&quot;:&quot;popup&quot;,&quot;tsType&quot;:&quot;'popup' | 'options'&quot;,&quot;section&quot;:&quot;Behaviour&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;options&quot;:[&quot;#82d5cc&quot;,&quot;#febc2e&quot;,&quot;#c9a0ff&quot;],&quot;default&quot;:&quot;#82d5cc&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Appearance&quot;}}">
+class Component extends DCLogic {
+  state = {
+    surface: 'popup', scope: 'video', preset: '1080',
+    mediaSearch: '', optionSearch: '', optionSection: 'general',
+    menu: null, menuSearch: '', dialog: null, regexTarget: null,
+    regexPattern: '\\.(m3u8|mpd|mp4)(\\?|$)', regexFlags: 'iu',
+    regexSample: 'https://cdn.example.com/hls/master.m3u8?token=abc',
+    toasts: [],
+    opts: {
+      autoSniff: true, injectButtons: true, contextMenu: true, badgeProgress: true,
+      cookiesHandoff: true, notifyDone: true, skipShorts: false,
+      host: 'com.ytdlp.studio', folder: 'D:\\media\\%(uploader)s',
+      urlAllow: '^https://(www\\.)?(youtube|vimeo|twitch)\\.',
+      titleBlock: '(?i)\\b(trailer|teaser)\\b',
+      mode: 'English', narratorLanguage: 'English', narrator: false, enFunny: 2, yueFunny: 3,
+      emoji: false, school: false, adhd: false,
+      theme: 'Dark', density: 'Comfortable', reducedMotion: false, followOS: true,
+      keepHistory: true, quiet: 'Off', ollama: 'Off', exportFormat: 'json',
+      autoMode: false, autoLimit: 'First video only', watchInApp: false,
+    },
+    locks: [], confirm: null, watching: false,
+  };
+  extAction(key) {
+    if (key === 'appLogo') this.toast('App mark', 'Pick a square PNG — toolbar, popup and store listing');
+    else if (key === 'exportHistory') this.toast('Exported', 'history.' + (this.state.opts.exportFormat || 'json'));
+    else if (key === 'clearHistory') this.setState({ confirm: { title: 'Clear the local history?', copy: 'Every recorded action is removed from this browser. Nothing else holds a copy.', a: false, l: false, slider: 0 } });
+    else if (key === 'changelog') this.toast('What changed', '0.9.2 — locks enforce, downloads surface, full options parity with Studio');
+    else if (key === 'vocab') this.toast('Vocabulary loaded', 'personal-vocabulary.json · 212 terms now replace the stock copy');
+    else if (key === 'tickets') this.toast('Support tickets', '2 open · stored locally, nothing is sent anywhere');
+    else if (key === 'dimsum') this.toast('🥟 Dim-sum surprise', 'Siu mai — pork and shrimp, wolfberry on top');
+  }
+
+  toast(title, body) {
+    const id = Math.random();
+    this.setState(s => ({ toasts: [...s.toasts, { id, title, body }] }));
+    setTimeout(() => this.setState(s => ({ toasts: s.toasts.filter(t => t.id !== id) })), 3200);
+  }
+  openMenu(e, title, items) {
+    e.preventDefault(); e.stopPropagation();
+    const x = Math.min(e.clientX, window.innerWidth - 260), y = Math.min(e.clientY, window.innerHeight - 280);
+    const lk = (this.state.locks || []).find(L => L.target === title);
+    if (lk) {
+      this.setState({ menu: { title, items: [
+        { glyph: '🔒', label: 'Locked — password', run: () => {} },
+        { glyph: '🗝', label: 'Unlock this element', run: () => { this.setState(st => ({ locks: st.locks.filter(L2 => L2.target !== title) })); this.toast('Unlocked', title); } },
+        { glyph: '?', label: 'Forgot it? The recovery path', run: () => this.toast('Recovery', 'Clear the extension storage — a local ticket records the reset') },
+      ], x, y }, menuSearch: '' });
+      return;
+    }
+    const house = [
+      { glyph: '🔒', label: 'Lock this element…', run: () => { this.setState(st => ({ locks: [...(st.locks || []), { target: title }] })); this.toast('Element locked', title + ' — right-click it to unlock'); } },
+      { glyph: '🎨', label: 'Edit appearance', run: () => this.toast('Appearance', title + ' — accent, radius, density') },
+      { glyph: '▤', label: 'Export this element', run: () => this.toast('Exported', title + '.' + (this.state.opts.exportFormat || 'json')) },
+    ];
+    this.setState({ menu: { title, items: [...items, ...house], x, y }, menuSearch: '' });
+  }
+  icon(glyph, label) {
+    if (glyph && /^[a-z_]+$/.test(glyph)) return glyph;
+    const l = String(label || '').toLowerCase();
+    const rules = [
+      [/copy/, 'content_copy'], [/regex/, 'regular_expression'], [/reset|default/, 'restart_alt'],
+      [/download|send|queue/, 'download'], [/format/, 'high_quality'], [/cookie|sign in/, 'key'],
+      [/reconnect|retry/, 'refresh'], [/settings|option/, 'settings'], [/hide|ignore|disable/, 'visibility_off'],
+      [/export/, 'file_download'], [/open|studio|browse/, 'open_in_new'], [/pick|use|apply/, 'check'],
+      [/default|pin/, 'push_pin'], [/why|help/, 'help'], [/json/, 'data_object'], [/wizard|error/, 'emergency_home'],
+      [/channel/, 'subscriptions'], [/link/, 'link'], [/video/, 'play_arrow'], [/selection/, 'select_all'],
+    ];
+    for (const [re, name] of rules) if (re.test(l)) return name;
+    return 'chevron_right';
+  }
+  match(text, q) {
+    if (!q.trim()) return true;
+    try { return new RegExp(q, 'i').test(text); } catch (err) { return text.toLowerCase().includes(q.toLowerCase()); }
+  }
+  setOpt(k, v) { this.setState(s => ({ opts: { ...s.opts, [k]: v } })); }
+
+  renderVals() {
+    const s = this.state;
+    const presetDefs = [
+      { id: 'best', label: 'Best available', flags: '-f bv*+ba/b' },
+      { id: '1080', label: '1080p mkv', flags: '-f bv*[height<=1080]+ba/b' },
+      { id: '720', label: '720p mp4', flags: '-t mp4 -f bv*[height<=720]+ba/b' },
+      { id: 'mp3', label: 'Audio · mp3', flags: '-t mp3' },
+      { id: 'subs', label: '1080p + subtitles', flags: '--write-subs --embed-subs' },
+    ];
+    const scopeDefs = [
+      { id: 'video', label: 'This video' },
+      { id: 'playlist', label: 'Whole playlist' },
+      { id: 'channel', label: 'Channel' },
+    ];
+    const preset = presetDefs.find(p => p.id === s.preset) || presetDefs[0];
+    const command = 'yt-dlp ' + preset.flags + (s.scope === 'video' ? ' --no-playlist' : ' -I 1:20 --lazy-playlist')
+      + ' -o "' + s.opts.folder + '\\%(title)s [%(id)s].%(ext)s" "https://www.youtube.com/watch?v=aqz-KE-bpKQ"';
+
+    const optionSectionDefs = [
+      { id: 'general', label: 'General' },
+      { id: 'auto', label: 'Auto download' },
+      { id: 'watch', label: 'Watch in app' },
+      { id: 'injection', label: 'Page injection' },
+      { id: 'rules', label: 'URL and title rules' },
+      { id: 'host', label: 'Native host' },
+      { id: 'notifications', label: 'Notifications' },
+      { id: 'language', label: 'Language and voice' },
+      { id: 'appearance', label: 'Appearance' },
+      { id: 'record', label: 'Local record' },
+      { id: 'extras', label: 'Extras' },
+    ];
+    const optionRowDefs = {
+      general: [
+        ['autoSniff', 'Sniff media requests', 'Watch network requests for m3u8, mpd and progressive media on every page.'],
+        ['badgeProgress', 'Show progress on the toolbar badge', 'The badge mirrors the active download percentage from the Studio queue.'],
+        ['folder', 'Default save folder', 'Passed to -o. Output template fields are allowed.', 'text'],
+      ],
+      injection: [
+        ['injectButtons', 'Inject download buttons', 'Adds an overlay button on players and a row button beside page actions.'],
+        ['contextMenu', 'Register right-click entries', 'Adds yt-dlp entries to link, video, selection and page context menus.'],
+        ['skipShorts', 'Hide buttons on shorts and reels', 'Keeps the injected controls off very short vertical clips.'],
+      ],
+      rules: [
+        ['urlAllow', 'Only inject on URLs matching', 'A regular expression tested against the page URL.', 'text', true],
+        ['titleBlock', 'Never auto-queue titles matching', 'Matching titles need an explicit click before they are sent.', 'text', true],
+      ],
+      host: [
+        ['host', 'Native messaging host id', 'The registered host that forwards jobs to yt-dlp Studio.', 'text'],
+        ['cookiesHandoff', 'Hand the page session to yt-dlp', 'Exports the current site cookies so subscriber-only media resolves.'],
+      ],
+      notifications: [
+        ['notifyDone', 'Notify when a download finishes', 'A Chrome notification with the final filename and size.'],
+      ],
+      auto: [
+        ['autoMode', 'Auto-download mode', 'Media on pages matching your URL rules is queued the moment the page loads, using the current preset. Off by default; the popup shows an AUTO chip while it is on.'],
+        ['autoLimit', 'What auto mode may take', 'How much a single page load is allowed to queue.', 'select', ['First video only', 'One per page', 'Everything matched']],
+        ['urlAllow', 'Auto-queue only on URLs matching', 'The same rule the injector uses; auto mode never fires outside it.', 'text', true],
+        ['titleBlock', 'Never auto-queue titles matching', 'Matching titles always wait for an explicit click.', 'text', true],
+      ],
+      watch: [
+        ['watchInApp', 'Watch in app', 'Adds a Watch in app button on video pages that plays the stream in the Companion instead of the site player. Entirely off until you turn it on.'],
+      ],
+      language: [
+        ['mode', 'Language mode', 'English, playful Cantonese, or bilingual labels throughout.', 'select', ['English', 'Yue', 'Bilingual']],
+        ['narratorLanguage', 'Narrator language', 'Which language the optional narrator speaks.', 'select', ['English', 'Yue', 'Both']],
+        ['narrator', 'Optional narrator', 'Off by default; reads notices aloud when enabled.'],
+        ['enFunny', 'English funny level', 'How playful the English copy and notices get.', 'range', [1, 5, 1]],
+        ['yueFunny', 'Cantonese funny level', 'How playful the Cantonese copy and notices get.', 'range', [1, 5, 1]],
+        ['emoji', 'Emoji in notices', 'Adds emoji beside notices. Off keeps them plain.'],
+        ['school', 'School mode', 'Classroom-safe plain copy everywhere; funny levels are ignored while it is on.'],
+      ],
+      appearance: [
+        ['theme', 'Theme', 'Dark is the default; light follows the same Material tokens.', 'select', ['Dark', 'Light']],
+        ['density', 'Density', 'Comfortable or compact row heights across every surface.', 'select', ['Comfortable', 'Compact']],
+        ['reducedMotion', 'Reduced motion', 'Removes every transition and animation.'],
+        ['followOS', 'Follow system settings', 'Theme and reduced motion track the operating system.'],
+        ['adhd', 'ADHD mode', 'One thing at a time: fewer moving parts, stronger focus states.'],
+        ['appLogo', 'App mark', 'Replace the toolbar icon with your own image.', 'action', 'Choose image'],
+      ],
+      record: [
+        ['keepHistory', 'Append every change to local history', 'Nothing leaves the browser; history is local storage.'],
+        ['quiet', 'Quiet hours', 'Mute notifications on a schedule.', 'select', ['Off', '22:00-07:00', '00:00-08:00', 'Custom']],
+        ['exportFormat', 'Export format', 'Used by every Export action in this extension.', 'select', ['json', 'md', 'csv', 'txt']],
+        ['exportHistory', 'Export history', 'Writes the local record as a file download.', 'action', 'Export'],
+        ['clearHistory', 'Clear history', 'Removes every locally recorded action. Gated behind the two-key confirmation.', 'action', 'Clear'],
+        ['changelog', 'What changed', 'Release notes for the extension, offline.', 'action', 'Open changelog'],
+      ],
+      extras: [
+        ['vocab', 'Personal vocabulary', 'Upload a local JSON dictionary; your words replace the stock copy.', 'action', 'Upload JSON'],
+        ['tickets', 'Support tickets', 'A local, searchable ticket file; nothing is sent anywhere.', 'action', 'Open tickets'],
+        ['ollama', 'Local AI (Ollama)', 'Optional local model that names downloads and drafts URL rules; fully offline.', 'select', ['Off', 'qwen3:4b', 'llama3.2:3b', 'Manage suite']],
+        ['dimsum', 'Dim-sum surprise', 'A small treat, on demand.', 'action', 'Surprise me'],
+      ],
+    };
+    const rows = (optionRowDefs[s.optionSection] || []).filter(r => this.match(r[1] + ' ' + r[2], s.optionSearch)).map(r => {
+      const [key, label, help, type, extra] = r;
+      const rx = type === 'text' ? extra : false;
+      const val = s.opts[key];
+      const on = val === true;
+      const isSelect = type === 'select', isRange = type === 'range', isAction = type === 'action';
+      return {
+        label, help, isToggle: !type, isText: type === 'text', isSelect, isRange, isAction, rx: !!rx,
+        value: type === 'text' || isSelect || isRange ? String(val) : '',
+        options: isSelect ? [String(val)].concat((extra || []).filter(o => o !== val)).map(v => ({ v })) : [],
+        rangeMin: isRange ? extra[0] : 0, rangeMax: isRange ? extra[1] : 1, rangeStep: isRange ? extra[2] : 1,
+        actionLabel: isAction ? extra : '',
+        act: () => this.extAction(key),
+        switchBg: on ? '#324b48' : '#303636', knobLeft: on ? '22px' : '3px', knobColor: on ? '#82d5cc' : '#889391',
+        toggle: () => this.setOpt(key, !on),
+        set: e => this.setOpt(key, isRange ? Number(e.target.value) : e.target.value),
+        openRegex: () => this.setState({ dialog: 'regex', regexTarget: key, regexPattern: String(val) }),
+        menu: e => this.openMenu(e, label, [
+          { glyph: '↺', label: 'Reset to default', run: () => this.toast('Reset', label) },
+          { glyph: '⎘', label: 'Copy value', run: () => this.toast('Copied', String(val)) },
+          ...(rx ? [{ glyph: '.*', label: 'Open regex builder', run: () => this.setState({ dialog: 'regex', regexTarget: key, regexPattern: String(val) }) }] : []),
+          { glyph: '⚙', label: 'Send to yt-dlp Studio settings', run: () => this.toast('Studio', label + ' mirrored') },
+        ]),
+      };
+    });
+
+    let feedback = '', ok = true, preview = '';
+    try {
+      const re = new RegExp(s.regexPattern, s.regexFlags);
+      const m = s.regexSample.match(re);
+      feedback = m ? 'Valid pattern · matches at index ' + m.index : 'Valid pattern · no match in the sample';
+      preview = m ? s.regexSample.slice(0, m.index) + '»' + m[0] + '«' + s.regexSample.slice(m.index + m[0].length) : s.regexSample;
+    } catch (err) { ok = false; feedback = 'Invalid: ' + err.message; preview = s.regexSample; }
+
+    const armed = !!((s.confirm || {}).a && (s.confirm || {}).l && ((s.confirm || {}).slider || 0) >= 100);
+    return {
+      jobRows: [
+        { title: 'Big Buck Bunny 4K remaster', state: 'downloading', pct: 62, meta: '148MiB of 240MiB · 8.2MiB/s · 00:12 left', color: '#82d5cc' },
+        { title: 'Cooking every dim sum — ep. 12', state: 'starting', pct: 3, meta: 'handshake accepted · resolving formats', color: '#febc2e' },
+        { title: 'Keynote 2026', state: 'done', pct: 100, meta: '412MiB · finished 2 min ago', color: '#82d5cc' },
+        { title: 'nebula exclusive', state: 'error', pct: 41, meta: 'HTTP 403 — open the fix wizard in Studio', color: '#ffb4ab' },
+      ].map(j => ({
+        title: j.title, meta: j.meta, color: j.color, width: j.pct + '%',
+        actGlyph: j.state === 'error' ? 'flag' : j.state === 'done' ? 'folder_open' : 'pause',
+        act: () => j.state === 'error' ? this.toast('Studio', 'Wizard: sign-in or region block') : j.state === 'done' ? this.toast('Opened', s.opts.folder) : this.toast('Paused', j.title),
+        menu: e => this.openMenu(e, j.title, [
+          ...(j.state === 'error' ? [{ glyph: '⚑', label: 'Open the fix wizard in Studio', run: () => this.toast('Studio', 'Wizard: sign-in or region block') }] : []),
+          ...(j.state === 'done' ? [{ glyph: '📂', label: 'Open the folder', run: () => this.toast('Opened', s.opts.folder) }] : [{ glyph: '⏸', label: 'Pause', run: () => this.toast('Paused', j.title) }]),
+          { glyph: '⎘', label: 'Copy the source URL', run: () => this.toast('Copied', 'URL') },
+          { glyph: '×', label: 'Remove from this list', color: '#ffb4ab', run: () => this.toast('Removed', j.title) },
+        ]),
+      })),
+      hasConfirm: !!s.confirm,
+      confirmTitle: (s.confirm || {}).title || '', confirmCopy: (s.confirm || {}).copy || '',
+      keyABg: (s.confirm || {}).a ? '#324b48' : '#252b2b', keyLBg: (s.confirm || {}).l ? '#324b48' : '#252b2b',
+      toggleKeyA: () => this.setState(st => ({ confirm: { ...st.confirm, a: !st.confirm.a } })),
+      toggleKeyL: () => this.setState(st => ({ confirm: { ...st.confirm, l: !st.confirm.l } })),
+      confirmSlider: String((s.confirm || {}).slider || 0),
+      setConfirmSlider: e => this.setState(st => ({ confirm: { ...st.confirm, slider: Number(e.target.value) } })),
+      confirmHint: !((s.confirm || {}).a && (s.confirm || {}).l) ? 'Arm both keys first.' : ((s.confirm || {}).slider || 0) < 100 ? 'Drag the slider fully to the right.' : 'Armed — Authorize is live.',
+      authorizeBg: armed ? '#ffb4ab' : '#252b2b', authorizeFg: armed ? '#3b0a08' : '#889391',
+      authorize: () => { if (!armed) return; this.setState({ confirm: null }); this.toast('Cleared', 'Local history removed'); },
+      cancelConfirm: () => this.setState({ confirm: null }),
+      surfaceTabs: [['popup', 'Popup + in-page'], ['options', 'Options page']].map(([id, label]) => ({
+        label, bg: s.surface === id ? '#324b48' : '#252b2b', fg: s.surface === id ? '#82d5cc' : '#bec9c7',
+        pick: () => this.setState({ surface: id }),
+      })),
+      showPopup: s.surface === 'popup', showOptions: s.surface === 'options',
+
+      hostState: 'host connected', hostColor: '#82d5cc',
+      statusMenu: e => this.openMenu(e, 'Native host', [
+        { glyph: '↻', label: 'Reconnect to yt-dlp Studio', run: () => this.toast('Host', 'Reconnected') },
+        { glyph: '⚙', label: 'Open the host settings', run: () => this.setState({ surface: 'options', optionSection: 'host' }) },
+        { glyph: '?', label: 'Show the host id', run: () => this.toast('Host id', s.opts.host) },
+      ]),
+      pageTitle: 'Big Buck Bunny 4K remaster', pageUrl: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ&list=PL0123',
+      pageMenu: e => this.openMenu(e, 'This page', [
+        { glyph: '↓', label: 'Send to the queue', run: () => this.toast('Queued', 'Sent to yt-dlp Studio') },
+        { glyph: '⎘', label: 'Copy the page URL', run: () => this.toast('Copied', 'URL copied') },
+        { glyph: '{}', label: 'Copy as --load-info-json', run: () => this.toast('Copied', 'info.json request') },
+        { glyph: '⚿', label: 'Hand over site cookies', run: () => this.toast('Cookies', '27 cookies exported') },
+      ]),
+      scopeTabs: scopeDefs.map(t => ({
+        label: t.label, bg: s.scope === t.id ? '#324b48' : '#252b2b', fg: s.scope === t.id ? '#82d5cc' : '#bec9c7',
+        pick: () => this.setState({ scope: t.id }),
+      })),
+      presets: presetDefs.map(p => ({
+        label: p.label, flags: p.flags, tick: s.preset === p.id ? '●' : '○',
+        bg: s.preset === p.id ? '#324b48' : '#252b2b', border: s.preset === p.id ? '#82d5cc' : '#2a3130',
+        fg: s.preset === p.id ? '#cfe9e5' : '#dee4e3',
+        pick: () => this.setState({ preset: p.id }),
+        menu: e => this.openMenu(e, p.label, [
+          { glyph: '✓', label: 'Use this preset', run: () => this.setState({ preset: p.id }) },
+          { glyph: '📌', label: 'Make it the default', run: () => this.toast('Default', p.label) },
+          { glyph: '⎘', label: 'Copy the flags', run: () => this.toast('Copied', p.flags) },
+          { glyph: '⚙', label: 'Edit in yt-dlp Studio', run: () => this.toast('Studio', 'Opening the format explorer') },
+        ]),
+      })),
+      mediaSearch: s.mediaSearch, setMediaSearch: e => this.setState({ mediaSearch: e.target.value }),
+      openRegexMedia: () => this.setState({ dialog: 'regex', regexTarget: 'sniffed media' }),
+      mediaRows: [
+        ['hls', 'master.m3u8 · 6 variants up to 2160p60', '—'],
+        ['dash', 'manifest.mpd · 18 representations', '—'],
+        ['mp4', 'itag 18 progressive 360p', '12.7MiB'],
+        ['m4a', 'itag 140 audio 129k', '9.85MiB'],
+        ['vtt', 'en auto captions', '48KiB'],
+      ].filter(r => this.match(r.join(' '), s.mediaSearch)).map(r => ({
+        kind: r[0], label: r[1], size: r[2],
+        menu: e => this.openMenu(e, r[0] + ' stream', [
+          { glyph: '↓', label: 'Download this stream', run: () => this.toast('Queued', r[1]) },
+          { glyph: '⎘', label: 'Copy the media URL', run: () => this.toast('Copied', r[0] + ' url') },
+          { glyph: 'f', label: 'Open in the format explorer', run: () => this.toast('Studio', 'Format explorer') },
+          { glyph: '⊘', label: 'Ignore this type here', run: () => this.toast('Ignored', r[0]) },
+        ]),
+      })),
+      autoOn: !!s.opts.autoMode,
+      autoChipBg: s.opts.autoMode ? '#3d3a24' : '#252b2b', autoChipFg: s.opts.autoMode ? '#febc2e' : '#889391',
+      autoChipLabel: s.opts.autoMode ? 'AUTO · ' + s.opts.autoLimit.toLowerCase() : 'AUTO off',
+      toggleAuto: () => { const on = !this.state.opts.autoMode; this.setOpt('autoMode', on); this.toast(on ? 'Auto-download on' : 'Auto-download off', on ? 'Pages matching your URL rules queue themselves — ' + this.state.opts.autoLimit.toLowerCase() : 'Nothing is queued without a click'); },
+      autoMenu: e => this.openMenu(e, 'Auto-download mode', [
+        { glyph: '⚙', label: 'Auto-download settings', run: () => this.setState({ surface: 'options', optionSection: 'auto' }) },
+        { glyph: '.*', label: 'Edit the URL rule', run: () => this.setState({ dialog: 'regex', regexTarget: 'urlAllow', regexPattern: s.opts.urlAllow }) },
+        { glyph: '⊘', label: 'Pause auto mode on this site', run: () => this.toast('Paused here', 'youtube.com skips auto mode') },
+      ]),
+      watchEnabled: !!s.opts.watchInApp,
+      isWatching: !!s.watching,
+      startWatch: () => this.setState({ watching: true }),
+      closeWatch: () => this.setState({ watching: false }),
+      watchMenu: e => this.openMenu(e, 'Watch in app', [
+        { glyph: '▶', label: 'Watch this video in the app', run: () => this.setState({ watching: true }) },
+        { glyph: '⚙', label: 'Watch-in-app settings', run: () => this.setState({ surface: 'options', optionSection: 'watch' }) },
+        { glyph: '⊘', label: 'Turn watch-in-app off', run: () => { this.setOpt('watchInApp', false); this.toast('Watch in app', 'Turned off'); } },
+      ]),
+      sendLabel: s.scope === 'video' ? 'Send to yt-dlp Studio' : s.scope === 'playlist' ? 'Send playlist (20 items)' : 'Send channel (latest 20)',
+      send: () => this.toast('Sent', 'Job handed to yt-dlp Studio over the native host'),
+      openStudio: () => this.toast('Studio', 'Bringing the Yern Geen to the front'),
+      copyCmd: () => this.toast('Copied', command),
+      goOptions: () => this.setState({ surface: 'options' }),
+      openFormats: () => this.toast('Formats', '24 formats on this page'),
+      command,
+      overlayMenu: e => this.openMenu(e, 'Injected overlay', [
+        { glyph: '↓', label: 'Download with the current preset', run: () => this.toast('Queued', preset.label) },
+        { glyph: '▾', label: 'Pick a format first', run: () => this.toast('Formats', 'Format picker') },
+        { glyph: '⊘', label: 'Hide the button on this site', run: () => this.toast('Hidden', 'youtube.com') },
+        { glyph: '⚙', label: 'Injection settings', run: () => this.setState({ surface: 'options', optionSection: 'injection' }) },
+      ]),
+      contextEntries: [
+        { glyph: 'link', label: 'Download link with yt-dlp', ctx: 'link' },
+        { glyph: 'play_arrow', label: 'Download this video', ctx: 'video' },
+        { glyph: 'select_all', label: 'Download every link in the selection', ctx: 'selection' },
+        { glyph: 'subscriptions', label: 'Download this whole channel', ctx: 'page' },
+        { glyph: 'emergency_home', label: 'Send the page error to the fix wizard', ctx: 'page' },
+      ],
+
+      optionSearch: s.optionSearch, setOptionSearch: e => this.setState({ optionSearch: e.target.value }),
+      openRegexOptions: () => this.setState({ dialog: 'regex', regexTarget: 'settings search' }),
+      optionSections: optionSectionDefs.map(sec => ({
+        label: sec.label, bg: s.optionSection === sec.id ? '#324b48' : 'transparent',
+        fg: s.optionSection === sec.id ? '#82d5cc' : '#bec9c7',
+        pick: () => this.setState({ optionSection: sec.id }),
+        menu: e => this.openMenu(e, sec.label, [
+          { glyph: '↗', label: 'Open section', run: () => this.setState({ optionSection: sec.id }) },
+          { glyph: '↺', label: 'Reset this section', run: () => this.toast('Reset', sec.label) },
+          { glyph: '▤', label: 'Export section as JSON', run: () => this.toast('Exported', sec.label + '.json') },
+        ]),
+      })),
+      optionRows: rows,
+
+      dialogRegex: s.dialog === 'regex', closeDialog: () => this.setState({ dialog: null }),
+      stop: e => e.stopPropagation(),
+      regexTargetLabel: s.regexTarget || 'search',
+      regexPattern: s.regexPattern, setRegexPattern: e => this.setState({ regexPattern: e.target.value }),
+      regexFlags: s.regexFlags, setRegexFlags: e => this.setState({ regexFlags: e.target.value }),
+      regexSample: s.regexSample, setRegexSample: e => this.setState({ regexSample: e.target.value }),
+      regexFeedback: feedback, regexFeedbackColor: ok ? '#bec9c7' : '#ffb4ab', regexPreview: preview,
+      regexAtoms: [['.', 'any character'], ['\\d', 'digit'], ['\\w', 'word character'], ['\\b', 'word boundary'],
+        ['[abc]', 'character class'], ['(?i)', 'caseless'], ['+', 'one or more'], ['*', 'zero or more'],
+        ['?', 'optional'], ['|', 'alternation'], ['^', 'start'], ['$', 'end']].map(([token, help]) => ({
+        token, help, insert: () => this.setState(st => ({ regexPattern: st.regexPattern + token })),
+      })),
+      applyRegex: () => {
+        const t = s.regexTarget;
+        if (t === 'sniffed media') this.setState({ mediaSearch: s.regexPattern, dialog: null });
+        else if (t === 'settings search') this.setState({ optionSearch: s.regexPattern, dialog: null });
+        else if (t && s.opts[t] !== undefined) { this.setOpt(t, s.regexPattern); this.setState({ dialog: null }); }
+        else this.setState({ dialog: null });
+        this.toast('Applied', s.regexPattern);
+      },
+
+      hasMenu: !!s.menu, menuTitle: s.menu ? s.menu.title : '',
+      menuTop: s.menu ? s.menu.y + 'px' : '0px', menuLeft: s.menu ? s.menu.x + 'px' : '0px',
+      menuSearch: s.menuSearch, setMenuSearch: e => this.setState({ menuSearch: e.target.value }),
+      openRegexMenu: () => this.setState({ dialog: 'regex', regexTarget: 'menu' }),
+      menuItems: (s.menu ? s.menu.items : []).filter(i => this.match(i.label, s.menuSearch)).map(i => ({
+        label: i.label, glyph: this.icon(i.glyph, i.label), color: i.color || '#dee4e3',
+        run: () => { this.setState({ menu: null }); i.run(); },
+      })),
+      closeMenu: () => this.setState({ menu: null }),
+      closeMenuEvent: e => { e.preventDefault(); this.setState({ menu: null }); },
+      toasts: s.toasts,
+    };
+  }
+}
+</script>
+</body>
+</html>

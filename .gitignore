@@ -1,0 +1,12 @@
+node_modules/
+dist/
+out/
+release/
+.vite/
+*.log
+vendor/bin/
+vendor/yt-dlp/dist/
+vendor/yt-dlp/build/
+vendor/toolchain/
+app/dist/
+app/out/

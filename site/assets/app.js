@@ -81,7 +81,16 @@
           var panel = document.getElementById(t.getAttribute("aria-controls"));
           if (panel) panel.hidden = !selected;
         });
-        if (focus) tab.focus();
+        if (focus) {
+          tab.focus();
+          // A keyboard-focused tab can sit outside the horizontally
+          // scrollable strip on a narrow screen — bring it into view
+          // rather than leaving it reachable-but-invisible.
+          var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          if (tab.scrollIntoView) {
+            tab.scrollIntoView({ inline: "nearest", block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+          }
+        }
       }
 
       tabs.forEach(function (tab, i) {
@@ -479,6 +488,85 @@
     }
   }
 
+  /* ---------------- Mobile header: hamburger menu ---------------- */
+
+  function initMobileMenu() {
+    var toggle = document.querySelector("[data-mobile-menu-toggle]");
+    var panel = document.querySelector("[data-mobile-nav-panel]");
+    if (!toggle || !panel) return;
+
+    function open() {
+      panel.hidden = false;
+      toggle.setAttribute("aria-expanded", "true");
+    }
+    function close(returnFocus) {
+      panel.hidden = true;
+      toggle.setAttribute("aria-expanded", "false");
+      if (returnFocus) toggle.focus();
+    }
+
+    toggle.addEventListener("click", function () {
+      if (panel.hidden) open(); else close(false);
+    });
+    panel.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape") { ev.stopPropagation(); close(true); }
+    });
+    panel.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { close(false); });
+    });
+    document.addEventListener("click", function (ev) {
+      if (!panel.hidden && !panel.contains(ev.target) && ev.target !== toggle && !toggle.contains(ev.target)) {
+        close(false);
+      }
+    });
+    // A narrow-to-wide resize (rotating a tablet, or a real desktop resize)
+    // should not leave the panel awkwardly open behind now-visible inline nav.
+    window.addEventListener("resize", function () {
+      if (window.innerWidth > 760 && !panel.hidden) close(false);
+    });
+  }
+
+  /* ---------------- Mobile header: search overlay ---------------- */
+
+  function initMobileSearch() {
+    var toggle = document.querySelector("[data-mobile-search-toggle]");
+    var wrap = document.querySelector("[data-site-search]");
+    var closeBtn = document.querySelector("[data-mobile-search-close]");
+    var input = document.querySelector("[data-search-input]");
+    if (!toggle || !wrap) return;
+
+    function open() {
+      wrap.classList.add("mobile-open");
+      toggle.setAttribute("aria-expanded", "true");
+      if (input) input.focus();
+    }
+    function close(returnFocus) {
+      wrap.classList.remove("mobile-open");
+      toggle.setAttribute("aria-expanded", "false");
+      var results = wrap.querySelector("[data-search-results]");
+      if (results) results.hidden = true;
+      var popover = wrap.querySelector("[data-regex-popover]");
+      if (popover) popover.hidden = true;
+      if (returnFocus) toggle.focus();
+    }
+
+    toggle.addEventListener("click", function () {
+      if (wrap.classList.contains("mobile-open")) close(false); else open();
+    });
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () { close(true); });
+    }
+    wrap.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape" && wrap.classList.contains("mobile-open")) {
+        ev.stopPropagation();
+        close(true);
+      }
+    });
+    window.addEventListener("resize", function () {
+      if (window.innerWidth > 760 && wrap.classList.contains("mobile-open")) close(false);
+    });
+  }
+
   /* ---------------- Boot ---------------- */
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -486,5 +574,7 @@
     initTabs();
     initPlanner();
     initSearchAndRegexBuilder();
+    initMobileMenu();
+    initMobileSearch();
   });
 })();

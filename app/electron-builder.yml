@@ -1,0 +1,33 @@
+appId: com.dingdingprojects.ytdlp-studio
+productName: yt-dlp Studio
+
+directories:
+  output: dist
+
+files:
+  - out/**/*
+  - package.json
+
+extraResources:
+  - from: ../vendor/bin
+    to: bin
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: squirrel
+      arch:
+        - x64
+
+# Code signing is permanently prohibited for this project. The installer
+# ships unsigned on purpose; do not request, discover, or configure a
+# certificate here.
+forceCodeSigning: false
+signExecutable: false
+signAndEditExecutable: false
+
+# Squirrel.Windows only. electron-builder 26's Squirrel schema uses these
+# `squirrelWindows.*` keys; the legacy top-level `setupExe` / `noMsi` keys
+# fail schema validation on this version and must not be used.
+squirrelWindows:
+  artifactName: '${productName}-Setup-${version}.${ext}'

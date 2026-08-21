@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Documentation — yt-dlp Studio</title>
 <meta name="description" content="Documentation for yt-dlp Studio: bundled binaries, building from source, and the unsigned-installer warning.">
-<link rel="icon" href="data:,">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='56' fill='%230f1414'/%3E%3Crect x='48' y='48' width='160' height='160' rx='36' fill='none' stroke='%2382d5cc' stroke-width='18'/%3E%3Cpath d='M128 76 L128 148 M92 122 L128 158 L164 122' fill='none' stroke='%2382d5cc' stroke-width='18' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 
 <meta property="og:title" content="yt-dlp Studio Documentation">
 <meta property="og:description" content="Bundled binaries, building from source, and the unsigned-installer warning, explained.">
@@ -29,10 +29,14 @@
 
 <header class="site-header">
   <div class="container header-row">
+    <button type="button" class="icon-btn mobile-menu-toggle" data-mobile-menu-toggle aria-expanded="false" aria-controls="mobile-nav-panel" aria-label="Open menu">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+    </button>
     <a class="wordmark" href="index.html">
-      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
-        <rect width="26" height="26" rx="7" fill="var(--accent)"></rect>
-        <path d="M8 7l7 6-7 6V7z" fill="var(--accent-contrast)"></path>
+      <svg width="26" height="26" viewBox="0 0 256 256" fill="none" aria-hidden="true">
+        <rect width="256" height="256" rx="56" fill="var(--accent)"></rect>
+        <rect x="48" y="48" width="160" height="160" rx="36" fill="none" stroke="var(--accent-contrast)" stroke-width="18"></rect>
+        <path d="M128 76 L128 148 M92 122 L128 158 L164 122" fill="none" stroke="var(--accent-contrast)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"></path>
       </svg>
       yt-dlp Studio
     </a>
@@ -43,12 +47,17 @@
     </nav>
     <div class="header-spacer"></div>
 
+    <button type="button" class="icon-btn mobile-search-toggle" data-mobile-search-toggle aria-expanded="false" aria-controls="site-search-input" aria-label="Search this page">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"></circle><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+    </button>
+
     <div class="search-wrap" data-site-search>
       <div class="search-box">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"></circle><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
         <label class="visually-hidden" for="site-search-input">Search this page</label>
         <input id="site-search-input" type="text" placeholder="Search this page" data-search-input autocomplete="off">
         <button type="button" class="regex-toggle-btn" data-regex-toggle aria-haspopup="dialog" aria-expanded="false" aria-controls="regex-popover">.*</button>
+        <button type="button" class="icon-btn mobile-search-close" data-mobile-search-close aria-label="Close search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></button>
       </div>
       <div class="search-results" data-search-results hidden></div>
 
@@ -94,6 +103,12 @@
       </button>
       <a class="btn-pill-nav" href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases">View releases</a>
     </div>
+  </div>
+  <div class="mobile-nav-panel" id="mobile-nav-panel" data-mobile-nav-panel hidden>
+    <a href="index.html#capabilities">Capabilities</a>
+    <a href="index.html#workflow">Workflow</a>
+    <a href="docs.html" aria-current="page">Documentation</a>
+    <a class="btn-pill-nav" href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases">View releases</a>
   </div>
 </header>
 

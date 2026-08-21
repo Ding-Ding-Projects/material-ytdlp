@@ -494,13 +494,28 @@ section.page-section:first-of-type { border-top: none; }
 
 /* ---------- Planner (tabs) ---------- */
 
+.tab-strip-scroll {
+  position: relative;
+  margin-bottom: 28px;
+}
+.tab-strip-scroll::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 28px;
+  background: linear-gradient(to right, transparent, var(--bg));
+  pointer-events: none;
+}
 .tab-strip {
   display: flex;
   gap: 4px;
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
   scrollbar-width: thin;
-  margin-bottom: 28px;
 }
 .tab-strip [role="tab"] {
   appearance: none;
@@ -515,6 +530,7 @@ section.page-section:first-of-type { border-top: none; }
   min-height: 44px;
   cursor: pointer;
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 .tab-strip [role="tab"]:hover { color: var(--text); }
 .tab-strip [role="tab"][aria-selected="true"] {
@@ -825,6 +841,13 @@ section.page-section:first-of-type { border-top: none; }
   gap: 40px;
   align-items: start;
 }
+/* Grid items default to an automatic minimum width equal to their content's
+   min-content size, which a long unbroken <pre> code line ignores overflow-x
+   for and blows out — forcing the whole grid, and the page, wide. min-width:0
+   is the standard escape hatch so a grid item's own overflow rules can win. */
+.docs-grid > * {
+  min-width: 0;
+}
 .docs-nav {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -855,6 +878,133 @@ section.page-section:first-of-type { border-top: none; }
   font-size: 0.9em;
 }
 
+
+/* ---------- Mobile header: menu + search toggles ---------- */
+
+.mobile-menu-toggle,
+.mobile-search-toggle,
+.mobile-search-close {
+  display: none;
+}
+
+.mobile-nav-panel {
+  display: none;
+}
+.mobile-nav-panel:not([hidden]) {
+  display: flex;
+}
+
+@media (max-width: 760px) {
+  .header-row {
+    min-height: 56px;
+    gap: 8px;
+    padding: 8px 0;
+    position: relative;
+  }
+
+  .mobile-menu-toggle {
+    display: inline-flex;
+    order: -1;
+  }
+  .mobile-search-toggle {
+    display: inline-flex;
+  }
+
+  .wordmark {
+    font-size: 15px;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .wordmark svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .primary-nav {
+    display: none;
+  }
+  .header-actions .btn-pill-nav {
+    display: none;
+  }
+
+  /* The inline search bar is hidden on narrow screens; the search icon
+     opens it as a full-width overlay instead of leaving a clipped,
+     barely-typeable 100px field sitting in the header row. */
+  .search-wrap {
+    display: none;
+  }
+  .search-wrap.mobile-open {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 90;
+    background: var(--bg);
+    padding: 10px 16px;
+    box-shadow: var(--shadow);
+    border-bottom: 1px solid var(--border);
+  }
+  .search-wrap.mobile-open .search-box {
+    width: 100%;
+  }
+  .search-wrap.mobile-open .search-box input {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+  .search-wrap.mobile-open .mobile-search-close {
+    display: inline-flex;
+    flex: none;
+  }
+  .search-wrap.mobile-open .search-results {
+    position: fixed;
+    top: 62px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
+  .search-wrap.mobile-open .regex-popover {
+    position: fixed;
+    top: 62px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
+
+  .mobile-nav-panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-raised);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 10px 20px 16px;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 85;
+  }
+  .mobile-nav-panel a {
+    padding: 12px 10px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    border-radius: var(--radius-sm);
+  }
+  .mobile-nav-panel a:hover {
+    background: var(--bg-sunken);
+  }
+  .mobile-nav-panel a.btn-pill-nav {
+    margin-top: 8px;
+    justify-content: center;
+    display: inline-flex;
+  }
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 900px) {
@@ -872,9 +1022,19 @@ section.page-section:first-of-type { border-top: none; }
 @media (max-width: 640px) {
   .container { padding: 0 16px; }
   .primary-nav a { padding: 10px 10px; font-size: 13.5px; }
-  .search-box input { width: 100px; }
   .cta-band { padding: 28px 20px; }
-  .header-row { flex-wrap: wrap; row-gap: 8px; padding: 10px 0; }
+
+  /* Below this width there usually isn't room to comfortably scroll-reveal
+     the last two tabs, and a scrollable strip with no visible scrollbar is
+     easy to miss entirely on a touch screen. Wrap onto more than one row
+     instead, so every tab is always on screen with no gesture required. */
+  .tab-strip {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+  .tab-strip-scroll::after {
+    display: none;
+  }
 }
 
 .visually-hidden {

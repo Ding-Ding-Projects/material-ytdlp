@@ -166,7 +166,7 @@ jobs:
       # fails. See docs/features/build-and-packaging/smoke-test.md.
       - name: Smoke test the built application
         shell: cmd
-        run: node scripts\smoke-test.mjs
+        run: node scripts/smoke-test.mjs
 
       - name: Compute release tag
         id: tag
@@ -212,7 +212,7 @@ jobs:
       # still preserves the installer and every log if this fails.
       - name: Verify the installer
         shell: cmd
-        run: node scriptserify-installer.mjs
+        run: node scripts/verify-installer.mjs
 
       - name: Collect release evidence
         id: evidence

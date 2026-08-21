@@ -23,6 +23,11 @@ import {
   type HistorySnapshot,
   type HistoryStatus,
 } from '../shared/history-contract'
+import {
+  VocabularyIpcChannel,
+  type VocabularyLoadResult,
+  type VocabularyState,
+} from '../shared/vocabulary-contract'
 
 // ---------------------------------------------------------------------------
 // Deadline-enforced invoke.
@@ -175,6 +180,15 @@ const bridge = {
       const cutoff = Date.now() - retention.maxAgeDays * 24 * 60 * 60 * 1000
       return commits.filter((c) => c.timestamp >= cutoff)
     },
+  },
+
+  vocabulary: {
+    /** Opens the native file picker; on a real (non-cancelled) selection, validates and — only on success — caches it. */
+    pickAndLoad: () => invokeWithDeadline<VocabularyLoadResult>(VocabularyIpcChannel.PickAndLoad, LONG),
+    /** Re-reads and revalidates the on-disk cache. Fails closed to the empty state if it is missing, corrupt, or stale. */
+    getState: () => invokeWithDeadline<VocabularyState>(VocabularyIpcChannel.GetState, SHORT),
+    /** Purges the cache and restores original shipped wording immediately. */
+    clear: () => invokeWithDeadline<VocabularyState>(VocabularyIpcChannel.Clear, SHORT),
   },
 }
 

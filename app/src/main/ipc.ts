@@ -29,6 +29,8 @@ import { resolveAllBinaries, probeVersion } from './resolve-binaries'
 import { getStore } from './store'
 import { getHistoryStore } from './history'
 import { YtDlpManager } from './ytdlp'
+import { VocabularyIpcChannel } from '../shared/vocabulary-contract'
+import { clearVocabularyCache, loadVocabularyFromDisk, pickAndLoadVocabulary } from './vocabulary'
 
 // ---------------------------------------------------------------------------
 // History auto-recording.
@@ -284,6 +286,12 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): YtDl
   )
   ipcMain.handle(HistoryIpcChannel.GetFilters, () => historyStore.getFilters())
   ipcMain.handle(HistoryIpcChannel.SetFilters, (_event, filters: HistoryFilterState) => historyStore.setFilters(filters))
+
+  // -- Personal vocabulary (local-only; no built-in mappings ever ship) -----
+
+  ipcMain.handle(VocabularyIpcChannel.PickAndLoad, () => pickAndLoadVocabulary())
+  ipcMain.handle(VocabularyIpcChannel.GetState, () => loadVocabularyFromDisk())
+  ipcMain.handle(VocabularyIpcChannel.Clear, () => clearVocabularyCache())
 
   return manager
 }

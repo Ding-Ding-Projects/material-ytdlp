@@ -192,6 +192,28 @@ jobs:
           $joined | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
+      # The smoke test above launches app/dist/win-unpacked -- the build output,
+      # not the artifact a user receives. That blind spot is exactly how a
+      # release shipped whose installer created no shortcut and appeared to do
+      # nothing: the app had no Squirrel lifecycle handling, so Squirrel launched
+      # it, the app opened a window and sat there, and the install sequence that
+      # waits for that process to exit never reached shortcut creation. Nothing
+      # in the build, the package step or the smoke test could see it.
+      #
+      # This step runs the real Setup.exe on the ephemeral runner and asserts the
+      # outcomes a user would notice -- the install directory, Update.exe, the
+      # installed executable, and a genuine .lnk on disk (searched recursively:
+      # Squirrel nests shortcuts under a publisher subfolder, and a top-level-only
+      # scan reports a false negative). It then uninstalls through Squirrel's own
+      # path and asserts the shortcut and install directory are actually gone.
+      #
+      # Gating, like the smoke test and for the same reason: an installer that
+      # does not install is worse than no release. The always-run collector below
+      # still preserves the installer and every log if this fails.
+      - name: Verify the installer
+        shell: cmd
+        run: node scriptserify-installer.mjs
+
       - name: Collect release evidence
         id: evidence
         # Evidence is informational. It must never withhold a release: a run

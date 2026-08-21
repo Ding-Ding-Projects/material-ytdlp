@@ -1,0 +1,335 @@
+/* yt-dlp Studio — subpage styles (features / download / building / faq / roadmap)
+   Layered on top of assets/theme.css. Reuses the existing custom-property tokens;
+   defines a small number of new ones following the same light/dark contract. */
+
+:root {
+  --status-built-bg: var(--ok-tint);
+  --status-built-text: var(--ok);
+  --status-planned-bg: var(--pill-bg);
+  --status-planned-text: var(--text-muted);
+}
+
+/* ---------- Sub-page hero ---------- */
+
+.page-hero {
+  padding: 8px 0 12px;
+}
+.page-hero h1 {
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.1;
+  margin: 6px 0 12px;
+}
+.page-hero .hero-lede {
+  max-width: 62ch;
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-faint);
+  margin: 0 0 10px;
+  flex-wrap: wrap;
+}
+.breadcrumb a { color: var(--text-muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb svg { flex: none; }
+
+/* ---------- Status pills for feature groups ---------- */
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.status-pill-built { background: var(--status-built-bg); color: var(--status-built-text); }
+.status-pill-planned { background: var(--status-planned-bg); color: var(--status-planned-text); }
+.status-pill svg { flex: none; }
+
+/* ---------- Feature group sections ---------- */
+
+.group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+.group-head h2 { margin: 0; font-size: 20px; }
+
+.feature-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  margin-bottom: 8px;
+}
+.feature-table caption { text-align: left; }
+.feature-table th,
+.feature-table td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.feature-table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+  font-weight: 700;
+}
+.feature-table td:first-child { font-weight: 600; white-space: nowrap; }
+.feature-table td:last-child { color: var(--text-muted); }
+.feature-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); min-width: 0; }
+.feature-table-wrap .feature-table { margin-bottom: 0; }
+.feature-table-wrap .feature-table th:first-child,
+.feature-table-wrap .feature-table td:first-child { padding-left: 16px; }
+
+.feature-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 22px;
+  background: var(--bg-raised);
+}
+.feature-group > p.group-lede {
+  color: var(--text-muted);
+  font-size: 14.5px;
+  margin: 0 0 16px;
+  max-width: 68ch;
+}
+
+/* ---------- Roadmap ---------- */
+
+.roadmap-phase {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  margin-bottom: 18px;
+  background: var(--bg-raised);
+}
+.roadmap-phase-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.roadmap-phase-head h2 { margin: 0; font-size: 18px; }
+.roadmap-progress {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.roadmap-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.roadmap-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14.5px;
+}
+.roadmap-list li:last-child { border-bottom: none; }
+.roadmap-check {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+.roadmap-list li[data-done="true"] .roadmap-check { background: var(--ok-tint); color: var(--ok); }
+.roadmap-list li[data-done="false"] .roadmap-check { background: var(--pill-bg); color: var(--text-faint); }
+.roadmap-list li[data-done="false"] .roadmap-item-text { color: var(--text-muted); }
+.roadmap-note {
+  display: block;
+  font-size: 12.5px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+/* ---------- Download page ---------- */
+
+.download-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 26px;
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-sm);
+}
+.requirement-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin: 18px 0;
+}
+.requirement-grid .checklist-card { align-self: stretch; }
+.what-inside-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.what-inside-list li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14.5px;
+  color: var(--text-muted);
+}
+.what-inside-list li svg { flex: none; color: var(--accent); margin-top: 3px; }
+.what-inside-list li strong { color: var(--text); }
+
+/* ---------- Building page: numbered steps + copy buttons ---------- */
+
+.build-step {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  margin-bottom: 18px;
+  background: var(--bg-raised);
+}
+.build-step h3 { margin: 0 0 8px; font-size: 17px; }
+.build-step p { margin: 0 0 12px; color: var(--text-muted); font-size: 14.5px; }
+.command-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+.command-row .command-field {
+  flex: 1;
+  margin-bottom: 0;
+}
+.copy-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 0 12px;
+  cursor: pointer;
+}
+.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+.copy-btn:focus-visible,
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.copy-btn[data-copied="true"] { color: var(--ok); border-color: var(--ok); }
+
+/* ---------- FAQ page extras ---------- */
+
+.faq-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 4px;
+}
+.faq-toc a {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.faq-toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ---------- Sub-nav pill row (used on features.html to jump groups) ---------- */
+
+.jump-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 26px;
+}
+.jump-row a {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  background: var(--bg-sunken);
+}
+.jump-row a:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ---------- Static-preview labelling ---------- */
+
+.static-note {
+  font-size: 12px;
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* ---------- Local toast region (pages.js) ---------- */
+
+.pg-toast-region {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: min(320px, calc(100vw - 24px));
+}
+.pg-toast {
+  background: var(--toast-bg);
+  color: var(--toast-text);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.pg-toast[data-shown="true"] { opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .pg-toast { transition: none; }
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 720px) {
+  .requirement-grid { grid-template-columns: 1fr; }
+  .command-row { flex-direction: column; }
+  .copy-btn { align-self: flex-start; padding: 8px 12px; }
+  .feature-table-wrap { border-radius: var(--radius-sm); min-width: 0; }
+  .feature-group,
+  .container > .feature-table-wrap,
+  .container { min-width: 0; }
+}
+
+@media (max-width: 480px) {
+  .feature-group { padding: 18px; }
+  .roadmap-phase { padding: 16px 18px; }
+  .build-step { padding: 16px 18px; }
+  .download-card { padding: 18px; }
+}

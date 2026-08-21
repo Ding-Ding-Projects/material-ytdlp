@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAQ — yt-dlp Studio</title>
+<meta name="description" content="Honest answers about yt-dlp Studio: whether it's affiliated with yt-dlp, why the installer is unsigned, why it's large, whether it phones home, and what happens when yt-dlp breaks on a site.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='56' fill='%230f1414'/%3E%3Crect x='48' y='48' width='160' height='160' rx='36' fill='none' stroke='%2382d5cc' stroke-width='18'/%3E%3Cpath d='M128 76 L128 148 M92 122 L128 158 L164 122' fill='none' stroke='%2382d5cc' stroke-width='18' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+<meta property="og:title" content="FAQ — yt-dlp Studio">
+<meta property="og:description" content="Honest answers: affiliation, unsigned installer, size, no phone-home, and what happens when yt-dlp breaks on a site.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ding-ding-projects.github.io/material-ytdlp/faq.html">
+<meta property="og:site_name" content="yt-dlp Studio">
+<meta property="og:image" content="https://ding-ding-projects.github.io/material-ytdlp/social-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="yt-dlp Studio wordmark on a dark terminal-styled card">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FAQ — yt-dlp Studio">
+<meta name="twitter:description" content="Honest answers about affiliation, signing, size, privacy and upstream breakage.">
+<meta name="twitter:image" content="https://ding-ding-projects.github.io/material-ytdlp/social-preview.png">
+<meta name="theme-color" content="#0f766e">
+
+<link rel="stylesheet" href="assets/theme.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="container header-row">
+    <button type="button" class="icon-btn mobile-menu-toggle" data-mobile-menu-toggle aria-expanded="false" aria-controls="mobile-nav-panel" aria-label="Open menu">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+    </button>
+    <a class="wordmark" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 256 256" fill="none" aria-hidden="true">
+        <rect width="256" height="256" rx="56" fill="var(--accent)"></rect>
+        <rect x="48" y="48" width="160" height="160" rx="36" fill="none" stroke="var(--accent-contrast)" stroke-width="18"></rect>
+        <path d="M128 76 L128 148 M92 122 L128 158 L164 122" fill="none" stroke="var(--accent-contrast)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      yt-dlp Studio
+    </a>
+    <nav class="primary-nav" aria-label="Primary">
+      <a href="features.html">Features</a>
+      <a href="download.html">Download</a>
+      <a href="building.html">Building</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="faq.html" aria-current="page">FAQ</a>
+      <a href="docs.html">Documentation</a>
+    </nav>
+    <div class="header-spacer"></div>
+
+    <button type="button" class="icon-btn mobile-search-toggle" data-mobile-search-toggle aria-expanded="false" aria-controls="site-search-input" aria-label="Search this page">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"></circle><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+    </button>
+
+    <div class="search-wrap" data-site-search>
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"></circle><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+        <label class="visually-hidden" for="site-search-input">Search this page</label>
+        <input id="site-search-input" type="text" placeholder="Search the FAQ" data-search-input autocomplete="off">
+        <button type="button" class="regex-toggle-btn" data-regex-toggle aria-haspopup="dialog" aria-expanded="false" aria-controls="regex-popover">.*</button>
+        <button type="button" class="icon-btn mobile-search-close" data-mobile-search-close aria-label="Close search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></button>
+      </div>
+      <div class="search-results" data-search-results hidden></div>
+
+      <div class="regex-popover" id="regex-popover" data-regex-popover role="dialog" aria-label="Regex search builder" hidden>
+        <h3>Regex search builder</h3>
+        <div class="field">
+          <label for="regex-pattern">Pattern</label>
+          <input id="regex-pattern" type="text" data-regex-pattern placeholder="e.g. phone|network|extractor" autocomplete="off">
+        </div>
+        <div class="regex-row" aria-label="Insert common tokens">
+          <button type="button" data-regex-insert="^">^ start</button>
+          <button type="button" data-regex-insert="$">$ end</button>
+          <button type="button" data-regex-insert="\d">\d digit</button>
+          <button type="button" data-regex-insert="\w">\w word</button>
+          <button type="button" data-regex-insert="\s">\s space</button>
+          <button type="button" data-regex-insert="[]">[ ] class</button>
+          <button type="button" data-regex-insert="()">( ) group</button>
+          <button type="button" data-regex-insert="|">| or</button>
+          <button type="button" data-regex-insert="*">* 0+</button>
+          <button type="button" data-regex-insert="+">+ 1+</button>
+          <button type="button" data-regex-insert="?">? optional</button>
+        </div>
+        <div class="regex-flags">
+          <label><input type="checkbox" data-regex-flag="m"> Multiline (m)</label>
+          <label><input type="checkbox" data-regex-flag="u"> Unicode (u)</label>
+        </div>
+        <div class="field">
+          <label for="regex-sample">Sample text</label>
+          <textarea id="regex-sample" data-regex-sample rows="3" placeholder="Paste or type text to test the pattern against, or leave blank and click Apply to search the page.">The app makes zero network requests on its own.</textarea>
+        </div>
+        <p class="regex-status" data-regex-status>Enter a pattern to preview matches.</p>
+        <div class="regex-matches" data-regex-matches></div>
+        <div class="regex-actions">
+          <button type="button" class="btn btn-outline btn-sm" data-regex-clear>Clear</button>
+          <button type="button" class="btn btn-primary btn-sm" data-regex-apply>Apply to search</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="icon-btn" data-theme-toggle aria-pressed="false" aria-label="Switch to dark theme">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M15 10.5A6.5 6.5 0 017.5 3 6.5 6.5 0 1015 10.5z" stroke="currentColor" stroke-width="1.4"></path></svg>
+      </button>
+      <a class="btn-pill-nav" href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases">View releases</a>
+    </div>
+  </div>
+  <div class="mobile-nav-panel" id="mobile-nav-panel" data-mobile-nav-panel hidden>
+    <a href="features.html">Features</a>
+    <a href="download.html">Download</a>
+    <a href="building.html">Building</a>
+    <a href="roadmap.html">Roadmap</a>
+    <a href="faq.html">FAQ</a>
+    <a href="docs.html">Documentation</a>
+    <a class="btn-pill-nav" href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases">View releases</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="page-section" style="border-top:none; padding-top:0;">
+    <div class="container page-hero">
+      <p class="breadcrumb"><a href="index.html">Home</a>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        FAQ</p>
+      <p class="eyebrow">Real questions, honest answers</p>
+      <h1 id="faq-page-title" data-index data-index-section="FAQ">Frequently asked questions.</h1>
+      <p class="hero-lede" data-index data-index-section="FAQ">Short, direct answers. The <a href="docs.html">documentation</a> goes deeper on most of these.</p>
+      <div class="faq-toc" aria-label="Jump to a question">
+        <a href="#faq-affiliation">Affiliation</a>
+        <a href="#faq-unsigned">Unsigned installer</a>
+        <a href="#faq-size">Why so large</a>
+        <a href="#faq-privacy">Phoning home</a>
+        <a href="#faq-breakage">yt-dlp breaks on a site</a>
+        <a href="#faq-tests">No automated tests</a>
+        <a href="#faq-release">Is there a release</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section" style="padding-top:0;">
+    <div class="container">
+      <div class="faq-list">
+
+        <details class="faq-item" id="faq-affiliation">
+          <summary data-index data-index-section="FAQ">
+            Is this the official yt-dlp project, or affiliated with it?
+            <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </summary>
+          <div class="faq-body" data-index data-index-section="FAQ">No. yt-dlp Studio is an independent desktop application that wraps the open-source <a href="https://github.com/yt-dlp/yt-dlp" rel="noopener">yt-dlp</a> project and bundles a build of it for convenience. It is a front-end — it does not fork, replace, or claim credit for the download engine itself. All credit for the actual extraction and downloading work belongs to the yt-dlp maintainers and contributors, and this project is not affiliated with or endorsed by them in any way.</div>
+        </details>
+
+        <details class="faq-item" id="faq-unsigned">
+          <summary data-index data-index-section="FAQ">
+            Why is the installer unsigned, and should I trust that?
+            <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </summary>
+          <div class="faq-body" data-index data-index-section="FAQ">Code signing costs money on an ongoing basis, and this project deliberately doesn't use it. That means Windows SmartScreen will show an unknown-publisher warning the first time you run a new build — expected behaviour for any unsigned installer, not evidence of tampering. Check that you downloaded it from the <a href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases" rel="noopener">official GitHub Releases page</a>, and compare the SHA-256 in the release notes if you want to verify the exact bytes. See the <a href="download.html">download page</a> for the full walkthrough.</div>
+        </details>
+
+        <details class="faq-item" id="faq-size">
+          <summary data-index data-index-section="FAQ">
+            Why is the installer so much larger than a typical yt-dlp wrapper?
+            <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </summary>
+          <div class="faq-body" data-index data-index-section="FAQ">Because it bundles two compiled binaries most wrappers make you install separately: a full <code>yt-dlp.exe</code> compiled with PyInstaller, and a full ffmpeg build. Both are compiled from pinned source at build time rather than fetched as prebuilt binaries — see <a href="building.html">building from source</a>. The trade is a bigger download in exchange for genuinely nothing else to install: no Python, no separate ffmpeg, no PATH configuration.</div>
+        </details>
+
+        <details class="faq-item" id="faq-privacy">
+          <summary data-index data-index-section="FAQ">
+            Does the app phone home, or send any telemetry?
+            <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </summary>
+          <div class="faq-body" data-index data-index-section="FAQ">No. The application itself makes zero network requests on its own — the only network traffic is what yt-dlp itself generates when you actually start a download, which is expected of a download tool. This isn't just a claim: the smoke test that gates every release specifically asserts the app makes zero network requests, and fails the release if that ever stops being true.</div>
+        </details>
+
+        <details class="faq-item" id="faq-breakage">
+          <summary data-index data-index-section="FAQ">
+            What happens when yt-dlp breaks on a site because the site changed?
+            <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </summary>
+          <div class="faq-body" data-index data-index-section="FAQ">The same thing that happens for every yt-dlp user: the upstream project ships a fix, usually within days, sometimes hours. yt-dlp Studio's <code>vendor/yt-dlp</code> submodule tracks yt-dlp's <code>master</code> branch and is advanced on every pull specifically so the bundled binary can pick up those fixes quickly, rather than being frozen against an old release. The next build after upstream's fix carries it.</div>
+        </details>
+
+        <details class="faq-item" id="faq-tests">
+          <summary data-index data-index-section="FAQ">
+            Are there automated tests? How is a release verified at all?
+            <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </summary>
+          <div class="faq-body" data-index data-index-section="FAQ">There is currently no broader automated test suite — a deliberate, stated gap in this release pass, not an oversight (see <a href="roadmap.html">Phase 5 of the roadmap</a>). What does gate a release is a smoke test: it launches the real built application, asserts that it renders, that all three bundled binaries (the app itself, <code>yt-dlp.exe</code>, and ffmpeg) actually run, and that the app makes zero network requests. A build that fails any of that does not ship.</div>
+        </details>
+
+        <details class="faq-item" id="faq-release">
+          <summary data-index data-index-section="FAQ">
+            Is there a release yet? Where do I get it?
+            <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </summary>
+          <div class="faq-body" data-index data-index-section="FAQ">Not yet published. See the <a href="download.html">download page</a> for what will be there once one ships, or <a href="building.html">build it from source</a> in the meantime — the same scripts a release would use.</div>
+        </details>
+
+        <details class="faq-item" id="faq-lgpl">
+          <summary data-index data-index-section="FAQ">
+            Why doesn't the bundled ffmpeg support x264 encoding?
+            <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </summary>
+          <div class="faq-body" data-index data-index-section="FAQ">Because the ffmpeg build is compiled as LGPL-only — <code>--enable-gpl</code> is never passed and <code>--enable-nonfree</code> never will be — so the GPL-licensed <code>libx264</code> encoder isn't compiled in. Muxing, remuxing, format conversion and audio extraction (most of what yt-dlp Studio actually uses ffmpeg for) are unaffected. See the licensing explanation on the <a href="building.html#lgpl">building page</a>.</div>
+        </details>
+
+        <details class="faq-item" id="faq-platforms">
+          <summary data-index data-index-section="FAQ">
+            Will there be a macOS or Linux build?
+            <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </summary>
+          <div class="faq-body" data-index data-index-section="FAQ">The project's current, deliberate delivery scope is Windows only. That may change later, but it isn't a current commitment and isn't on the <a href="roadmap.html">roadmap</a> as it stands today.</div>
+        </details>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section">
+    <div class="container">
+      <div class="cta-band">
+        <p class="eyebrow" style="margin-bottom:8px;">Still have a question?</p>
+        <h2>Open an issue on the source repository.</h2>
+        <p>The maintainers read GitHub issues on the project repository directly.</p>
+        <a class="btn btn-primary" href="https://github.com/Ding-Ding-Projects/material-ytdlp/issues" rel="noopener">Open an issue</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-row">
+    <p class="footer-note">yt-dlp Studio is an independent project and is not affiliated with, endorsed by, or produced by the yt-dlp maintainers. This site is a landing and documentation surface — it is not the application itself.</p>
+    <div class="footer-links">
+      <a href="features.html">Features</a>
+      <a href="download.html">Download</a>
+      <a href="building.html">Building</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="faq.html">FAQ</a>
+      <a href="docs.html">Documentation</a>
+      <a href="https://github.com/Ding-Ding-Projects/material-ytdlp" rel="noopener">Source</a>
+      <a href="https://github.com/yt-dlp/yt-dlp" rel="noopener">Upstream yt-dlp</a>
+      <a href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases" rel="noopener">Releases</a>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+<script src="assets/pages.js"></script>
+</body>
+</html>

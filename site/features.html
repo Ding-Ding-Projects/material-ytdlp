@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Features — yt-dlp Studio</title>
+<meta name="description" content="Every feature of yt-dlp Studio, grouped and split honestly between what works today and what is committed on the roadmap but not built yet.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='56' fill='%230f1414'/%3E%3Crect x='48' y='48' width='160' height='160' rx='36' fill='none' stroke='%2382d5cc' stroke-width='18'/%3E%3Cpath d='M128 76 L128 148 M92 122 L128 158 L164 122' fill='none' stroke='%2382d5cc' stroke-width='18' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+<meta property="og:title" content="Features — yt-dlp Studio">
+<meta property="og:description" content="Every feature of yt-dlp Studio, split honestly between what works today and what is committed but not built yet.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ding-ding-projects.github.io/material-ytdlp/features.html">
+<meta property="og:site_name" content="yt-dlp Studio">
+<meta property="og:image" content="https://ding-ding-projects.github.io/material-ytdlp/social-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="yt-dlp Studio wordmark on a dark terminal-styled card">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Features — yt-dlp Studio">
+<meta name="twitter:description" content="Every feature, split honestly between what works today and what's on the roadmap.">
+<meta name="twitter:image" content="https://ding-ding-projects.github.io/material-ytdlp/social-preview.png">
+<meta name="theme-color" content="#0f766e">
+
+<link rel="stylesheet" href="assets/theme.css">
+<link rel="stylesheet" href="assets/pages.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="container header-row">
+    <button type="button" class="icon-btn mobile-menu-toggle" data-mobile-menu-toggle aria-expanded="false" aria-controls="mobile-nav-panel" aria-label="Open menu">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+    </button>
+    <a class="wordmark" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 256 256" fill="none" aria-hidden="true">
+        <rect width="256" height="256" rx="56" fill="var(--accent)"></rect>
+        <rect x="48" y="48" width="160" height="160" rx="36" fill="none" stroke="var(--accent-contrast)" stroke-width="18"></rect>
+        <path d="M128 76 L128 148 M92 122 L128 158 L164 122" fill="none" stroke="var(--accent-contrast)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      yt-dlp Studio
+    </a>
+    <nav class="primary-nav" aria-label="Primary">
+      <a href="features.html" aria-current="page">Features</a>
+      <a href="download.html">Download</a>
+      <a href="building.html">Building</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="faq.html">FAQ</a>
+      <a href="docs.html">Documentation</a>
+    </nav>
+    <div class="header-spacer"></div>
+
+    <button type="button" class="icon-btn mobile-search-toggle" data-mobile-search-toggle aria-expanded="false" aria-controls="site-search-input" aria-label="Search this page">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"></circle><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+    </button>
+
+    <div class="search-wrap" data-site-search>
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"></circle><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+        <label class="visually-hidden" for="site-search-input">Search this page</label>
+        <input id="site-search-input" type="text" placeholder="Search features" data-search-input autocomplete="off">
+        <button type="button" class="regex-toggle-btn" data-regex-toggle aria-haspopup="dialog" aria-expanded="false" aria-controls="regex-popover">.*</button>
+        <button type="button" class="icon-btn mobile-search-close" data-mobile-search-close aria-label="Close search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></button>
+      </div>
+      <div class="search-results" data-search-results hidden></div>
+
+      <div class="regex-popover" id="regex-popover" data-regex-popover role="dialog" aria-label="Regex search builder" hidden>
+        <h3>Regex search builder</h3>
+        <div class="field">
+          <label for="regex-pattern">Pattern</label>
+          <input id="regex-pattern" type="text" data-regex-pattern placeholder="e.g. queue|console" autocomplete="off">
+        </div>
+        <div class="regex-row" aria-label="Insert common tokens">
+          <button type="button" data-regex-insert="^">^ start</button>
+          <button type="button" data-regex-insert="$">$ end</button>
+          <button type="button" data-regex-insert="\d">\d digit</button>
+          <button type="button" data-regex-insert="\w">\w word</button>
+          <button type="button" data-regex-insert="\s">\s space</button>
+          <button type="button" data-regex-insert="[]">[ ] class</button>
+          <button type="button" data-regex-insert="()">( ) group</button>
+          <button type="button" data-regex-insert="|">| or</button>
+          <button type="button" data-regex-insert="*">* 0+</button>
+          <button type="button" data-regex-insert="+">+ 1+</button>
+          <button type="button" data-regex-insert="?">? optional</button>
+        </div>
+        <div class="regex-flags">
+          <label><input type="checkbox" data-regex-flag="m"> Multiline (m)</label>
+          <label><input type="checkbox" data-regex-flag="u"> Unicode (u)</label>
+        </div>
+        <div class="field">
+          <label for="regex-sample">Sample text</label>
+          <textarea id="regex-sample" data-regex-sample rows="3" placeholder="Paste or type text to test the pattern against, or leave blank and click Apply to search the page.">Argument-array execution, real progress, honest pause.</textarea>
+        </div>
+        <p class="regex-status" data-regex-status>Enter a pattern to preview matches.</p>
+        <div class="regex-matches" data-regex-matches></div>
+        <div class="regex-actions">
+          <button type="button" class="btn btn-outline btn-sm" data-regex-clear>Clear</button>
+          <button type="button" class="btn btn-primary btn-sm" data-regex-apply>Apply to search</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="icon-btn" data-theme-toggle aria-pressed="false" aria-label="Switch to dark theme">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M15 10.5A6.5 6.5 0 017.5 3 6.5 6.5 0 1015 10.5z" stroke="currentColor" stroke-width="1.4"></path></svg>
+      </button>
+      <a class="btn-pill-nav" href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases">View releases</a>
+    </div>
+  </div>
+  <div class="mobile-nav-panel" id="mobile-nav-panel" data-mobile-nav-panel hidden>
+    <a href="features.html">Features</a>
+    <a href="download.html">Download</a>
+    <a href="building.html">Building</a>
+    <a href="roadmap.html">Roadmap</a>
+    <a href="faq.html">FAQ</a>
+    <a href="docs.html">Documentation</a>
+    <a class="btn-pill-nav" href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases">View releases</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="page-section" style="border-top:none; padding-top:0;">
+    <div class="container page-hero">
+      <p class="breadcrumb"><a href="index.html">Home</a>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        Features</p>
+      <p class="eyebrow">Full feature surface</p>
+      <h1 id="features-title" data-index data-index-section="Features">Everything yt-dlp Studio does — and everything it is going to do.</h1>
+      <p class="hero-lede">Grouped by area, each item marked plainly as <span class="status-pill status-pill-built"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.5l2.2 2.2L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>Built today</span> or <span class="status-pill status-pill-planned"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.4"></circle></svg>Committed, not built yet</span>. Nothing here is invented — it mirrors <a href="https://github.com/Ding-Ding-Projects/material-ytdlp/blob/main/ROADMAP.md" rel="noopener">ROADMAP.md</a> in the source repository.</p>
+      <div class="jump-row" aria-label="Jump to a feature group">
+        <a href="#group-downloading">Downloading</a>
+        <a href="#group-installer">What's inside the installer</a>
+        <a href="#group-interface">Interface</a>
+        <a href="#group-site">The site</a>
+        <a href="#group-planned">Committed but not built</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section" id="group-downloading">
+    <div class="container">
+      <div class="group-head">
+        <h2 data-index data-index-section="Features" id="downloading-heading">Downloading</h2>
+        <span class="status-pill status-pill-built"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.5l2.2 2.2L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>Built today</span>
+      </div>
+      <div class="feature-table-wrap">
+        <table class="feature-table">
+          <caption class="visually-hidden">Downloading features</caption>
+          <thead><tr><th scope="col">Feature</th><th scope="col">What it does</th></tr></thead>
+          <tbody>
+            <tr data-index data-index-section="Features"><td>Easy mode</td><td>Paste a URL, pick a folder, press Download. Quality, subtitles and thumbnail switches, nothing else in the way.</td></tr>
+            <tr data-index data-index-section="Features"><td>Expert mode</td><td>All 16 option groups and 250 flags from yt-dlp's own documentation, each rendered as the right control — switch, text, slider, select, date, path or chips — with its real help text.</td></tr>
+            <tr data-index data-index-section="Features"><td>Plain mode</td><td>A raw argument box for when you already know exactly what you want.</td></tr>
+            <tr data-index data-index-section="Features"><td>Live command preview</td><td>The exact arguments that will be spawned, updating as you change anything.</td></tr>
+            <tr data-index data-index-section="Features"><td>Argument-array execution</td><td>The command is passed as an array, never through a shell, so a URL can never be interpreted as one.</td></tr>
+            <tr data-index data-index-section="Features"><td>Real progress</td><td>Parsed from <code>--progress-template</code> and aggregated across fragments, not scraped off the human-readable bar.</td></tr>
+            <tr data-index data-index-section="Features"><td>Queue</td><td>Multiple jobs with per-job state, cancel, retry and remove.</td></tr>
+            <tr data-index data-index-section="Features"><td>Live console</td><td>Real stdout and stderr, with errors and warnings marked.</td></tr>
+            <tr data-index data-index-section="Features"><td>Honest pause</td><td>Windows has no <code>SIGSTOP</code>, so the control reads "Stop (resume continues the file)" and resumes with <code>--continue</code> rather than pretending to suspend a process.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section" id="group-installer">
+    <div class="container">
+      <div class="group-head">
+        <h2 data-index data-index-section="Features" id="installer-heading">What's inside the installer</h2>
+        <span class="status-pill status-pill-built"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.5l2.2 2.2L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>Built today</span>
+      </div>
+      <div class="feature-table-wrap">
+        <table class="feature-table">
+          <caption class="visually-hidden">Installer contents</caption>
+          <thead><tr><th scope="col">Feature</th><th scope="col">What it does</th></tr></thead>
+          <tbody>
+            <tr data-index data-index-section="Features"><td>yt-dlp built from source</td><td>Compiled from the pinned <code>vendor/yt-dlp</code> submodule with PyInstaller during the build. Not downloaded, not a binary of unknown provenance.</td></tr>
+            <tr data-index data-index-section="Features"><td>ffmpeg built from source</td><td>Compiled from the pinned <code>vendor/ffmpeg</code> submodule. An LGPL build: <code>--enable-gpl</code> is never passed and <code>--enable-nonfree</code> never will be.</td></tr>
+            <tr data-index data-index-section="Features"><td>Dependencies track upstream</td><td>Both submodules follow <code>master</code> and are advanced on every pull, because yt-dlp breaks when a site changes and is fixed upstream within days.</td></tr>
+            <tr data-index data-index-section="Features"><td>Build provenance in every release</td><td>Release notes carry the yt-dlp version, the exact submodule commit it was built from, and the SHA-256 of both the binary and the installer.</td></tr>
+            <tr data-index data-index-section="Features"><td>One-click builds</td><td><code>build.bat</code> and <code>build-installer.bat</code> install every dependency themselves, from a bare Windows machine, with a silent <code>/s</code> mode. See <a href="building.html">building from source</a>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section" id="group-interface">
+    <div class="container">
+      <div class="group-head">
+        <h2 data-index data-index-section="Features" id="interface-heading">Interface</h2>
+        <span class="status-pill status-pill-built"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.5l2.2 2.2L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>Built today</span>
+      </div>
+      <div class="feature-table-wrap">
+        <table class="feature-table">
+          <caption class="visually-hidden">Interface features</caption>
+          <thead><tr><th scope="col">Feature</th><th scope="col">What it does</th></tr></thead>
+          <tbody>
+            <tr data-index data-index-section="Features"><td>Material Design 3</td><td>Tokens, typography, shape and elevation throughout, on a dark teal palette.</td></tr>
+            <tr data-index data-index-section="Features"><td>Frameless window</td><td>A custom Material title bar rather than the operating system's default chrome.</td></tr>
+            <tr data-index data-index-section="Features"><td>Navigation rail</td><td>Destinations down the left, with unbuilt ones plainly labelled as unbuilt.</td></tr>
+            <tr data-index data-index-section="Features"><td>Catalog drift guard</td><td>A test fails the build if the shipped option catalog and the design reference ever disagree — verified by breaking it on purpose and watching it go red.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section" id="group-site">
+    <div class="container">
+      <div class="group-head">
+        <h2 data-index data-index-section="Features" id="site-heading">The site</h2>
+        <span class="status-pill status-pill-built"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.5l2.2 2.2L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>Built today</span>
+      </div>
+      <div class="feature-table-wrap">
+        <table class="feature-table">
+          <caption class="visually-hidden">Site features</caption>
+          <thead><tr><th scope="col">Feature</th><th scope="col">What it does</th></tr></thead>
+          <tbody>
+            <tr data-index data-index-section="Features"><td>Landing and documentation site</td><td>Fully self-contained: no CDN, no remote fonts, no analytics, nothing fetched at page load.</td></tr>
+            <tr data-index data-index-section="Features"><td>Command planner</td><td>Composes a real yt-dlp command from form inputs, with copy-to-clipboard and a graceful fallback.</td></tr>
+            <tr data-index data-index-section="Features"><td>Page search with a regex builder</td><td>Plain text by default, regex as an explicit opt-in, with an anchored builder popover — the box at the top of this page is a live example.</td></tr>
+            <tr data-index data-index-section="Features"><td>Light and dark themes</td><td>Follows the system by default, with a toggle that persists.</td></tr>
+            <tr data-index data-index-section="Features"><td>Genuinely mobile</td><td>Verified at 375px: no off-screen controls, no sideways scroll, on every page in this site including this one.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section tint-section" id="group-planned">
+    <div class="container">
+      <div class="section-head">
+        <h2 data-index data-index-section="Features" id="planned-heading">Committed but not built yet</h2>
+        <p>Everything below is a real commitment with a row in <a href="roadmap.html">the roadmap</a>, not a claim about the current build. None of it ships today. It is listed in full because an absence that reads as a decision is better than one that reads as an oversight — and because this is the standard every surface in the project is eventually held to.</p>
+      </div>
+
+      <div class="feature-group">
+        <div class="group-head"><h3 data-index data-index-section="Features">Language and voice</h3><span class="status-pill status-pill-planned">Planned</span></div>
+        <div class="feature-table-wrap">
+          <table class="feature-table">
+            <tbody>
+              <tr data-index data-index-section="Features"><td>Three language modes</td><td>English, playful Hong Kong Cantonese, and a bilingual mode showing both without crowding the layout.</td></tr>
+              <tr data-index data-index-section="Features"><td>Two playfulness sliders</td><td>One per language, 1 (fully serious) to 5 (maximum playfulness), wired to the copy the app actually renders. Voice changes; the facts never do.</td></tr>
+              <tr data-index data-index-section="Features"><td>Emoji toggle</td><td>Decorative emoji in dialogs and message boxes, on or off, never inside button or control labels.</td></tr>
+              <tr data-index data-index-section="Features"><td>Spoken narrator</td><td>Text-to-speech for app events, off by default, with per-language voice, rate and pitch selection, a serialised queue, and deference to an active screen reader.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="feature-group">
+        <div class="group-head"><h3 data-index data-index-section="Features">Accessibility and focus</h3><span class="status-pill status-pill-planned">Planned</span></div>
+        <div class="feature-table-wrap">
+          <table class="feature-table">
+            <tbody>
+              <tr data-index data-index-section="Features"><td>ADHD modes</td><td>Five independent toggles — Focus, Low stimulation, Time awareness, One thing at a time, Momentum — all off by default. Interface accommodations, never medical claims.</td></tr>
+              <tr data-index data-index-section="Features"><td>School mode</td><td>One shared switch that hides the playful capabilities across every app at once, renameable, and unlocked with a locally verified credential. A user-experience lock, not a security boundary.</td></tr>
+              <tr data-index data-index-section="Features"><td>Unlock ladder</td><td>Locked out? Play your way out: dim sum, then ten quick sums, then whack-a-mole. Clears the waiting, never the credential, and is budgeted so it can never become a cheaper brute force.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="feature-group">
+        <div class="group-head"><h3 data-index data-index-section="Features">Customisation</h3><span class="status-pill status-pill-planned">Planned</span></div>
+        <div class="feature-table-wrap">
+          <table class="feature-table">
+            <tbody>
+              <tr data-index data-index-section="Features"><td>Per-element appearance editor</td><td>Right-click any rendered element and restyle it: word-processor-depth typography, every installed font, spacing, shape, elevation and state.</td></tr>
+              <tr data-index data-index-section="Features"><td>Infinite colour picker</td><td>A continuous spectrum with numeric entry, plus a translator between HEX, RGB, HSL, HSV, HWB, CIELAB, OKLCH and CMYK, with contrast readouts and an animated rainbow option.</td></tr>
+              <tr data-index data-index-section="Features"><td>Rename the app</td><td>Change the name the app calls itself. Display only: the data directory, installer identity and update feed never move.</td></tr>
+              <tr data-index data-index-section="Features"><td>App-mark customisation</td><td>Swap the application mark for shipped presets or your own image, converted locally with no upload.</td></tr>
+              <tr data-index data-index-section="Features"><td>Themes, density, scale</td><td>Light and dark, density, accent colour, font family and size, corner radius, reduced motion — all persisted, exportable and importable.</td></tr>
+              <tr data-index data-index-section="Features"><td>Scheduled settings</td><td>Put any of the above on a schedule, or drive it from a local API or a Home Assistant switch.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="feature-group">
+        <div class="group-head"><h3 data-index data-index-section="Features">Getting around</h3><span class="status-pill status-pill-planned">Planned</span></div>
+        <div class="feature-table-wrap">
+          <table class="feature-table">
+            <tbody>
+              <tr data-index data-index-section="Features"><td>Command palette</td><td><code>Ctrl+Shift+F</code> opens every command, page and setting, with live controls inline in the results and teleport-with-highlight to the exact element.</td></tr>
+              <tr data-index data-index-section="Features"><td>Browser-style tabs</td><td>Dockable to any edge (left by default), with overflow, reordering, pinning, groups, and four separate tab searches.</td></tr>
+              <tr data-index data-index-section="Features"><td>Regex builder on every search</td><td>Every search field, dropdown and right-click menu gets a filter with an anchored regex builder beside it. Plain text stays the default.</td></tr>
+              <tr data-index data-index-section="Features"><td>Guided forms</td><td>Pickers populated from real data instead of empty boxes, and every disabled control names the exact condition it is waiting on.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="feature-group">
+        <div class="group-head"><h3 data-index data-index-section="Features">Your data</h3><span class="status-pill status-pill-planned">Planned</span></div>
+        <div class="feature-table-wrap">
+          <table class="feature-table">
+            <tbody>
+              <tr data-index data-index-section="Features"><td>Local version history</td><td>A local Git-backed history of the download list and every setting, with a day-grouped manager, a diff inspector, restore points and rich filters.</td></tr>
+              <tr data-index data-index-section="Features"><td>Export everything</td><td>Every list and record exportable as JSON, JSONL, YAML, TOML, XML, CSV, TSV, Markdown, HTML and SQL, plus ZIP and 7z archives with the full 7z option surface.</td></tr>
+              <tr data-index data-index-section="Features"><td>Bulk actions everywhere</td><td>Multi-select, range select, honest select-all, inverse selection, and every single-item action available in bulk with a reviewable preview first.</td></tr>
+              <tr data-index data-index-section="Features"><td>Built-in authenticator</td><td>Standards-compliant TOTP with QR pairing, generated locally with no network call, secrets held in the operating-system credential vault.</td></tr>
+              <tr data-index data-index-section="Features"><td>Per-element toy locks</td><td>Lock any element behind its own password or one-time code. Explicitly for fun, not security, and it tells you exactly how to recover.</td></tr>
+              <tr data-index data-index-section="Features"><td>File converter</td><td>A local converter with a categorised adapter catalog, honest disclosure of what each conversion loses, and an unlimited queue that never loads every file into memory.</td></tr>
+              <tr data-index data-index-section="Features"><td>Local model suite</td><td>Manage locally installed Ollama models, with conservative hardware-fit verdicts backed by evidence rather than guesses.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="feature-group">
+        <div class="group-head"><h3 data-index data-index-section="Features">Everywhere else</h3><span class="status-pill status-pill-planned">Planned</span></div>
+        <div class="feature-table-wrap">
+          <table class="feature-table">
+            <tbody>
+              <tr data-index data-index-section="Features"><td>Non-blocking notifications</td><td>Corner toasts with a reviewable history. Modals reserved for decisions you must actually make.</td></tr>
+              <tr data-index data-index-section="Features"><td>Two-key destructive gate</td><td>Anything irreversible needs two independent keys and a full-range slider before it will run.</td></tr>
+              <tr data-index data-index-section="Features"><td>Changelog viewer</td><td>Every released version in-app, with a date picker, search and a link to the commit behind each entry.</td></tr>
+              <tr data-index data-index-section="Features"><td>Automatic updates</td><td>Chrome-style background updates with a non-blocking ready banner, honest about the artifacts being unsigned.</td></tr>
+              <tr data-index data-index-section="Features"><td>Companion browser extension</td><td>Popup, injected page controls, and an options page, with real download start, progress and completion surfaces.</td></tr>
+              <tr data-index data-index-section="Features"><td>Automated tests</td><td>This build ships with none, by decision. See the <a href="faq.html#faq-tests">FAQ</a> for why, and what the smoke test does instead.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section">
+    <div class="container">
+      <div class="cta-band">
+        <p class="eyebrow" style="margin-bottom:8px;">Ready when a release ships</p>
+        <h2>See the download page for what to expect at install time.</h2>
+        <p>The unsigned-installer warning, what's bundled, and system requirements.</p>
+        <a class="btn btn-primary" href="download.html">Go to download page</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-row">
+    <p class="footer-note">yt-dlp Studio is an independent project and is not affiliated with, endorsed by, or produced by the yt-dlp maintainers. This site is a landing and documentation surface — it is not the application itself.</p>
+    <div class="footer-links">
+      <a href="features.html">Features</a>
+      <a href="download.html">Download</a>
+      <a href="building.html">Building</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="faq.html">FAQ</a>
+      <a href="docs.html">Documentation</a>
+      <a href="https://github.com/Ding-Ding-Projects/material-ytdlp" rel="noopener">Source</a>
+      <a href="https://github.com/yt-dlp/yt-dlp" rel="noopener">Upstream yt-dlp</a>
+      <a href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases" rel="noopener">Releases</a>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+<script src="assets/pages.js"></script>
+</body>
+</html>

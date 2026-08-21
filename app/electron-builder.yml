@@ -18,16 +18,28 @@ win:
     - target: squirrel
       arch:
         - x64
+  # signExecutable, NOT signAndEditExecutable. Both skip code signing, but
+  # signAndEditExecutable also skips resource editing, which silently strips the
+  # icon and version metadata off the built executable - electron-builder says
+  # so in its own log line and then carries on succeeding. This one skips only
+  # the signing.
+  #
+  # Neither belongs at the top level: that fails schema validation outright on
+  # electron-builder 26, and there is no top-level signExecutable key at all.
+  signExecutable: false
 
 # Code signing is permanently prohibited for this project. The installer
 # ships unsigned on purpose; do not request, discover, or configure a
 # certificate here.
 forceCodeSigning: false
-signExecutable: false
-signAndEditExecutable: false
 
 # Squirrel.Windows only. electron-builder 26's Squirrel schema uses these
 # `squirrelWindows.*` keys; the legacy top-level `setupExe` / `noMsi` keys
 # fail schema validation on this version and must not be used.
 squirrelWindows:
   artifactName: '${productName}-Setup-${version}.${ext}'
+  # Squirrel refuses to package without an icon URL, and it must be a real
+  # reachable one - an invented or dead URL is worse than none, because the
+  # installer then shows a broken icon to every user. This points at the icon
+  # committed in this repository, which is public and returns 200.
+  iconUrl: https://raw.githubusercontent.com/Ding-Ding-Projects/material-ytdlp/main/app/build/icon.ico

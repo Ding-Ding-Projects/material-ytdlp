@@ -28,6 +28,12 @@
   ::-webkit-scrollbar-thumb{background:#303636;border-radius:8px}
   ::-webkit-scrollbar-track{background:transparent}
   .msym{font-family:'Material Symbols Outlined';font-weight:400;font-style:normal;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;font-variation-settings:'opsz' 24}
+  /* Frameless window: the design's header IS the title bar, so it has to
+     carry the drag region the operating system would otherwise provide.
+     Every interactive descendant opts out again, or the region would
+     swallow their clicks. */
+  header{-webkit-app-region:drag}
+  header button,header input,header select,header textarea,header a,header [contenteditable],header [role="button"],header [role="textbox"]{-webkit-app-region:no-drag}
   @keyframes slide{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
   [data-motion="off"] *{animation:none!important;transition:none!important}
@@ -69,9 +75,9 @@
       </div>
       <button onClick="{{ openNotifications }}" title="Notifications" style="width:40px;height:40px;border-radius:20px;background:transparent;color:#82d5cc"><i class="msym" style="font-size:22px">notifications</i></button>
       <div style="width:1px;height:24px;background:#2a3130;margin:0 6px"></div>
-      <button title="Minimize" style="width:40px;height:40px;border-radius:20px;background:transparent;color:#bec9c7"><i class="msym" style="font-size:20px">remove</i></button>
-      <button title="Maximize" style="width:40px;height:40px;border-radius:20px;background:transparent;color:#bec9c7"><i class="msym" style="font-size:18px">crop_square</i></button>
-      <button title="Close" style="width:40px;height:40px;border-radius:20px;background:transparent;color:#bec9c7"><i class="msym" style="font-size:20px">close</i></button>
+      <button onClick="{{ winMinimize }}" title="Minimize" style="width:40px;height:40px;border-radius:20px;background:transparent;color:#bec9c7"><i class="msym" style="font-size:20px">remove</i></button>
+      <button onClick="{{ winMaximize }}" title="Maximize" style="width:40px;height:40px;border-radius:20px;background:transparent;color:#bec9c7"><i class="msym" style="font-size:18px">crop_square</i></button>
+      <button onClick="{{ winClose }}" title="Close" style="width:40px;height:40px;border-radius:20px;background:transparent;color:#bec9c7"><i class="msym" style="font-size:20px">close</i></button>
     </div>
   <sc-if value="{{ adhdBarVisible }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;align-items:center;gap:14px;padding:6px 16px;background:#151a1c;border-bottom:1px solid #2a3130;flex:0 0 auto;font-size:12px;color:#bec9c7">
@@ -2162,10 +2168,25 @@ class Component extends DCLogic {
   // bridge exposed by app/src/preload/index.ts. Nothing here mutates
   // design/ — this text only exists in the generated app/src/renderer/index.html.
   // ---------------------------------------------------------------------
+  // The design's runtime calls this with prevProps ONLY -- it never passes a
+  // second prevState argument. Both wiring lanes assumed it did, and both were
+  // wrong in the same way. Keep the snapshot here so each hook can have the
+  // previous state it needs, and guard each hook separately so one lane
+  // throwing cannot stop the other from running.
+  componentDidUpdate(prevProps) {
+    const prevState = this._prevStateSnapshot || {};
+    this._prevStateSnapshot = this.state;
+    if (typeof this._didUpdateTabs === 'function') {
+      try { this._didUpdateTabs(prevProps, prevState); }
+      catch (e) { console.error('tab-state update hook failed', e); }
+    }
+    if (typeof this._didUpdateLanguage === 'function') {
+      try { this._didUpdateLanguage(prevProps, prevState); }
+      catch (e) { console.error('language-prefs update hook failed', e); }
+    }
+  }
+
   _wireBridge() {
-    this._wire = this._wire || {};
-    this._wire.loadTabsState = (component) => component._loadTabsState();
-    this._wire.maybeSaveTabsState = (component, prevState) => component._maybeSaveTabsState(component, prevState);
     const bridge = window.ytdlpStudio;
     if (!bridge) { this.toast('Not connected', 'window.ytdlpStudio is missing — running outside the packaged app?'); return; }
     this._offProgress = bridge.jobs.onProgress(ev => {
@@ -2824,10 +2845,10 @@ class Component extends DCLogic {
     if (window.ytdlpStudio && window.ytdlpStudio.appearance) {
       window.ytdlpStudio.appearance.getRename().then(r => this.setState({ renameState: r })).catch(() => {});
     }
-    this._wire.loadTabsState(this);
+    this._loadTabsState();
   }
-  componentDidUpdate(prevProps, prevState) {
-    this._wire.maybeSaveTabsState(this, prevState);
+  _didUpdateTabs(prevProps, prevState) {
+    this._maybeSaveTabsState(this, prevState);
   }
   componentWillUnmount() {
     clearInterval(this._timer); clearInterval(this._totpTimer); clearTimeout(this._tabsStateSaveTimer); window.removeEventListener('keydown', this._key); clearInterval(this._modesTimer); this._unwireBridge();
@@ -2956,7 +2977,7 @@ class Component extends DCLogic {
     }).catch(() => {});
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  _didUpdateLanguage(prevProps, prevState) {
     const keys = ['mode', 'enFunny', 'yueFunny', 'emoji', 'narrator', 'narratorLanguage', 'narratorVoiceEn', 'narratorVoiceYue', 'narratorRate', 'narratorPitch'];
     const prevP = prevState.prefs || {};
     const curP = this.state.prefs || {};
@@ -4797,6 +4818,23 @@ class Component extends DCLogic {
       stop: e => e.stopPropagation(),
       openPalette: () => this.setState({ dialog: 'palette' }),
       openNotifications: () => this.setState({ dialog: 'notifications' }),
+      winMinimize: () => {
+        const w = window.ytdlpStudio && window.ytdlpStudio.window;
+        if (!w) return this.toast('Window controls unavailable', 'Running outside the packaged app.');
+        w.minimize().catch(e => this.toast('Could not minimize', String(e && e.message ? e.message : e)));
+      },
+      winMaximize: () => {
+        const w = window.ytdlpStudio && window.ytdlpStudio.window;
+        if (!w) return this.toast('Window controls unavailable', 'Running outside the packaged app.');
+        w.isMaximized()
+          .then(isMax => (isMax ? w.unmaximize() : w.maximize()))
+          .catch(e => this.toast('Could not resize the window', String(e && e.message ? e.message : e)));
+      },
+      winClose: () => {
+        const w = window.ytdlpStudio && window.ytdlpStudio.window;
+        if (!w) return this.toast('Window controls unavailable', 'Running outside the packaged app.');
+        w.close().catch(e => this.toast('Could not close the window', String(e && e.message ? e.message : e)));
+      },
       openRegexPalette: () => this.setState({ dialog: 'regex', regexTarget: 'palette' }),
       regexTargetLabel: s.regexTarget || 'search',
       regexTop: (s.regexPos || {}).y != null ? s.regexPos.y + 'px' : '96px',

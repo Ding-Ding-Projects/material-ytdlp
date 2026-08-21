@@ -31,7 +31,13 @@ function runApp(): void {
     const win = new BrowserWindow({
       width: 1360,
       height: 860,
-      minWidth: 960,
+      // The design's root wrapper carries a hard min-width:1180px. A floor
+      // below that does not shrink the layout, it hides it: at 960px the
+      // document was measured overflowing its own viewport by 231px, with
+      // the mode toggle, a quality card and the whole status bar cut off at
+      // the right edge and no scrollbar to reach them. Any width in the
+      // 960-1179 range was reachable by ordinary dragging or window snapping.
+      minWidth: 1180,
       minHeight: 600,
       show: false,
       // Frameless with a custom Material title bar — never expose the OS

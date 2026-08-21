@@ -11,3 +11,6 @@ vendor/toolchain/
 app/dist/
 app/out/
 .claude/
+
+# Scratch output directory used when a locked previous build blocks repackaging.
+app/dist-verify/

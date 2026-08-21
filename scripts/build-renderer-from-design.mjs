@@ -61,6 +61,8 @@ import { wireAppearance } from './wire-appearance.mjs'
 import { wirePaletteTabs } from './wire-palette-tabs.mjs'
 import { wireLocksAuth } from './wire-locks-auth.mjs'
 import { wireToolsModes } from './wire-tools-modes.mjs'
+import { wireWindowChrome } from './wire-window-chrome.mjs'
+import { wireLifecycleRepair } from './wire-lifecycle-repair.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(__dirname, '..')
@@ -242,6 +244,11 @@ function main() {
   html = wireLanguage(html, replaceExact)
   html = wireAppearance(html, replaceExact)
   html = wireToolsModes(html, replaceExact)
+  html = wireWindowChrome(html, replaceExact)
+  // MUST run last. It repairs collisions between earlier lanes -- the
+  // duplicated componentDidUpdate and the assignment to the getter-only
+  // _wire -- so every lane that could create one has to have run already.
+  html = wireLifecycleRepair(html, replaceExact)
 
   writeFileSync(OUT_HTML_PATH, html, 'utf8')
   console.log(`build-renderer-from-design: wrote ${OUT_HTML_PATH}`)

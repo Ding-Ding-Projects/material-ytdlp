@@ -28,7 +28,15 @@ import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const APP_EXE = path.join(REPO_ROOT, "app", "dist", "win-unpacked", "yt-dlp Studio.exe");
+// Which packaged build to drive. Defaults to the normal output directory;
+// SMOKE_APP_DIR points it at another one, which is how a verification run
+// gets past a previous build whose files Windows still has locked.
+const APP_DIR = process.env.SMOKE_APP_DIR
+  ? path.resolve(process.env.SMOKE_APP_DIR)
+  : path.join(REPO_ROOT, "app", "dist", "win-unpacked");
+const APP_EXE = path.join(APP_DIR, "yt-dlp Studio.exe");
+const BUILT_RENDERER = path.join(REPO_ROOT, "app", "out", "renderer", "index.html");
+const PACKAGED_ASAR = path.join(APP_DIR, "resources", "app.asar");
 const RESOURCES_DIR = path.join(REPO_ROOT, "app", "dist", "win-unpacked", "resources");
 const BIN_DIR = path.join(RESOURCES_DIR, "bin");
 
@@ -72,6 +80,32 @@ function assertPackagedAppExists() {
     return false;
   }
   pass("Packaged app exists", APP_EXE);
+
+  // The packaged app is a SNAPSHOT of app/out taken by electron-builder. Running
+  // `electron-vite build` refreshes app/out and leaves the package untouched, so
+  // a renderer fix can land, type-check, build cleanly -- and this suite will
+  // still be driving the previous build, reporting green about code that is no
+  // longer in the tree. Measured once: the package was four hours behind app/out
+  // and a full pass was reported against it.
+  //
+  // Nothing about that is visible from inside the run. The app launches, every
+  // assertion passes, and the only tell is a fix that appears to change nothing.
+  if (fs.existsSync(PACKAGED_ASAR) && fs.existsSync(BUILT_RENDERER)) {
+    const packagedAt = fs.statSync(PACKAGED_ASAR).mtimeMs;
+    const builtAt = fs.statSync(BUILT_RENDERER).mtimeMs;
+    if (builtAt > packagedAt) {
+      const behind = Math.round((builtAt - packagedAt) / 1000);
+      fail(
+        "Packaged app is current with app/out",
+        `the package is ${behind}s behind app/out/renderer/index.html, so this run ` +
+          `would verify a stale build. Repackage first: ` +
+          `cd app && npx electron-builder --win squirrel`,
+      );
+      return false;
+    }
+    pass("Packaged app is current with app/out");
+  }
+
   return true;
 }
 
@@ -399,6 +433,7 @@ async function main() {
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), "ytdlp-studio-smoke-"));
   let child = null;
   let cdp = null;
+  const consoleErrors = [];
   const uncaughtExceptions = [];
   const externalRequests = [];
 
@@ -437,6 +472,25 @@ async function main() {
       printSummaryAndExit();
       return;
     }
+
+    // A caught-and-logged error is still a broken app. The design's own runtime
+    // wraps every lifecycle call in try/catch and console.errors whatever comes
+    // out, so a method that throws on its very first statement never reaches
+    // Runtime.exceptionThrown and this suite reported a clean 12/12 while the
+    // renderer was throwing 476 times per reload. Nothing was visible on screen,
+    // and the only real symptom was that settings silently never saved.
+    //
+    // So watch console.error too. A gate that only sees UNCAUGHT errors cannot
+    // see the ones a framework politely catches, which are most of them.
+    cdp.on("Runtime.consoleAPICalled", (params) => {
+      if (params?.type !== "error") return;
+      const text = (params.args || [])
+        .map((a) => a?.description || a?.value || a?.unserializableValue || "")
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      consoleErrors.push(text || "console.error with no readable payload");
+    });
 
     cdp.on("Runtime.exceptionThrown", (params) => {
       const detail = params?.exceptionDetails;
@@ -531,6 +585,20 @@ async function main() {
       pass("Zero uncaught exceptions");
     } else {
       fail("Zero uncaught exceptions", uncaughtExceptions.slice(0, 5).join(" | "));
+    }
+
+    // --- Assertion: zero console errors ---
+    // Deliberately has no allowlist. The moment one exists, the entry that
+    // matters gets added to it by whoever is in a hurry.
+    if (consoleErrors.length === 0) {
+      pass("Zero console errors");
+    } else {
+      const unique = [...new Set(consoleErrors)];
+      fail(
+        "Zero console errors",
+        `${consoleErrors.length} logged (${unique.length} distinct): ` +
+          unique.slice(0, 3).join(" | "),
+      );
     }
 
     // --- Assertion: zero external network requests ---

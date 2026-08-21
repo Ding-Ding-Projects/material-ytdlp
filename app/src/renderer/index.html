@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>yt-dlp Studio</title>
 <script src="./dc-resources.js"></script>
 <script src="./dc-support.js"></script>
 </head>
@@ -224,7 +225,7 @@
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px">
                 <label style="display:grid;gap:5px;font-weight:700;font-size:12px;color:#bec9c7">Save to
                   <div style="display:flex;gap:6px">
-                    <input value="{{ easyFolder }}" onChange="{{ setEasyFolder }}" style="flex:1;min-width:0;background:#252b2b;border:1px solid #3f4948;border-radius:11px;color:#dee4e3;padding:11px 12px;font-family:'Roboto Mono',Consolas,monospace;font-size:12.5px" />
+                    <input value="{{ easyFolder }}" onChange="{{ setEasyFolder }}" placeholder="D:\media\%(uploader)s" style="flex:1;min-width:0;background:#252b2b;border:1px solid #3f4948;border-radius:11px;color:#dee4e3;padding:11px 12px;font-family:'Roboto Mono',Consolas,monospace;font-size:12.5px" />
                     <button onClick="{{ browseFolder }}" style="padding:0 14px;border-radius:11px;background:#303636;color:#82d5cc;font-weight:700">…</button>
                   </div>
                 </label>
@@ -313,9 +314,11 @@
                     <button onClick="{{ openLogin }}" style="padding:9px 20px;border-radius:20px;font-weight:500;font-size:13px;background:#324b48;color:#cfe9e5">Open browser to sign in</button>
                     <button onClick="{{ simulateRun }}" style="padding:9px 20px;border-radius:20px;font-weight:500;font-size:13px;background:transparent;border:1px solid #889391;color:#82d5cc">-s simulate</button>
                   </div>
+                  <sc-if value="{{ hasBatchWatch }}" hint-placeholder-val="{{ false }}">
                   <div style="margin-top:12px;padding:11px 13px;border-radius:12px;background:#223131;border-left:3px solid #82d5cc;color:#bec9c7;font-size:12.5px">
                     Batch file <b style="color:#dee4e3">D:\queue\weekly.txt</b> is watched — 3 new lines since 06:40. Lines starting with <code>#</code>, <code>;</code> or <code>]</code> are comments.
                   </div>
+                  </sc-if>
                 </section>
 
                 <section style="grid-column:span 4;background:#1b2121;border:0;border-radius:12px;padding:16px">
@@ -330,7 +333,7 @@
                     <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:11px;background:#252b2b"><span style="color:#bec9c7">-N fragments</span><b>4</b></div>
                     <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:11px;background:#252b2b"><span style="color:#bec9c7">-r limit rate</span><b>8M</b></div>
                     <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:11px;background:#252b2b"><span style="color:#bec9c7">--downloader</span><b>aria2c</b></div>
-                    <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:11px;background:#252b2b"><span style="color:#bec9c7">archive</span><b>18 442 ids</b></div>
+                    <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:11px;background:#252b2b"><span style="color:#bec9c7">archive</span><b>—</b></div>
                   </div>
                   <button onClick="{{ togglePause }}" style="width:100%;margin-top:14px;padding:11px;border-radius:22px;font-weight:700;background:#324b48;color:#82d5cc">{{ pauseLabel }}</button>
                 </section>
@@ -406,6 +409,7 @@
                   </div>
                 </section>
 
+                <sc-if value="{{ hasChapterData }}" hint-placeholder-val="{{ false }}">
                 <section style="grid-column:span 5;background:#1b2121;border:0;border-radius:12px;padding:16px">
                   <h2 style="font-size:11px;margin:0 0 9px;letter-spacing:.9px;text-transform:uppercase;color:#bec9c7;font-weight:800">Chapters &amp; SponsorBlock</h2>
                   <p style="margin:0 0 14px;color:#bec9c7;font-size:12.5px">Big Buck Bunny — 10:34. Segments from the SponsorBlock API; mark and remove policy applies at post-process.</p>
@@ -425,6 +429,7 @@
                     </sc-for>
                   </div>
                 </section>
+                </sc-if>
 
               </div>
             </sc-if>
@@ -2019,6 +2024,26 @@ class Component extends DCLogic {
   // app/src/renderer/commandBuilder.ts's parsePlainCommand, translated to
   // plain JS since this code runs inside the design's own runtime rather
   // than through the TypeScript build.
+  // Sums the real per-job rate strings ('7.9MiB/s', '4.1MiB/s', ...) that
+  // arrive from window.ytdlpStudio.jobs.onProgress, rather than the
+  // design's fixed '14.6MiB/s' demo figure. Returns a dash when nothing
+  // is actually downloading, since a rate of 0.0MiB/s still implies
+  // something is being measured.
+  _totalRateLabel(activeJobs) {
+    const parse = (r) => {
+      const m = /([d.]+)s*([KMG]?)i?B/s/i.exec(String(r || ''));
+      if (!m) return 0;
+      const mult = { K: 1024, M: 1024 * 1024, G: 1024 * 1024 * 1024 }[m[2].toUpperCase()] || 1;
+      return parseFloat(m[1]) * mult;
+    };
+    const totalBytes = (activeJobs || []).reduce((sum, j) => sum + parse(j.rate), 0);
+    if (!totalBytes) return '—';
+    if (totalBytes >= 1024 * 1024 * 1024) return (totalBytes / 1024 / 1024 / 1024).toFixed(1) + 'GiB/s';
+    if (totalBytes >= 1024 * 1024) return (totalBytes / 1024 / 1024).toFixed(1) + 'MiB/s';
+    if (totalBytes >= 1024) return (totalBytes / 1024).toFixed(1) + 'KiB/s';
+    return Math.round(totalBytes) + 'B/s';
+  }
+
   _tokenize(line) {
     const argv = [];
     let cur = '', inS = false, inD = false, has = false;
@@ -2208,9 +2233,9 @@ class Component extends DCLogic {
   state = {
     mode: 'easy', view: 'download', groupId: 'general',
     groups: [], presets: [],
-    easyUrl: 'https://www.youtube.com/@blenderfoundation',
+    easyUrl: '',
     easyQuality: 'best', easyScope: 'latest', easyLimit: '20', easyAfter: '',
-    easyArchive: 'yes', easyFolder: 'D:\\media\\%(uploader)s', easySubs: true,
+    easyArchive: 'yes', easyFolder: '', easySubs: true,
     easyThumb: true, easySponsor: true, easyRuns: [],
     values: {
       '--format': 'bv*[height<=1080]+ba/b', '--output': '%(uploader)s/%(title)s [%(id)s].%(ext)s',
@@ -2218,7 +2243,7 @@ class Component extends DCLogic {
       '--embed-metadata': true, '--embed-thumbnail': true, '--sponsorblock-mark': 'all,-preview',
       '--download-archive': 'D:\\media\\archive.txt', '--merge-output-format': 'mkv',
     },
-    urls: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ\nhttps://www.twitch.tv/videos/2109458821\nhttps://vimeo.com/347119375',
+    urls: '',
     tabs: [
       { id: 1, label: 'Download', view: 'download', pinned: true },
       { id: 2, label: 'Video Format', view: 'group', groupId: 'format' },
@@ -2228,7 +2253,7 @@ class Component extends DCLogic {
     dialog: null, regexTarget: null, regexPattern: '(?i)\\b(4k|2160p)\\b', regexFlags: 'iu',
     regexSample: 'Big Buck Bunny 4K remaster [aqz-KE-bpKQ]',
     paletteQuery: '', queueSearch: '', queueState: 'all', logSearch: '', flagSearch: '',
-    setOnly: false, exportFormat: 'md', updateBanner: true, paused: false,
+    setOnly: false, exportFormat: 'md', updateBanner: false, paused: false,
     globalSearch: '', railSearch: '', menuSearch: '', menu: null,
     formatExpr: 'bv*[height<=1080][vcodec^=avc1]+ba[acodec^=mp4a]/b',
     sortExpr: 'res:1080,fps,hdr:12,vcodec:h264',
@@ -2236,41 +2261,12 @@ class Component extends DCLogic {
     formatSearch: '', outTemplate: '%(uploader)s/%(playlist|)s/%(title)s [%(id)s].%(ext)s',
     fieldSearch: '', librarySearch: '', siteSearch: '', configSearch: '', historySearch: '',
     historySurf: 'all', historyKind: 'All', historyPinnedOnly: false, historySel: {}, historyOpen: 'h2',
-    historyPins: { h9: true }, historyLive: true, historyKeep: '90 days', historyCollapsed: {},
+    historyPins: {}, historyLive: true, historyKeep: '90 days', historyCollapsed: {},
     settingsSearch: '', ppSearch: '', configFile: 'user',
     toasts: [], loginCookieCount: 0,
-    jobs: [
-      { id: 'a', state: 'downloading', extractor: 'youtube', title: 'Big Buck Bunny 4K remaster', detail: '137+140 · mkv · 3840x2160 60fps', pct: 61.4, rate: '7.9MiB/s', size: '1.42GiB', eta: '03:12', frags: 'frag 214/362' },
-      { id: 'b', state: 'downloading', extractor: 'twitch:vod', title: 'Speedrun marathon — day 2 VOD', detail: 'hls-1080p60 · mp4 · 1920x1080', pct: 23.8, rate: '4.1MiB/s', size: '6.02GiB', eta: '21:46', frags: 'frag 89/1204' },
-      { id: 'c', state: 'downloading', extractor: 'vimeo', title: 'Colour grading reel 2025', detail: 'http-1080p+audio · mp4', pct: 88.1, rate: '2.6MiB/s', size: '742MiB', eta: '00:34', frags: 'frag 51/58' },
-      { id: 'd', state: 'queued', extractor: 'soundcloud', title: 'Late night set — 3 hours', detail: 'ba/b · -x --audio-format flac', pct: 0, rate: '—', size: '~1.1GiB', eta: 'waiting', frags: 'slot 1 of 4' },
-      { id: 'e', state: 'queued', extractor: 'youtube:tab', title: 'Channel backlog (playlist, 40 entries)', detail: '-I 1:40 · --lazy-playlist', pct: 0, rate: '—', size: '~22GiB', eta: 'waiting', frags: 'entry 0/40' },
-      { id: 'f', state: 'done', extractor: 'youtube', title: 'Keynote 2026 — full session', detail: 'merged mkv · SponsorBlock removed 4 segments', pct: 100, rate: '—', size: '3.31GiB', eta: 'done', frags: 'post-processed' },
-      { id: 'g', state: 'done', extractor: 'bilibili', title: 'Documentary ep. 4 (subs: zh-Hans, en)', detail: 'embedded subs · --convert-subs srt', pct: 100, rate: '—', size: '1.08GiB', eta: 'done', frags: 'post-processed' },
-      { id: 'h', state: 'done', extractor: 'generic', title: 'Conference stream mirror', detail: 'm3u8_native · mpegts', pct: 100, rate: '—', size: '498MiB', eta: 'done', frags: 'post-processed' },
-      { id: 'i', state: 'error', extractor: 'nebula', title: 'Members-only episode 12', detail: 'ERROR: This video is only available to subscribers', pct: 42, rate: '—', size: '—', eta: 'failed', frags: 'HTTP 403 after 10 retries' },
-    ],
-    log: [
-      ['[debug] Command-line config: [-f, bv*[height<=1080]+ba/b, --embed-metadata]', '#889391'],
-      ['[debug] Loaded 1908 extractors · plugin dirs: default', '#889391'],
-      ['[youtube] Extracting URL: https://www.youtube.com/watch?v=aqz-KE-bpKQ', '#bec9c7'],
-      ['[youtube] aqz-KE-bpKQ: Downloading webpage', '#bec9c7'],
-      ['[youtube] aqz-KE-bpKQ: Downloading tv client config', '#bec9c7'],
-      ['[info] aqz-KE-bpKQ: Downloading 1 format(s): 137+140', '#82d5cc'],
-      ['[download] Destination: Blender Foundation/Big Buck Bunny [aqz-KE-bpKQ].f137.mp4', '#dee4e3'],
-      ['[download]  61.4% of ~1.42GiB at 7.90MiB/s ETA 03:12 (frag 214/362)', '#dee4e3'],
-      ['[SponsorBlock] Found 4 segments in the SponsorBlock API', '#82d5cc'],
-      ['[nebula] ERROR: This video is only available to subscribers. Use --cookies-from-browser', '#ffb4ab'],
-      ['[debug] ffmpeg version 7.1 · Merger: mkv', '#889391'],
-    ],
-    timeline: [
-      { tag: 'INTRO', w: 9, color: '#82d5cc', title: 'Intro 0:00–0:57', range: '0:00 – 0:57', action: 'mark' },
-      { tag: 'SPONSOR', w: 14, color: '#ffb4ab', title: 'Sponsor 0:57–2:26', range: '0:57 – 2:26', action: 'remove' },
-      { tag: '', w: 32, color: '#303636', title: 'Content', range: '', action: '' },
-      { tag: 'SELF', w: 8, color: '#febc2e', title: 'Self promo 5:40–6:31', range: '5:40 – 6:31', action: 'remove' },
-      { tag: '', w: 26, color: '#303636', title: 'Content', range: '', action: '' },
-      { tag: 'OUTRO', w: 11, color: '#82d5cc', title: 'Outro 9:23–10:34', range: '9:23 – 10:34', action: 'mark' },
-    ],
+    jobs: [],
+    log: [],
+    timeline: [],
   };
 
   componentDidMount() {
@@ -3731,6 +3727,7 @@ class Component extends DCLogic {
         name: p.name, expands: p.expands, bg: '#303636', fg: '#82d5cc',
         apply: () => { this.toast('Preset applied', '-t ' + p.name + ' → ' + p.expands); },
       })),
+      hasBatchWatch: false,
       enqueue: () => this._wire.enqueue(this, s),
       pickBatch: () => this._wire.pickBatch(this),
       pickInfoJson: () => this._wire.pickInfoJson(this),
@@ -3738,7 +3735,7 @@ class Component extends DCLogic {
       simulateRun: () => this._wire.simulateRun(this, s),
       activeCount: activeJobs.length, queuedCount: s.jobs.filter(j => j.state === 'queued').length,
       errorCount: s.jobs.filter(j => j.state === 'error').length,
-      totalRate: '14.6M', pauseLabel: s.paused ? 'Resume queue' : 'Pause queue',
+      totalRate: this._totalRateLabel(activeJobs), pauseLabel: s.paused ? 'Resume queue' : 'Pause queue',
       togglePause: () => this._wire.togglePause(this),
       queueSearch: s.queueSearch, setQueueSearch: e => this.setState({ queueSearch: e.target.value }),
       queueState: s.queueState, setQueueState: e => this.setState({ queueState: e.target.value }),
@@ -3758,6 +3755,7 @@ class Component extends DCLogic {
       })),
       timeline: s.timeline.map(t => ({ ...t, width: t.w + '%' })),
       segments: s.timeline.filter(t => t.tag).map(t => ({ title: t.title.split(' ')[0], color: t.color, range: t.range, action: t.action })),
+      hasChapterData: s.timeline.length > 0,
 
       // group pages
       flagSearch: s.flagSearch, setFlagSearch: e => this.setState({ flagSearch: e.target.value }),
@@ -4004,12 +4002,7 @@ class Component extends DCLogic {
       librarySearch: s.librarySearch, setLibrarySearch: e => this.setState({ librarySearch: e.target.value }),
       openRegexLibrary: () => this.setState({ dialog: 'regex', regexTarget: 'library' }),
       libraryRows: [
-        ['Keynote 2026 — full session', 'D:\\media\\Conference\\Keynote 2026 [x8Kd2Lp].mkv', 'Conference Org', '3.31GiB', 'mkv', 'youtube x8Kd2Lp'],
-        ['Documentary ep. 4', 'D:\\media\\BiliBili\\Documentary ep 4 [BV1x4].mkv', 'CCTV Docs', '1.08GiB', 'mkv', 'BiliBili BV1x4'],
-        ['Conference stream mirror', 'D:\\media\\generic\\stream-mirror.mp4', 'generic', '498MiB', 'mp4', 'generic 9f2a1'],
-        ['Late night set — 3 hours', 'D:\\media\\SoundCloud\\Late night set.flac', 'DJ Nocturne', '1.14GiB', 'flac', 'soundcloud 88213'],
-        ['Big Buck Bunny 4K remaster', 'D:\\media\\Blender Foundation\\Big Buck Bunny [aqz-KE-bpKQ].mkv', 'Blender Foundation', '2.24GiB', 'mkv', 'youtube aqz-KE-bpKQ'],
-        ['Colour grading reel 2025', 'D:\\media\\Vimeo\\Colour grading reel.mp4', 'Studio Nine', '742MiB', 'mp4', 'vimeo 347119375'],
+
       ].filter(r => this.match(r.join(' '), s.librarySearch)).map(r => ({
         title: r[0], path: r[1], uploader: r[2], size: r[3], ext: r[4], archive: r[5],
         menu: e => this.openMenu(e, r[0], [
@@ -4022,7 +4015,7 @@ class Component extends DCLogic {
           { glyph: '×', label: 'Delete file from disk', color: '#ffb4ab', run: () => this.askDestructive('Delete from disk?', 'The file is removed permanently. The download archive entry stays unless you remove it separately.') },
         ]),
       })),
-      libraryCount: '6 of 1 204 files · 18 442 archive ids',
+      libraryCount: '0 of 0 files · — archive ids',
 
       siteSearch: s.siteSearch, setSiteSearch: e => this.setState({ siteSearch: e.target.value }),
       openRegexSites: () => this.setState({ dialog: 'regex', regexTarget: 'sites' }),
@@ -4191,14 +4184,7 @@ class Component extends DCLogic {
       exportConf: () => this._wire.exportConf(this, this.state.configBody !== undefined ? this.state.configBody : undefined, confLines),
       saveConf: () => this._wire.saveConf(this, s.configFile, confLines),
       effectiveRows: [
-        ['-f bv*[height<=1080]+ba/b', 'user', '#82d5cc'],
-        ['--merge-output-format mkv', 'user', '#dee4e3'],
-        ['-N 4', 'user', '#dee4e3'],
-        ['-r 8M', 'portable (overridden)', '#889391'],
-        ['--downloader aria2c', 'user', '#dee4e3'],
-        ['--sponsorblock-mark all,-preview', 'user', '#dee4e3'],
-        ['--cookies-from-browser firefox', 'user', '#dee4e3'],
-        ['--download-archive D:\\media\\archive.txt', 'command line', '#82d5cc'],
+
       ].filter(r => this.match(r.join(' '), s.configSearch)).map(r => ({
         line: r[0], from: r[1], color: r[2],
         menu: e => this.openMenu(e, r[0], [
@@ -4223,7 +4209,7 @@ class Component extends DCLogic {
             { glyph: '↓', label: 'Go to the queue', run: () => this.goto('download') },
             { glyph: '×', label: 'Cancel every active job', color: '#ffb4ab', run: () => this.toast('Safety gate', 'Cancelling all needs confirmation') },
           ]) },
-        { glyph: 'speed', text: '14.6MiB/s', color: '#bec9c7', title: 'Total download rate',
+        { glyph: 'speed', text: this._totalRateLabel(activeJobs), color: '#bec9c7', title: 'Total download rate',
           menu: e => this.openMenu(e, 'Rate', [
             { glyph: 'r', label: 'Change -r limit rate', run: () => this.goto('group', 'download') },
             { glyph: 'N', label: 'Change -N concurrent fragments', run: () => this.goto('group', 'download') },
@@ -4233,17 +4219,17 @@ class Component extends DCLogic {
             { glyph: '↻', label: 'Retry every failed job', run: () => this.toast('Retrying', 'All failed jobs requeued') },
             { glyph: '⌦', label: 'Clear completed', run: () => this.setState(st => ({ jobs: st.jobs.filter(j => j.state !== 'done') })) },
           ]) },
-        { glyph: 'settings', text: 'user config', color: '#bec9c7', title: 'Active configuration source',
+        { glyph: 'settings', text: '—', color: '#bec9c7', title: 'Active configuration source',
           menu: e => this.openMenu(e, 'Configuration', [
             { glyph: '↗', label: 'Open config files', run: () => this.goto('config') },
             { glyph: '⊘', label: '--ignore-config for this run', run: () => this.toast('--ignore-config', 'Config chain skipped') },
           ]) },
-        { glyph: 'key', text: s.loginCookieCount ? 'cookies: ' + s.loginCookieCount : 'cookies: firefox', color: '#bec9c7', title: 'Cookie source',
+        { glyph: 'key', text: s.loginCookieCount ? 'cookies: ' + s.loginCookieCount : (s.values['--cookies-from-browser'] || s.values['--cookies']) ? 'cookies: configured' : 'cookies: none', color: '#bec9c7', title: 'Cookie source',
           menu: e => this.openMenu(e, 'Cookies', [
             { glyph: '▤', label: 'Open browser to sign in', run: () => this.setState({ dialog: 'login' }) },
             { glyph: '⚿', label: 'Authentication options', run: () => this.goto('group', 'auth') },
           ]) },
-        { glyph: 'extension', text: '1 908 extractors', color: '#bec9c7', title: 'Loaded extractors',
+        { glyph: 'extension', text: '—', color: '#bec9c7', title: 'Loaded extractors',
           menu: e => this.openMenu(e, 'Extractors', [
             { glyph: '↗', label: 'Browse supported sites', run: () => this.goto('sites') },
             { glyph: '⚙', label: 'Extractor options', run: () => this.goto('group', 'extractor') },
@@ -4448,11 +4434,7 @@ class Component extends DCLogic {
       setNotificationSearch: e => this.setState({ notificationSearch: e.target.value }),
       openRegexNotifications: () => this.setState({ dialog: 'regex', regexTarget: 'notifications' }),
       notificationRows: [
-        ['✓', '#82d5cc', 'Archive updated', '18 442 ids · +3 this session', '08:41'],
-        ['!', '#ffb4ab', 'nebula job failed', 'HTTP 403 after 10 retries — auto-fix wizard available', '08:41'],
-        ['⬆', '#82d5cc', 'Update downloaded', '2026.08.19 nightly, unsigned, hash verified', '08:33'],
-        ['✓', '#82d5cc', 'Cookies handed back', '27 cookies written to yt.cookies.txt', '08:14'],
-        ['i', '#bec9c7', 'Format check', '2 formats rejected by --check-formats', '08:12'],
+
       ].filter(r => this.match(r.join(' '), s.notificationSearch || '')).map(r => ({
         glyph: r[0], color: r[1], title: r[2], body: r[3], time: r[4],
         menu: e => this.openMenu(e, r[2], [

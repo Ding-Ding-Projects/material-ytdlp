@@ -118,6 +118,13 @@ function main() {
     '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; script-src \'self\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\'; font-src \'self\'; img-src \'self\' data:; connect-src \'self\'" />'
   html = replaceExact(html, '<meta charset="utf-8">', '<meta charset="utf-8">\n' + CSP)
 
+  // The packaged window otherwise falls back to Electron's app name
+  // (the package.json "name", i.e. the literal string "yt-dlp-studio")
+  // for its title-bar/taskbar/Alt-Tab title, because the design has no
+  // <title> element at all. Set it explicitly from the design's own
+  // displayed product name.
+  html = replaceExact(html, '<meta name="viewport" content="width=device-width, initial-scale=1">', '<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>yt-dlp Studio</title>')
+
   // 2a. Point the support.js <script src> at the local verbatim copy.
   html = replaceExact(html, '<script src="./support.js"></script>', '<script src="./dc-support.js"></script>')
 
@@ -178,6 +185,11 @@ function main() {
   // text from the design file (verified against the checked-in source at
   // generator-authoring time); each is asserted to occur exactly once.
   html = wireHandlers(html)
+
+  // 4. Empty the design's demo/seed data so a fresh profile shows real
+  //    zero/empty states instead of fabricated activity (jobs, rates,
+  //    archive counts, a pre-typed URL, a fake update banner...).
+  html = zeroDemoState(html)
 
   writeFileSync(OUT_HTML_PATH, html, 'utf8')
   console.log(`build-renderer-from-design: wrote ${OUT_HTML_PATH}`)
@@ -482,6 +494,211 @@ function wireHistory(html) {
 // name below is called from the small set of replaced handlers above and
 // nowhere else, so it stays self-contained and easy to audit against
 // design/HANDOFF.md.
+// ---------------------------------------------------------------------------
+// Empties the design's demo/seed state so a FRESH profile shows real zero and
+// empty states instead of fabricated activity. The design ships with canned
+// jobs, a pre-typed URL, a fake update banner, and specific-looking numbers
+// ("18 442 ids", "1 908 extractors", "14.6MiB/s") that were never measured.
+// A user's first launch must not appear to already have downloads, a rate,
+// or an update it never asked for. Every needle below is sourced from the
+// untouched design file (these lines are never touched by wireHandlers or
+// wireHistory), so this stays exact even as the design evolves elsewhere.
+// ---------------------------------------------------------------------------
+
+function zeroDemoState(html) {
+  html = replaceExact(html, '    easyUrl: \'https://www.youtube.com/@blenderfoundation\',', '    easyUrl: \'\',')
+
+  html = replaceExact(html, '    easyArchive: \'yes\', easyFolder: \'D:\\\\media\\\\%(uploader)s\', easySubs: true,', '    easyArchive: \'yes\', easyFolder: \'\', easySubs: true,')
+
+  html = replaceExact(html, '    urls: \'https://www.youtube.com/watch?v=aqz-KE-bpKQ\\nhttps://www.twitch.tv/videos/2109458821\\nhttps://vimeo.com/347119375\',', '    urls: \'\',')
+
+  html = replaceExact(html, `    jobs: [
+      { id: 'a', state: 'downloading', extractor: 'youtube', title: 'Big Buck Bunny 4K remaster', detail: '137+140 · mkv · 3840x2160 60fps', pct: 61.4, rate: '7.9MiB/s', size: '1.42GiB', eta: '03:12', frags: 'frag 214/362' },
+      { id: 'b', state: 'downloading', extractor: 'twitch:vod', title: 'Speedrun marathon — day 2 VOD', detail: 'hls-1080p60 · mp4 · 1920x1080', pct: 23.8, rate: '4.1MiB/s', size: '6.02GiB', eta: '21:46', frags: 'frag 89/1204' },
+      { id: 'c', state: 'downloading', extractor: 'vimeo', title: 'Colour grading reel 2025', detail: 'http-1080p+audio · mp4', pct: 88.1, rate: '2.6MiB/s', size: '742MiB', eta: '00:34', frags: 'frag 51/58' },
+      { id: 'd', state: 'queued', extractor: 'soundcloud', title: 'Late night set — 3 hours', detail: 'ba/b · -x --audio-format flac', pct: 0, rate: '—', size: '~1.1GiB', eta: 'waiting', frags: 'slot 1 of 4' },
+      { id: 'e', state: 'queued', extractor: 'youtube:tab', title: 'Channel backlog (playlist, 40 entries)', detail: '-I 1:40 · --lazy-playlist', pct: 0, rate: '—', size: '~22GiB', eta: 'waiting', frags: 'entry 0/40' },
+      { id: 'f', state: 'done', extractor: 'youtube', title: 'Keynote 2026 — full session', detail: 'merged mkv · SponsorBlock removed 4 segments', pct: 100, rate: '—', size: '3.31GiB', eta: 'done', frags: 'post-processed' },
+      { id: 'g', state: 'done', extractor: 'bilibili', title: 'Documentary ep. 4 (subs: zh-Hans, en)', detail: 'embedded subs · --convert-subs srt', pct: 100, rate: '—', size: '1.08GiB', eta: 'done', frags: 'post-processed' },
+      { id: 'h', state: 'done', extractor: 'generic', title: 'Conference stream mirror', detail: 'm3u8_native · mpegts', pct: 100, rate: '—', size: '498MiB', eta: 'done', frags: 'post-processed' },
+      { id: 'i', state: 'error', extractor: 'nebula', title: 'Members-only episode 12', detail: 'ERROR: This video is only available to subscribers', pct: 42, rate: '—', size: '—', eta: 'failed', frags: 'HTTP 403 after 10 retries' },
+    ],`, '    jobs: [],')
+  html = replaceExact(html, `    log: [
+      ['[debug] Command-line config: [-f, bv*[height<=1080]+ba/b, --embed-metadata]', '#889391'],
+      ['[debug] Loaded 1908 extractors · plugin dirs: default', '#889391'],
+      ['[youtube] Extracting URL: https://www.youtube.com/watch?v=aqz-KE-bpKQ', '#bec9c7'],
+      ['[youtube] aqz-KE-bpKQ: Downloading webpage', '#bec9c7'],
+      ['[youtube] aqz-KE-bpKQ: Downloading tv client config', '#bec9c7'],
+      ['[info] aqz-KE-bpKQ: Downloading 1 format(s): 137+140', '#82d5cc'],
+      ['[download] Destination: Blender Foundation/Big Buck Bunny [aqz-KE-bpKQ].f137.mp4', '#dee4e3'],
+      ['[download]  61.4% of ~1.42GiB at 7.90MiB/s ETA 03:12 (frag 214/362)', '#dee4e3'],
+      ['[SponsorBlock] Found 4 segments in the SponsorBlock API', '#82d5cc'],
+      ['[nebula] ERROR: This video is only available to subscribers. Use --cookies-from-browser', '#ffb4ab'],
+      ['[debug] ffmpeg version 7.1 · Merger: mkv', '#889391'],
+    ],`, '    log: [],')
+
+  html = replaceExact(html, '    setOnly: false, exportFormat: \'md\', updateBanner: true, paused: false,', '    setOnly: false, exportFormat: \'md\', updateBanner: false, paused: false,')
+
+  html = replaceExact(html, '                    <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:11px;background:#252b2b"><span style="color:#bec9c7">archive</span><b>18 442 ids</b></div>', '                    <div style="display:flex;justify-content:space-between;padding:10px 12px;border-radius:11px;background:#252b2b"><span style="color:#bec9c7">archive</span><b>—</b></div>')
+
+
+  // The status-bar extractor count ('1 908 extractors') was a fixed string
+  // with no backing data source. There is no IPC surface today that runs the
+  // bundled yt-dlp's --list-extractors and reports a real count, so a dash
+  // is shown rather than a specific number nobody actually measured.
+  html = replaceExact(html, '        { glyph: \'extension\', text: \'1 908 extractors\', color: \'#bec9c7\', title: \'Loaded extractors\',', '        { glyph: \'extension\', text: \'—\', color: \'#bec9c7\', title: \'Loaded extractors\',')
+
+  // Add a real placeholder to the Save-to field now that its value starts
+  // empty, so the user still sees the shape of a real yt-dlp output template
+  // without it looking like an already-chosen folder.
+  html = replaceExact(html, '<input value="{{ easyFolder }}" onChange="{{ setEasyFolder }}" style="flex:1;min-width:0;background:#252b2b;border:1px solid #3f4948;border-radius:11px;color:#dee4e3;padding:11px 12px;font-family:\'Roboto Mono\',Consolas,monospace;font-size:12.5px" />', '<input value="{{ easyFolder }}" onChange="{{ setEasyFolder }}" placeholder="D:\\media\\%(uploader)s" style="flex:1;min-width:0;background:#252b2b;border:1px solid #3f4948;border-radius:11px;color:#dee4e3;padding:11px 12px;font-family:\'Roboto Mono\',Consolas,monospace;font-size:12.5px" />')
+
+  // The batch-file watch banner claimed a real file on disk was being
+  // watched, unconditionally, with no watcher behind it at all. Gate it
+  // behind a real (currently always-false) state flag instead of deleting
+  // the surface, so a future real batch-watch feature can flip it on.
+  html = replaceExact(html, `                  <div style="margin-top:12px;padding:11px 13px;border-radius:12px;background:#223131;border-left:3px solid #82d5cc;color:#bec9c7;font-size:12.5px">
+                    Batch file <b style="color:#dee4e3">D:\\queue\\weekly.txt</b> is watched — 3 new lines since 06:40. Lines starting with <code>#</code>, <code>;</code> or <code>]</code> are comments.
+                  </div>`, `                  <sc-if value="{{ hasBatchWatch }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:12px;padding:11px 13px;border-radius:12px;background:#223131;border-left:3px solid #82d5cc;color:#bec9c7;font-size:12.5px">
+                    Batch file <b style="color:#dee4e3">D:\\queue\\weekly.txt</b> is watched — 3 new lines since 06:40. Lines starting with <code>#</code>, <code>;</code> or <code>]</code> are comments.
+                  </div>
+                  </sc-if>`)
+  html = replaceExact(html, 'enqueue: () => this._wire.enqueue(this, s),', `hasBatchWatch: false,
+      enqueue: () => this._wire.enqueue(this, s),`)
+
+
+  // The 'total rate' figure — shown both in the SESSION panel and the
+  // status bar — was a fixed '14.6M'/'14.6MiB/s' with no measurement
+  // behind it. Both now derive from the real per-job rates the bridge
+  // streams in via jobs.onProgress (see _totalRateLabel above), and read
+  // a dash when nothing is actually downloading.
+  html = replaceExact(html, '      totalRate: \'14.6M\', pauseLabel: s.paused ? \'Resume queue\' : \'Pause queue\',', '      totalRate: this._totalRateLabel(activeJobs), pauseLabel: s.paused ? \'Resume queue\' : \'Pause queue\',')
+  html = replaceExact(html, '        { glyph: \'speed\', text: \'14.6MiB/s\', color: \'#bec9c7\', title: \'Total download rate\',', '        { glyph: \'speed\', text: this._totalRateLabel(activeJobs), color: \'#bec9c7\', title: \'Total download rate\',')
+
+
+  // Second sweep pass: the same shape of fabricated-but-plausible data was
+  // found in several more places once the first pass made the pattern easy
+  // to spot. Same rule throughout: a fresh profile must not claim anything
+  // about the user's own files, browser, or configuration that is not true
+  // at that moment. A dash or an empty list is always honest.
+
+  // Chapters & SponsorBlock panel: a fixed timeline for a video the user
+  // never downloaded. Emptying state.timeline empties the segment strip and
+  // list; hasChapterData (below) additionally hides the whole panel, since
+  // an empty timeline strip with no context reads as broken rather than honest.
+  html = replaceExact(html, `    timeline: [
+      { tag: 'INTRO', w: 9, color: '#82d5cc', title: 'Intro 0:00–0:57', range: '0:00 – 0:57', action: 'mark' },
+      { tag: 'SPONSOR', w: 14, color: '#ffb4ab', title: 'Sponsor 0:57–2:26', range: '0:57 – 2:26', action: 'remove' },
+      { tag: '', w: 32, color: '#303636', title: 'Content', range: '', action: '' },
+      { tag: 'SELF', w: 8, color: '#febc2e', title: 'Self promo 5:40–6:31', range: '5:40 – 6:31', action: 'remove' },
+      { tag: '', w: 26, color: '#303636', title: 'Content', range: '', action: '' },
+      { tag: 'OUTRO', w: 11, color: '#82d5cc', title: 'Outro 9:23–10:34', range: '9:23 – 10:34', action: 'mark' },
+    ],`, '    timeline: [],')
+
+  // Library surface: six fabricated 'already downloaded' files at real-
+  // looking D:/media/... paths, with a working delete-from-disk action.
+  // The <sc-for> already renders a correct empty grid for an empty array.
+  html = replaceExact(html, `        ['Keynote 2026 — full session', 'D:\\\\media\\\\Conference\\\\Keynote 2026 [x8Kd2Lp].mkv', 'Conference Org', '3.31GiB', 'mkv', 'youtube x8Kd2Lp'],
+        ['Documentary ep. 4', 'D:\\\\media\\\\BiliBili\\\\Documentary ep 4 [BV1x4].mkv', 'CCTV Docs', '1.08GiB', 'mkv', 'BiliBili BV1x4'],
+        ['Conference stream mirror', 'D:\\\\media\\\\generic\\\\stream-mirror.mp4', 'generic', '498MiB', 'mp4', 'generic 9f2a1'],
+        ['Late night set — 3 hours', 'D:\\\\media\\\\SoundCloud\\\\Late night set.flac', 'DJ Nocturne', '1.14GiB', 'flac', 'soundcloud 88213'],
+        ['Big Buck Bunny 4K remaster', 'D:\\\\media\\\\Blender Foundation\\\\Big Buck Bunny [aqz-KE-bpKQ].mkv', 'Blender Foundation', '2.24GiB', 'mkv', 'youtube aqz-KE-bpKQ'],
+        ['Colour grading reel 2025', 'D:\\\\media\\\\Vimeo\\\\Colour grading reel.mp4', 'Studio Nine', '742MiB', 'mp4', 'vimeo 347119375'],`, '')
+  html = replaceExact(html, '      libraryCount: \'6 of 1 204 files · 18 442 archive ids\',', '      libraryCount: \'0 of 0 files · — archive ids\',')
+
+  // Config surface's effective-configuration table claimed specific flags
+  // came from named config files that were never actually read. Empty is
+  // honest; the .filter().map() chain right after handles it unchanged.
+  html = replaceExact(html, `        ['-f bv*[height<=1080]+ba/b', 'user', '#82d5cc'],
+        ['--merge-output-format mkv', 'user', '#dee4e3'],
+        ['-N 4', 'user', '#dee4e3'],
+        ['-r 8M', 'portable (overridden)', '#889391'],
+        ['--downloader aria2c', 'user', '#dee4e3'],
+        ['--sponsorblock-mark all,-preview', 'user', '#dee4e3'],
+        ['--cookies-from-browser firefox', 'user', '#dee4e3'],
+        ['--download-archive D:\\\\media\\\\archive.txt', 'command line', '#82d5cc'],`, '')
+
+  // Notification centre: five fabricated notices with specific timestamps,
+  // none of which happened. There is no real notification-history feature
+  // wired up yet, so honest means empty rather than a new persistence layer.
+  html = replaceExact(html, `        ['✓', '#82d5cc', 'Archive updated', '18 442 ids · +3 this session', '08:41'],
+        ['!', '#ffb4ab', 'nebula job failed', 'HTTP 403 after 10 retries — auto-fix wizard available', '08:41'],
+        ['⬆', '#82d5cc', 'Update downloaded', '2026.08.19 nightly, unsigned, hash verified', '08:33'],
+        ['✓', '#82d5cc', 'Cookies handed back', '27 cookies written to yt.cookies.txt', '08:14'],
+        ['i', '#bec9c7', 'Format check', '2 formats rejected by --check-formats', '08:12'],`, '')
+
+  // Status bar 'cookies: firefox' claimed a browser cookie source was
+  // already configured. Nothing in the default state.values sets --cookies
+  // or --cookies-from-browser, so this is untrue on a fresh profile -- and
+  // it is a claim about touching the user's own browser profile. Read the
+  // real flag values instead.
+  html = replaceExact(html, '        { glyph: \'key\', text: s.loginCookieCount ? \'cookies: \' + s.loginCookieCount : \'cookies: firefox\', color: \'#bec9c7\', title: \'Cookie source\',', '        { glyph: \'key\', text: s.loginCookieCount ? \'cookies: \' + s.loginCookieCount : (s.values[\'--cookies-from-browser\'] || s.values[\'--cookies\']) ? \'cookies: configured\' : \'cookies: none\', color: \'#bec9c7\', title: \'Cookie source\',')
+
+  // Status bar 'user config' implied a configuration file had been found
+  // and loaded from disk. No IPC wiring today actually reads a config file
+  // (saveConf/validateConfig are still stubs), so show a dash rather than a
+  // source that was never read.
+  html = replaceExact(html, '        { glyph: \'settings\', text: \'user config\', color: \'#bec9c7\', title: \'Active configuration source\',', '        { glyph: \'settings\', text: \'—\', color: \'#bec9c7\', title: \'Active configuration source\',')
+
+  // Vestigial: historyPins referenced the design's old demo record id 'h9',
+  // which no longer exists now that history is real commit shas. Harmless,
+  // but start with no pins for the same reason everything else starts empty.
+  html = replaceExact(html, '    historyPins: { h9: true }, historyLive: true, historyKeep: \'90 days\', historyCollapsed: {},', '    historyPins: {}, historyLive: true, historyKeep: \'90 days\', historyCollapsed: {},')
+
+
+  html = replaceExact(html, '      segments: s.timeline.filter(t => t.tag).map(t => ({ title: t.title.split(\' \')[0], color: t.color, range: t.range, action: t.action })),', `      segments: s.timeline.filter(t => t.tag).map(t => ({ title: t.title.split(' ')[0], color: t.color, range: t.range, action: t.action })),
+      hasChapterData: s.timeline.length > 0,`)
+
+  // Gate the whole Chapters & SponsorBlock section behind real chapter data,
+  // exactly as the batch-file banner is gated behind hasBatchWatch. Wrapped as
+  // one block (rather than just the opening tag) because the section's own
+  // opening <section style=...> string recurs elsewhere in the template, so
+  // only the full block -- anchored by the unique 'Chapters & SponsorBlock'
+  // heading -- is a safe needle.
+  html = replaceExact(html, `                <section style="grid-column:span 5;background:#1b2121;border:0;border-radius:12px;padding:16px">
+                  <h2 style="font-size:11px;margin:0 0 9px;letter-spacing:.9px;text-transform:uppercase;color:#bec9c7;font-weight:800">Chapters &amp; SponsorBlock</h2>
+                  <p style="margin:0 0 14px;color:#bec9c7;font-size:12.5px">Big Buck Bunny — 10:34. Segments from the SponsorBlock API; mark and remove policy applies at post-process.</p>
+                  <div style="display:flex;height:34px;border-radius:9px;overflow:hidden;border:1px solid #3f4948">
+                    <sc-for list="{{ timeline }}" as="seg" hint-placeholder-count="6">
+                      <div title="{{ seg.title }}" style="width:{{ seg.width }};background:{{ seg.color }};display:grid;place-items:center;font-size:9px;font-weight:800;color:#0a0f0f;overflow:hidden">{{ seg.tag }}</div>
+                    </sc-for>
+                  </div>
+                  <div style="display:grid;gap:6px;margin-top:12px">
+                    <sc-for list="{{ segments }}" as="seg" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:10px;background:#252b2b;font-size:12px">
+                        <span style="width:9px;height:9px;border-radius:50%;background:{{ seg.color }};flex:0 0 auto"></span>
+                        <b style="font-weight:600">{{ seg.title }}</b>
+                        <span style="margin-left:auto;font-family:'Roboto Mono',Consolas,monospace;color:#bec9c7">{{ seg.range }}</span>
+                        <span style="border-radius:99px;background:#303636;color:#82d5cc;padding:2px 8px;font-size:10px;font-weight:700">{{ seg.action }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </section>`, `                <sc-if value="{{ hasChapterData }}" hint-placeholder-val="{{ false }}">
+                <section style="grid-column:span 5;background:#1b2121;border:0;border-radius:12px;padding:16px">
+                  <h2 style="font-size:11px;margin:0 0 9px;letter-spacing:.9px;text-transform:uppercase;color:#bec9c7;font-weight:800">Chapters &amp; SponsorBlock</h2>
+                  <p style="margin:0 0 14px;color:#bec9c7;font-size:12.5px">Big Buck Bunny — 10:34. Segments from the SponsorBlock API; mark and remove policy applies at post-process.</p>
+                  <div style="display:flex;height:34px;border-radius:9px;overflow:hidden;border:1px solid #3f4948">
+                    <sc-for list="{{ timeline }}" as="seg" hint-placeholder-count="6">
+                      <div title="{{ seg.title }}" style="width:{{ seg.width }};background:{{ seg.color }};display:grid;place-items:center;font-size:9px;font-weight:800;color:#0a0f0f;overflow:hidden">{{ seg.tag }}</div>
+                    </sc-for>
+                  </div>
+                  <div style="display:grid;gap:6px;margin-top:12px">
+                    <sc-for list="{{ segments }}" as="seg" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:10px;background:#252b2b;font-size:12px">
+                        <span style="width:9px;height:9px;border-radius:50%;background:{{ seg.color }};flex:0 0 auto"></span>
+                        <b style="font-weight:600">{{ seg.title }}</b>
+                        <span style="margin-left:auto;font-family:'Roboto Mono',Consolas,monospace;color:#bec9c7">{{ seg.range }}</span>
+                        <span style="border-radius:99px;background:#303636;color:#82d5cc;padding:2px 8px;font-size:10px;font-weight:700">{{ seg.action }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </section>
+                </sc-if>`)
+
+  return html
+}
+
 const WIRING_METHODS = `
   // ---------------------------------------------------------------------
   // Real IPC wiring (generated — see scripts/build-renderer-from-design.mjs).
@@ -551,6 +768,26 @@ const WIRING_METHODS = `
   // app/src/renderer/commandBuilder.ts's parsePlainCommand, translated to
   // plain JS since this code runs inside the design's own runtime rather
   // than through the TypeScript build.
+  // Sums the real per-job rate strings ('7.9MiB/s', '4.1MiB/s', ...) that
+  // arrive from window.ytdlpStudio.jobs.onProgress, rather than the
+  // design's fixed '14.6MiB/s' demo figure. Returns a dash when nothing
+  // is actually downloading, since a rate of 0.0MiB/s still implies
+  // something is being measured.
+  _totalRateLabel(activeJobs) {
+    const parse = (r) => {
+      const m = /([\d.]+)\s*([KMG]?)i?B\/s/i.exec(String(r || ''));
+      if (!m) return 0;
+      const mult = { K: 1024, M: 1024 * 1024, G: 1024 * 1024 * 1024 }[m[2].toUpperCase()] || 1;
+      return parseFloat(m[1]) * mult;
+    };
+    const totalBytes = (activeJobs || []).reduce((sum, j) => sum + parse(j.rate), 0);
+    if (!totalBytes) return '—';
+    if (totalBytes >= 1024 * 1024 * 1024) return (totalBytes / 1024 / 1024 / 1024).toFixed(1) + 'GiB/s';
+    if (totalBytes >= 1024 * 1024) return (totalBytes / 1024 / 1024).toFixed(1) + 'MiB/s';
+    if (totalBytes >= 1024) return (totalBytes / 1024).toFixed(1) + 'KiB/s';
+    return Math.round(totalBytes) + 'B/s';
+  }
+
   _tokenize(line) {
     const argv = [];
     let cur = '', inS = false, inD = false, has = false;

@@ -81,7 +81,7 @@ function wireSiteCount(html, replaceExact) {
   html = replaceExact(
     html,
     "].filter(r => this.match(r.join(' '), s.siteSearch)).map(r => ({\n        key: r[0], note: r[1],",
-    "])).map(r => ({\n        key: r[0], note: r[1],",
+    "].filter(r => this.match(r.join(' '), s.siteSearch))).map(r => ({\n        key: r[0], note: r[1],",
   )
 
   html = replaceExact(

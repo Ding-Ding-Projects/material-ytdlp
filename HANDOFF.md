@@ -1,64 +1,112 @@
 # Handoff
 
-Current, factual state of this repository, written for whoever picks this up next.
+The current, factual state of this repository, written for whoever picks it up next. Everything
+below was verified by running it unless the line says otherwise.
 
-## What genuinely exists right now
+## What genuinely works, and how it was checked
 
-- **Design reference**, checked in under `design/`: `yt-dlp Studio.dc.html` (the desktop app —
-  three modes, 20 rail destinations, every CLI option surfaced), `yt-dlp Companion
-  (Chrome).dc.html` (the browser extension), `ytdlp-flags.js` (the ~250-flag catalog across 16
-  groups), and `design/HANDOFF.md` (the wiring contract describing exactly which handlers the
-  real app must implement to replace the design's mock handlers).
-- **`vendor/yt-dlp`**, official yt-dlp pinned as a git submodule at commit
-  `81ecd58b1394793e6da9998cc19fdb45657f1685` (version `2026.08.19`). In *this* worktree the
-  submodule directory is intentionally empty — this worktree was deliberately created without
-  submodule contents for lane isolation during parallel development. That is correct here and
-  is not a defect to "fix" in this worktree.
-- **`app/`**, an Electron + Vite + React 19 + TypeScript scaffold, under active development by
-  another lane of this same effort.
-- Root build scripts (`download-dependencies.bat`, `build-ytdlp.bat`, `build.bat`,
-  `build-installer.bat`) are being written by another lane and are not authored in this
-  document; see those scripts directly for their current state.
+### Both bundled binaries are built from pinned source
 
-## Verification status — read this before trusting anything above
+Nothing shipped is a downloaded binary of unknown provenance.
 
-**This release pass deliberately shipped without an automated test suite and without any
-screenshot or capture evidence, on the maintainer's explicit instruction, in order to ship
-quickly.** Concretely:
+| | Value | How it was checked |
+| --- | --- | --- |
+| yt-dlp | `2026.08.19` from submodule `81ecd58b` | ran `yt-dlp.exe --version` |
+| ffmpeg / ffprobe | `8.0.git` from submodule `a1d17fdd`, LGPL | ran `-version` on both |
+| ffmpeg SHA-256 | `8bed4b8ed56dce2be23a1c1dbdd7ff28262f9e6e6dc8f2588a8eef4cfd3e06cd` | read off the file |
+| ffprobe SHA-256 | `8ebf0b3bc2ed122b0dc7a25591a579e637a3d91c93aee561ecc41a27fd515f67` | read off the file |
 
-- No unit, integration, or end-to-end tests have been written or run against `app/` as part of
-  this pass.
-- No screenshots or recordings of the built, running application exist. The images in
-  `design/screenshots/` are design-tool exports of the reference mockup, not captures of the
-  real running app, and are labeled that way wherever they are referenced.
-- No installer has been built and run end-to-end as part of this documentation pass. The build
-  scripts referenced above are the responsibility of a different lane; this document does not
-  claim they have been executed successfully.
-- The GitHub Actions release workflow (`.github/workflows/release.yml`) has not been run in
-  this repository as of this handoff. Its correctness is asserted from careful reading, not
-  from a green run.
+**Self-containment is proved, not assumed.** `objdump -p` on both ffmpeg binaries reports only
+Windows system DLLs — ADVAPI32, AVICAP32, CRYPT32, GDI32, KERNEL32, OLEAUT32, SHELL32, SHLWAPI,
+USER32, WS2_32, msvcrt, ncrypt, ole32 — and no mingw runtime or codec DLL. That check now lives
+inside `build-ffmpeg.bat` as a hard failure.
 
-Nowhere in this repository's documentation should "implemented" be read as "tested," and
-nowhere should a description of intended behavior be read as a claim that the behavior has been
-observed working.
+**End-to-end proof:** a download of separate video and audio streams was merged into a playable
+14.7 MB `.mkv` by these binaries. Not a claim; an observation.
 
-## Open items for the next owner
+### The installer builds
 
-- Wire the real Electron main-process ↔ yt-dlp process layer per `design/HANDOFF.md`'s
-  "What the host has to provide" section: process control, progress parsing from
-  `--progress-template`, console streaming, file pickers, cookie/login flow, config file I/O,
-  authenticator credential storage, toy-lock credential storage, preferences persistence, and
-  the Squirrel update feed.
-- Everything listed as unticked in `ROADMAP.md` — the full universal feature contract (language
-  modes, ADHD modes, command palette, tabs, appearance editor, unlock ladder, local AI suite
-  manager, and the rest) is not yet implemented in `app/`.
-- Build and run the app end to end at least once, then replace the "screenshots pending" note
-  in `README.md` with real captures.
-- Write and run the first tests, and update this file's verification status honestly once that
-  happens — do not backfill a claim of testing into an earlier, untested commit's description.
+`app/dist/squirrel-windows/` produces `Setup.exe`, `RELEASES` and a full `.nupkg`. The setup
+executable reports `NotSigned`, which is intended and permanent. All three binaries are genuinely
+present inside the package at `resources/bin/`, confirmed by listing the unpacked directory rather
+than by trusting the packaging log.
 
-## Submodule pin
+### The site is live
 
-- Repository: `yt-dlp/yt-dlp` (upstream)
-- Commit: `81ecd58b1394793e6da9998cc19fdb45657f1685`
-- Version tag: `2026.08.19`
+<https://ding-ding-projects.github.io/material-ytdlp/> — self-contained, no CDN, verified working
+at a 375px viewport with zero off-screen controls.
+
+## What is in flight
+
+**The renderer is being replaced.** The hand-written React renderer implemented roughly a third of
+the design contract — `docs/design-parity.md` measures it at 8 partial and 25 missing of 33 rows.
+It is being replaced by the checked-in design component itself, which carries its own runtime and
+renders as-is inside Chromium. This was proven before it was started: React 18.3.1 loads from local
+files, `#dc-root` renders the full shell, and there are zero external requests. `design/` remains
+byte-identical and is generated from, never edited.
+
+Once that lands, the old React components under `app/src/renderer/` are dead code and must be
+deleted rather than left looking live.
+
+## What is NOT true
+
+Read this section before believing anything else.
+
+- **No release has been published.** Nothing has shipped.
+- **There are no automated tests.** None. This was a deliberate instruction in order to ship
+  quickly, and it is stated here rather than implied away. The repository's CI builds and
+  publishes; it gates on nothing.
+- **The screenshots in `docs/screenshots/` are of the superseded React renderer**, captured from a
+  real build at that time. They do not show the design-component renderer and must be recaptured
+  once it lands.
+- **Most of the feature contract is unbuilt** — language modes, playfulness sliders, narrator,
+  School mode, ADHD modes, command palette, appearance editors, file converter, model suite, toy
+  locks, the companion extension, automatic updates. `README.md` lists them under a heading that
+  says plainly they do not ship, and `ROADMAP.md` leaves them unticked.
+- **The Windows pause is not a suspend.** There is no `SIGSTOP` on Windows, so the process layer
+  reports `pauseMode: 'stop-continue'` and resumes with `--continue`.
+
+## Traps this repository has already fallen into
+
+Worth reading before changing the build, because each of these cost real time and none of them
+announced itself.
+
+- **A built ffmpeg that runs here and dies everywhere else.** The first from-source build linked the
+  toolchain's own DLLs. Packaging succeeded and the installer got smaller. Only `objdump` caught it.
+- **`signAndEditExecutable: false` strips the icon.** It skips code signing *and* resource editing,
+  so the executable ships unbranded while the build reports success. `signExecutable: false` is the
+  key that skips only signing.
+- **electron-builder fails a build it already finished.** With no publish target configured it hunts
+  for one in `.git/config` at the end of a successful run and reports `Cannot cleanup`. Setting
+  `publish: null` stops it looking.
+- **`cmd` will not search the current directory on the CI runner.** `NoDefaultCurrentDirectoryInExePath`
+  makes a bare `foo.bat` fail with "is not recognized" even when the file is right there. Invoke
+  batch files through an explicit path.
+- **Two batch traps found only by running the scripts:** a chained `if A if B (…) else (…)` binds the
+  `else` to the inner `if`, and `exit /b` inside a `call`ed subroutine returns only from the
+  subroutine — so a failing run printed `FAILED` and then announced success on the next line.
+- **`libx264` is GPL-only.** ffmpeg's `configure` refuses it without `--enable-gpl`, which would
+  change the licence of everything in the installer. It was dropped.
+- **yt-dlp's progress percentage is per-fragment.** On a 123-fragment download it reaches 100% and
+  resets 123 times. Progress must be aggregated over `fragment_index`/`fragment_count` and clamped.
+  `size` and `eta` are legitimately `null` on fragmented downloads.
+
+## Vendored dependencies track upstream
+
+Both submodules follow `master`, and committed hooks in `.githooks/` advance them on every pull and
+checkout. yt-dlp breaks whenever a site changes and is fixed upstream within days, so a frozen pin
+is a downloader that quietly stops working.
+
+The cost, stated plainly: two checkouts of the same commit of this repository can build different
+binaries. Every build writes a stamp (`vendor/bin/*.build.json`) recording the exact submodule
+commit it used, so an artifact stays traceable even though the pin moves.
+
+Run `node scripts/enable-hooks.mjs` once in a fresh clone; the build scripts call it too.
+
+## Next actions, in order
+
+1. Finish the design-component renderer and delete the superseded React components.
+2. Recapture `docs/screenshots/` from the new renderer and refresh the README gallery.
+3. Update `docs/design-parity.md` — the drop-in should move most rows to `matches`.
+4. Publish the first release once CI is green.
+5. Start on the feature contract in `ROADMAP.md`, and add tests.

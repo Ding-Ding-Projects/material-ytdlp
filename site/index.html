@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>yt-dlp Studio — a Material Design cockpit for yt-dlp on Windows</title>
+<meta name="description" content="yt-dlp Studio is a Windows desktop app that wraps yt-dlp in a Material Design interface, with yt-dlp and ffmpeg bundled so nothing else has to be installed.">
+<link rel="icon" href="data:,">
+
+<meta property="og:title" content="yt-dlp Studio">
+<meta property="og:description" content="A Material Design cockpit for yt-dlp on Windows, with yt-dlp and ffmpeg bundled so nothing else has to be installed.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ding-ding-projects.github.io/material-ytdlp/">
+<meta property="og:site_name" content="yt-dlp Studio">
+<meta property="og:image" content="https://ding-ding-projects.github.io/material-ytdlp/social-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="yt-dlp Studio wordmark on a dark terminal-styled card">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="yt-dlp Studio">
+<meta name="twitter:description" content="A Material Design cockpit for yt-dlp on Windows, with yt-dlp and ffmpeg bundled in.">
+<meta name="twitter:image" content="https://ding-ding-projects.github.io/material-ytdlp/social-preview.png">
+<meta name="theme-color" content="#2954e6">
+
+<link rel="stylesheet" href="assets/theme.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="container header-row">
+    <a class="wordmark" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+        <rect width="26" height="26" rx="7" fill="var(--accent)"></rect>
+        <path d="M8 7l7 6-7 6V7z" fill="var(--accent-contrast)"></path>
+      </svg>
+      yt-dlp Studio
+    </a>
+    <nav class="primary-nav" aria-label="Primary">
+      <a href="#capabilities">Capabilities</a>
+      <a href="#workflow">Workflow</a>
+      <a href="docs.html">Documentation</a>
+    </nav>
+    <div class="header-spacer"></div>
+
+    <div class="search-wrap" data-site-search>
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"></circle><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+        <label class="visually-hidden" for="site-search-input">Search this page</label>
+        <input id="site-search-input" type="text" placeholder="Search this page" data-search-input autocomplete="off">
+        <button type="button" class="regex-toggle-btn" data-regex-toggle aria-haspopup="dialog" aria-expanded="false" aria-controls="regex-popover">.*</button>
+      </div>
+      <div class="search-results" data-search-results hidden></div>
+
+      <div class="regex-popover" id="regex-popover" data-regex-popover role="dialog" aria-label="Regex search builder" hidden>
+        <h3>Regex search builder</h3>
+        <div class="field">
+          <label for="regex-pattern">Pattern</label>
+          <input id="regex-pattern" type="text" data-regex-pattern placeholder="e.g. subtitle|caption" autocomplete="off">
+        </div>
+        <div class="regex-row" aria-label="Insert common tokens">
+          <button type="button" data-regex-insert="^">^ start</button>
+          <button type="button" data-regex-insert="$">$ end</button>
+          <button type="button" data-regex-insert="\d">\d digit</button>
+          <button type="button" data-regex-insert="\w">\w word</button>
+          <button type="button" data-regex-insert="\s">\s space</button>
+          <button type="button" data-regex-insert="[]">[ ] class</button>
+          <button type="button" data-regex-insert="()">( ) group</button>
+          <button type="button" data-regex-insert="|">| or</button>
+          <button type="button" data-regex-insert="*">* 0+</button>
+          <button type="button" data-regex-insert="+">+ 1+</button>
+          <button type="button" data-regex-insert="?">? optional</button>
+        </div>
+        <div class="regex-flags">
+          <label><input type="checkbox" data-regex-flag="m"> Multiline (m)</label>
+          <label><input type="checkbox" data-regex-flag="u"> Unicode (u)</label>
+        </div>
+        <div class="field">
+          <label for="regex-sample">Sample text</label>
+          <textarea id="regex-sample" data-regex-sample rows="3" placeholder="Paste or type text to test the pattern against, or leave blank and click Apply to search the page.">Download subtitles, embed captions, and keep the audio-only fallback.</textarea>
+        </div>
+        <p class="regex-status" data-regex-status>Enter a pattern to preview matches.</p>
+        <div class="regex-matches" data-regex-matches></div>
+        <div class="regex-actions">
+          <button type="button" class="btn btn-outline btn-sm" data-regex-clear>Clear</button>
+          <button type="button" class="btn btn-primary btn-sm" data-regex-apply>Apply to search</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="icon-btn" data-theme-toggle aria-pressed="false" aria-label="Switch to dark theme">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M15 10.5A6.5 6.5 0 017.5 3 6.5 6.5 0 1015 10.5z" stroke="currentColor" stroke-width="1.4"></path></svg>
+      </button>
+      <a class="btn-pill-nav" href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases">View releases</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="page-section" style="border-top:none; padding-top:0;">
+    <div class="container hero">
+      <div>
+        <p class="eyebrow">Windows desktop toolkit</p>
+        <h1 class="hero-title" data-index data-index-section="Hero" id="hero-title">Wrap yt-dlp in a cockpit you can actually see.</h1>
+        <p class="hero-lede">yt-dlp Studio is a Material Design desktop app that sits on top of yt-dlp: pick a URL, plan the command visually, and run it — with yt-dlp and ffmpeg bundled inside the installer, so there is nothing else to set up.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases">Download for Windows</a>
+          <a class="btn btn-outline" href="#workflow">See the workflow</a>
+        </div>
+        <p class="hero-note">Installers are unsigned. Windows will show an unknown-publisher warning at first run — that's expected, not a sign of a bad download. See the documentation for why signing isn't used.</p>
+      </div>
+
+      <div class="terminal-card" aria-hidden="true">
+        <div class="terminal-bar">
+          <span class="term-dot red"></span><span class="term-dot yellow"></span><span class="term-dot green"></span>
+          <span class="terminal-label">terminal</span>
+        </div>
+        <div class="terminal-body"><span class="prompt">$</span> yt-dlp -f bestvideo+bestaudio --embed-subs <span class="path">https://…</span>
+<span class="prompt">[info]</span> Downloading webpage
+<span class="prompt">[info]</span> Merging formats into <span class="path">clip.mp4</span>
+<span class="ok">[download] 100% of 84.3MiB in 00:07</span>
+<span class="prompt">$</span> <span class="prompt">_</span></div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="fact-row">
+        <div class="fact-cell"><div class="fact-num">2</div><div class="fact-label">Bundled binaries — yt-dlp and ffmpeg, built from pinned source</div></div>
+        <div class="fact-cell"><div class="fact-num">0</div><div class="fact-label">Separate installs required to start downloading</div></div>
+        <div class="fact-cell"><div class="fact-num">1</div><div class="fact-label">Visual command planner, so flags stop being a guessing game</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section" id="capabilities">
+    <div class="container">
+      <div class="section-head">
+        <h2 data-index data-index-section="Capabilities" id="capabilities-title">A downloader that stays out of your way.</h2>
+        <p>yt-dlp does the work. yt-dlp Studio gives it a Material Design surface — so the options you use often are visible, and the ones you rarely touch don't clutter the screen.</p>
+      </div>
+      <div class="card-grid">
+        <div class="feature-card" data-index data-index-section="Capabilities" id="feature-bundled">
+          <div class="icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v10m0 0l-4-4m4 4l4-4M4 15h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+          <h3>Bundled, not borrowed</h3>
+          <p>yt-dlp and ffmpeg ship inside the installer, built from pinned upstream source. No separate download, no PATH configuration, no version mismatch to chase.</p>
+        </div>
+        <div class="feature-card" data-index data-index-section="Capabilities" id="feature-command">
+          <div class="icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 6h12M4 10h12M4 14h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></div>
+          <h3>A command you can read</h3>
+          <p>Every choice in the planner writes into a real, visible yt-dlp command line as you make it — copy it, edit it by hand, or just let the app run it for you.</p>
+        </div>
+        <div class="feature-card" data-index data-index-section="Capabilities" id="feature-material">
+          <div class="icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="4" y="4" width="12" height="12" rx="3" stroke="currentColor" stroke-width="1.6"></rect></svg></div>
+          <h3>Material Design throughout</h3>
+          <p>Light and dark themes, keyboard-accessible controls, and a layout that holds together from a phone-width preview up to a full desktop window.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section" id="workflow">
+    <div class="container">
+      <div class="tint-section">
+        <div>
+          <p class="eyebrow">Getting started</p>
+          <h2 data-index data-index-section="Workflow" id="workflow-title">Start simple. Grow into the details.</h2>
+          <p class="lede">A first download needs one field. Everything else — subtitle handling, output templates, format selection — is there when you want it, not before.</p>
+        </div>
+        <div class="steps-panel">
+          <div class="command-field">yt-dlp &lt;media URL&gt;</div>
+          <ol class="step-list">
+            <li class="step-item">
+              <span class="step-num">1</span>
+              <span class="step-text"><strong>Paste a URL</strong><span>Drop the link into the planner or run yt-dlp Studio's command line directly.</span></span>
+            </li>
+            <li class="step-item">
+              <span class="step-num">2</span>
+              <span class="step-text"><strong>Choose a preference</strong><span>Best quality, audio only, or the smallest file — the planner fills in the right flags.</span></span>
+            </li>
+            <li class="step-item">
+              <span class="step-num">3</span>
+              <span class="step-text"><strong>Run or copy the draft</strong><span>Use the app's own runner, or copy the composed command into any terminal.</span></span>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section" id="planner">
+    <div class="container">
+      <div class="section-head">
+        <h2 data-index data-index-section="Planner" id="planner-title">A practical companion, kept in your browser.</h2>
+        <p>This planner mirrors part of the desktop app's own interface. It composes a real yt-dlp command from your choices — nothing here is a mockup.</p>
+      </div>
+
+      <div class="tab-strip" data-tablist role="tablist" aria-label="Planner sections">
+        <button type="button" role="tab" id="tab-planner" aria-selected="true" aria-controls="panel-planner" tabindex="0">Format planner</button>
+        <button type="button" role="tab" id="tab-converter" aria-selected="false" aria-controls="panel-converter" tabindex="-1">File converter</button>
+        <button type="button" role="tab" id="tab-models" aria-selected="false" aria-controls="panel-models" tabindex="-1">Local model suite</button>
+        <button type="button" role="tab" id="tab-settings" aria-selected="false" aria-controls="panel-settings" tabindex="-1">Site settings</button>
+      </div>
+
+      <div id="panel-planner" role="tabpanel" aria-labelledby="tab-planner" tabindex="0">
+        <div class="planner-panel">
+          <form data-planner-form>
+            <div class="field">
+              <label for="media-url">Media URL</label>
+              <input id="media-url" name="media-url" type="url" placeholder="https://example.com/watch?v=…" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="output-pref">Output preference</label>
+              <select id="output-pref" name="output-pref">
+                <option value="recommended">Recommended (yt-dlp's default)</option>
+                <option value="best-video">Best video + audio, merged</option>
+                <option value="audio-only">Audio only (MP3)</option>
+                <option value="smallest">Smallest file available</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="subs">Subtitles</label>
+              <select id="subs" name="subs">
+                <option value="none">None</option>
+                <option value="embed">Download and embed</option>
+                <option value="download">Download alongside (English)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="output-template">Output template</label>
+              <input id="output-template" name="output-template" type="text" placeholder="%(title)s.%(ext)s" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="draft-command">Draft command</label>
+              <textarea id="draft-command" data-draft-command readonly aria-live="polite"></textarea>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" data-copy-command>Copy draft command</button>
+          </form>
+
+          <div class="checklist-card">
+            <h4>Output checklist</h4>
+            <p>What this draft command will and won't do.</p>
+            <ul class="checklist">
+              <li>Merged video + audio container <span class="pill pill-ready">Ready</span></li>
+              <li>Subtitles embedded in the file <span class="pill pill-optional">Optional</span></li>
+              <li>Custom filename template <span class="pill pill-optional">Optional</span></li>
+              <li>Post-download library import <span class="pill pill-configure">Configure separately</span></li>
+              <li>Scheduled or watched-folder downloads <span class="pill pill-configure">Configure separately</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-converter" role="tabpanel" aria-labelledby="tab-converter" tabindex="0" hidden>
+        <div class="planner-panel" style="grid-template-columns:1fr;">
+          <div>
+            <p>The desktop app's file converter turns a finished download into another container or codec using the bundled ffmpeg — no separate ffmpeg install, and no upload anywhere. See the <a href="docs.html#converter">file converter documentation</a> for the full list of supported formats.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-models" role="tabpanel" aria-labelledby="tab-models" tabindex="0" hidden>
+        <div class="planner-panel" style="grid-template-columns:1fr;">
+          <div>
+            <p>The desktop app's local model suite manages an installed Ollama runtime entirely on your machine — no cloud account, no data leaving the device. See the <a href="docs.html#local-models">local model suite documentation</a> for setup.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" tabindex="0" hidden>
+        <div class="planner-panel" style="grid-template-columns:1fr;">
+          <div>
+            <p>Language modes, theme, density, and every other appearance setting in the desktop app persist locally and never leave your machine. See the <a href="docs.html">documentation index</a> for the settings reference.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section" id="faq">
+    <div class="container">
+      <div class="section-head">
+        <h2 data-index data-index-section="FAQ" id="faq-title">Use the project's current guidance.</h2>
+        <p>Short answers. The documentation goes deeper on each of these.</p>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary data-index data-index-section="FAQ" id="faq-1">
+            Is this the official yt-dlp project?
+            <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </summary>
+          <div class="faq-body" data-index data-index-section="FAQ">No. yt-dlp Studio is an independent desktop application that wraps the open-source <a href="https://github.com/yt-dlp/yt-dlp" rel="noopener">yt-dlp</a> project and bundles it for convenience. All credit for the download engine itself belongs to the yt-dlp maintainers and contributors; this project is not affiliated with or endorsed by them.</div>
+        </details>
+        <details class="faq-item">
+          <summary data-index data-index-section="FAQ" id="faq-2">
+            Why does Windows warn about an unknown publisher?
+            <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </summary>
+          <div class="faq-body" data-index data-index-section="FAQ">The installer is deliberately unsigned. Code signing costs money and this project does not use it. SmartScreen will show an unknown-publisher prompt the first time you run a new build — that's expected, not evidence of tampering. See the installation guide for what to check before you trust a download.</div>
+        </details>
+        <details class="faq-item">
+          <summary data-index data-index-section="FAQ" id="faq-3">
+            Is there a release yet?
+            <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </summary>
+          <div class="faq-body" data-index data-index-section="FAQ">Not yet published. The "Download for Windows" and "View releases" links on this site both go to the project's GitHub Releases page, which will list the current build once one ships — nothing on this page invents a version number or a file size ahead of that.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section">
+    <div class="container">
+      <div class="cta-band">
+        <p class="eyebrow" style="margin-bottom:8px;">Ready when a release ships</p>
+        <h2>Read the installation guide before your first run.</h2>
+        <p>It covers the bundled binaries, the unsigned-installer warning, and how to build from source if you'd rather not wait.</p>
+        <a class="btn btn-primary" href="docs.html">Read installation guide</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-row">
+    <p class="footer-note">yt-dlp Studio is an independent project and is not affiliated with, endorsed by, or produced by the yt-dlp maintainers. This site is a landing and documentation surface — it is not the application itself.</p>
+    <div class="footer-links">
+      <a href="docs.html">Documentation</a>
+      <a href="https://github.com/Ding-Ding-Projects/material-ytdlp" rel="noopener">Source</a>
+      <a href="https://github.com/yt-dlp/yt-dlp" rel="noopener">Upstream yt-dlp</a>
+      <a href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases" rel="noopener">Releases</a>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

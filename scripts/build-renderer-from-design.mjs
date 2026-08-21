@@ -53,6 +53,7 @@ import { dirname, join } from 'node:path'
 import { wireFileOps } from './wire-fileops.mjs'
 import { wireSettingsActions } from './wire-settings-actions.mjs'
 import { wireProbes } from './wire-probes.mjs'
+import { wireExports } from './wire-exports.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(__dirname, '..')
@@ -212,6 +213,9 @@ function main() {
   html = wireSettingsActions(html, replaceExact)
   html = wireFileOps(html, replaceExact)
   html = wireProbes(html, replaceExact)
+  // Exports runs last of all: several of its needles target text the lanes
+  // above created, so it cannot be derived from the design source alone.
+  html = wireExports(html, replaceExact)
 
   writeFileSync(OUT_HTML_PATH, html, 'utf8')
   console.log(`build-renderer-from-design: wrote ${OUT_HTML_PATH}`)

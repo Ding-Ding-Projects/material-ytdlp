@@ -19,6 +19,7 @@
 
 export function wireProbes(html, replaceExact) {
   html = wireExtractorCount(html, replaceExact)
+  html = wireSiteCount(html, replaceExact)
   html = wireListSubsAndThumbnails(html, replaceExact)
   html = wireEasyUrlProbe(html, replaceExact)
   html = addProbesWireMethods(html, replaceExact)
@@ -51,6 +52,42 @@ function wireExtractorCount(html, replaceExact) {
     html,
     "        { glyph: 'extension', text: '—', color: '#bec9c7', title: 'Loaded extractors',",
     "        { glyph: 'extension', text: (s.extractorCountText || '—'), color: '#bec9c7', title: 'Loaded extractors',",
+  )
+
+  return html
+}
+
+// ---------------------------------------------------------------------------
+// 1b. Sites surface's own status line — a SEPARATE hardcoded literal from
+// the status-bar badge above (same fabricated '1 908 extractors' figure,
+// caught in a screenshot review after the badge was already fixed). Reuses
+// the SAME s.extractorCountText the badge reads (populated once, on mount,
+// by fetchExtractorCount below) rather than issuing a second fetch.
+//
+// The "24 shown" half was ALSO hardcoded even though a real filtered count
+// was sitting right there — siteRows is built via a
+// [...].filter(...).map(...) chain, and the literal below just never read
+// its own length. Rather than duplicating the 24-row array (fragile: two
+// copies that can drift), this stashes the filtered array's length as a
+// side effect of building siteRows (`this._siteRowsShown = [...].filter(...)`)
+// and reads it back one property later in the same object literal, which is
+// legal because JS evaluates object literal property VALUES in source
+// order, left to right.
+// ---------------------------------------------------------------------------
+
+function wireSiteCount(html, replaceExact) {
+  html = replaceExact(html, "      siteRows: [", "      siteRows: (this._siteRowsShown = [")
+
+  html = replaceExact(
+    html,
+    "].filter(r => this.match(r.join(' '), s.siteSearch)).map(r => ({\n        key: r[0], note: r[1],",
+    "])).map(r => ({\n        key: r[0], note: r[1],",
+  )
+
+  html = replaceExact(
+    html,
+    "      siteCount: '24 shown · 1 908 extractors loaded',",
+    "      siteCount: (this._siteRowsShown || []).length + ' shown · ' + (s.extractorCountText ? s.extractorCountText + ' loaded' : '— extractors loaded'),",
   )
 
   return html

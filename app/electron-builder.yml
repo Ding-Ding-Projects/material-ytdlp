@@ -1,6 +1,14 @@
 appId: com.dingdingprojects.ytdlp-studio
 productName: yt-dlp Studio
 
+# This project publishes releases with the gh CLI, never with electron-builder.
+# Left unset, electron-builder tries to resolve a publish target from
+# .git/config at the END of a successful build, fails on a runner where it
+# cannot detect one, and reports the whole build as failed - "Cannot cleanup:
+# Cannot detect repository by .git/config" - with the installer already sitting
+# on disk. Setting this to null stops it looking.
+publish: null
+
 directories:
   output: dist
 

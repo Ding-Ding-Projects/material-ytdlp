@@ -29,5 +29,9 @@
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ding-Ding-Projects/material-ytdlp.git"
   }
 }

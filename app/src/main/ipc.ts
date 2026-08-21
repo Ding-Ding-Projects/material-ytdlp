@@ -31,6 +31,23 @@ import { getHistoryStore } from './history'
 import { YtDlpManager } from './ytdlp'
 import { VocabularyIpcChannel } from '../shared/vocabulary-contract'
 import { clearVocabularyCache, loadVocabularyFromDisk, pickAndLoadVocabulary } from './vocabulary'
+import { ProbesIpcChannel, type ProbeUrlRequest } from '../shared/probes-contract'
+import { cancelProbe, extractorCount, listFormats, listSubtitles, listThumbnails, probeUrl } from './probes'
+import { AppMarkIpcChannel, SupportTicketsIpcChannel, type TicketCreateRequest } from '../shared/settings-actions-contract'
+import { getAppMarkState, pickAndApplyAppMark, resetAppMark } from './app-mark'
+import { createSupportTicket, listSupportTickets, openSupportDataFolder } from './support-tickets'
+import { FileOpsIpcChannel, type ConfigFileId, type ExportContentRequest, type OpenInEditorRequest, type RevealPathRequest } from '../shared/fileops-contract'
+import {
+  compactArchive,
+  exportContent,
+  listConfigFiles,
+  openInEditor,
+  readArchive,
+  readConfigFile,
+  revealPath,
+  validateConfigText,
+  writeConfigFile,
+} from './fileops'
 
 // ---------------------------------------------------------------------------
 // History auto-recording.
@@ -292,6 +309,47 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): YtDl
   ipcMain.handle(VocabularyIpcChannel.PickAndLoad, () => pickAndLoadVocabulary())
   ipcMain.handle(VocabularyIpcChannel.GetState, () => loadVocabularyFromDisk())
   ipcMain.handle(VocabularyIpcChannel.Clear, () => clearVocabularyCache())
+
+  // -- Host file operations (exports, reveal, editor handoff, configs) ------
+
+  ipcMain.handle(FileOpsIpcChannel.ExportContent, (_event, req: ExportContentRequest) => exportContent(req))
+  ipcMain.handle(FileOpsIpcChannel.RevealPath, (_event, req: RevealPathRequest) => revealPath(req))
+  ipcMain.handle(FileOpsIpcChannel.OpenInEditor, (_event, req: OpenInEditorRequest) => openInEditor(req))
+  ipcMain.handle(FileOpsIpcChannel.ListConfigFiles, () => listConfigFiles())
+  ipcMain.handle(FileOpsIpcChannel.ReadConfigFile, (_event, id: ConfigFileId) => readConfigFile(id))
+  ipcMain.handle(FileOpsIpcChannel.WriteConfigFile, (_event, id: ConfigFileId, contents: string) =>
+    writeConfigFile(id, contents),
+  )
+  ipcMain.handle(FileOpsIpcChannel.ValidateConfigText, (_event, text: string) => validateConfigText(text))
+  ipcMain.handle(FileOpsIpcChannel.ReadArchive, (_event, explicitPath: string | null) => readArchive(explicitPath))
+  ipcMain.handle(FileOpsIpcChannel.CompactArchive, (_event, explicitPath: string | null) => compactArchive(explicitPath))
+
+  // -- Custom application mark (display-only; never touches installed identity) --
+
+  ipcMain.handle(AppMarkIpcChannel.PickAndApply, () => pickAndApplyAppMark())
+  ipcMain.handle(AppMarkIpcChannel.GetState, () => getAppMarkState())
+  ipcMain.handle(AppMarkIpcChannel.Reset, () => resetAppMark())
+
+  // -- Support Tickets (local-only; never leaves the machine) ---------------
+
+  ipcMain.handle(SupportTicketsIpcChannel.Create, (_event, req: TicketCreateRequest) => createSupportTicket(req))
+  ipcMain.handle(SupportTicketsIpcChannel.List, () => listSupportTickets())
+  ipcMain.handle(SupportTicketsIpcChannel.OpenDataFolder, () => openSupportDataFolder())
+
+  // -- Probes (one-shot, informational yt-dlp queries) ---------------------
+
+  ipcMain.handle(ProbesIpcChannel.ExtractorCount, () => extractorCount())
+  ipcMain.handle(ProbesIpcChannel.ListSubtitles, (_event, req: ProbeUrlRequest) =>
+    listSubtitles(req.url, req.requestId),
+  )
+  ipcMain.handle(ProbesIpcChannel.ListThumbnails, (_event, req: ProbeUrlRequest) =>
+    listThumbnails(req.url, req.requestId),
+  )
+  ipcMain.handle(ProbesIpcChannel.ListFormats, (_event, req: ProbeUrlRequest) =>
+    listFormats(req.url, req.requestId),
+  )
+  ipcMain.handle(ProbesIpcChannel.ProbeUrl, (_event, req: ProbeUrlRequest) => probeUrl(req.url, req.requestId))
+  ipcMain.handle(ProbesIpcChannel.Cancel, (_event, requestId: string) => cancelProbe(requestId))
 
   return manager
 }

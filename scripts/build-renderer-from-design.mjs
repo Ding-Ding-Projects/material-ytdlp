@@ -45,6 +45,15 @@ import { readFileSync, writeFileSync, copyFileSync, mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
+// Each wiring lane owns its own module and exports one pure function taking
+// (html, replaceExact). They are kept separate deliberately: three agents wrote
+// them in parallel, and one shared file would have been three agents editing the
+// same needles. This script owns the ORDER they run in, which matters — a later
+// lane's needle may be text an earlier lane rewrote.
+import { wireFileOps } from './wire-fileops.mjs'
+import { wireSettingsActions } from './wire-settings-actions.mjs'
+import { wireProbes } from './wire-probes.mjs'
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const repoRoot = join(__dirname, '..')
 
@@ -190,6 +199,19 @@ function main() {
   //    zero/empty states instead of fabricated activity (jobs, rates,
   //    archive counts, a pre-typed URL, a fake update banner...).
   html = zeroDemoState(html)
+
+  // 5. The parallel wiring lanes. Order matters and is deliberate:
+  //    - settings actions and file operations rewrite handler bodies that exist
+  //      in the design source unchanged, so they run first;
+  //    - probes runs last because one of its needles targets the extractor-count
+  //      dash that zeroDemoState introduces, which does not exist in the design
+  //      source at all.
+  //    Each lane asserts its own needles through the same replaceExact helper,
+  //    so a design change that moves any of them fails the build loudly rather
+  //    than silently producing a half-wired application.
+  html = wireSettingsActions(html, replaceExact)
+  html = wireFileOps(html, replaceExact)
+  html = wireProbes(html, replaceExact)
 
   writeFileSync(OUT_HTML_PATH, html, 'utf8')
   console.log(`build-renderer-from-design: wrote ${OUT_HTML_PATH}`)

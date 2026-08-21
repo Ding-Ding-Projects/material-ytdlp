@@ -2227,6 +2227,81 @@ class Component extends DCLogic {
           comp.toast('Retention', 'History kept for ' + label.toLowerCase() + ' — this only limits the view; nothing recorded is deleted');
         }).catch(err => comp.toast('Retention failed', String(err && err.message ? err.message : err)));
       },
+
+      // -- probes (one-shot, informational yt-dlp queries) ------------------
+
+      fetchExtractorCount(comp) {
+        const bridge = window.ytdlpStudio;
+        if (!bridge || !bridge.probes) return;
+        bridge.probes.extractorCount().then(res => {
+          if (res && res.ok && res.data) comp.setState({ extractorCountText: res.data.count.toLocaleString() + ' extractors' });
+          // ok:false or unparsed: leave the dash showing rather than a guess.
+        }).catch(() => {});
+      },
+
+      listSubtitlesForJob(comp, j) {
+        const bridge = window.ytdlpStudio;
+        if (!bridge || !bridge.probes) { comp.toast('Not connected', 'window.ytdlpStudio is missing'); return; }
+        const url = j && j.url;
+        if (!url) { comp.toast('No URL on this job', 'Cannot list subtitles without a source URL'); return; }
+        const requestId = 'subs-' + j.id + '-' + Date.now();
+        comp.toast('--list-subs', 'Asking yt-dlp\u2026');
+        bridge.probes.listSubtitles(requestId, url).then(res => {
+          if (!res || !res.ok) { comp.toast('--list-subs failed', (res && res.error && res.error.message) || 'Unknown error'); return; }
+          if (!res.parsed || !res.data) { comp.toast('--list-subs', 'Ran, but the output could not be parsed \u2014 see raw log'); return; }
+          const n = res.data.tracks.length;
+          const auto = res.data.tracks.filter(t => t.isAutomatic).length;
+          comp.toast('--list-subs', n + ' track(s), ' + auto + ' automatic');
+        }).catch(err => comp.toast('--list-subs failed', String(err && err.message ? err.message : err)));
+      },
+
+      listThumbnailsForJob(comp, j) {
+        const bridge = window.ytdlpStudio;
+        if (!bridge || !bridge.probes) { comp.toast('Not connected', 'window.ytdlpStudio is missing'); return; }
+        const url = j && j.url;
+        if (!url) { comp.toast('No URL on this job', 'Cannot list thumbnails without a source URL'); return; }
+        const requestId = 'thumbs-' + j.id + '-' + Date.now();
+        comp.toast('--list-thumbnails', 'Asking yt-dlp\u2026');
+        bridge.probes.listThumbnails(requestId, url).then(res => {
+          if (!res || !res.ok) { comp.toast('--list-thumbnails failed', (res && res.error && res.error.message) || 'Unknown error'); return; }
+          if (!res.parsed || !res.data) { comp.toast('--list-thumbnails', 'Ran, but the output could not be parsed \u2014 see raw log'); return; }
+          comp.toast('--list-thumbnails', res.data.thumbnails.length + ' thumbnail(s)');
+        }).catch(err => comp.toast('--list-thumbnails failed', String(err && err.message ? err.message : err)));
+      },
+
+      probeEasyUrl(comp, url) {
+        const bridge = window.ytdlpStudio;
+        const trimmed = (url || '').trim();
+        if (!bridge || !bridge.probes) return;
+        // Cancel whatever is in flight for this surface before starting a
+        // new one, so a fast typist's earlier keystroke cannot resolve after
+        // (and overwrite) a later one.
+        if (comp._easyProbeRequestId) bridge.probes.cancel(comp._easyProbeRequestId).catch(() => {});
+        if (!trimmed) { comp._easyProbeRequestId = null; comp.setState({ easyProbe: null }); return; }
+        const requestId = 'easy-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+        comp._easyProbeRequestId = requestId;
+        comp.setState({ easyProbe: { loading: true, result: null, error: null } });
+        // A short debounce: wait for the user to pause typing rather than
+        // spawning a yt-dlp process on every keystroke.
+        clearTimeout(comp._easyProbeDebounce);
+        comp._easyProbeDebounce = setTimeout(() => {
+          bridge.probes.probeUrl(requestId, trimmed).then(res => {
+            if (comp._easyProbeRequestId !== requestId) return; // superseded
+            if (!res || !res.ok) {
+              comp.setState({ easyProbe: { loading: false, result: null, error: (res && res.error && res.error.message) || 'Unknown error' } });
+              return;
+            }
+            if (!res.parsed || !res.data) {
+              comp.setState({ easyProbe: { loading: false, result: null, error: 'Could not parse yt-dlp\'s output' } });
+              return;
+            }
+            comp.setState({ easyProbe: { loading: false, result: res.data, error: null } });
+          }).catch(err => {
+            if (comp._easyProbeRequestId !== requestId) return;
+            comp.setState({ easyProbe: { loading: false, result: null, error: String(err && err.message ? err.message : err) } });
+          });
+        }, 500);
+      },
     };
   }
 
@@ -2278,11 +2353,22 @@ class Component extends DCLogic {
     window.addEventListener('keydown', this._key);
     this._totpTimer = setInterval(() => this.refreshTotp(), 1000);
     this.refreshTotp();
+    this._wire.fetchExtractorCount(this);
     this._wireBridge();
   }
   componentWillUnmount() { clearInterval(this._timer); clearInterval(this._totpTimer); window.removeEventListener('keydown', this._key); this._unwireBridge(); }
 
   toast(title, body) {
+    if (title === 'Copied' && typeof body === 'string' && typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(body).catch(() => {});
+    } else if (title === 'Explorer' && typeof body === 'string' && window.ytdlpStudio && window.ytdlpStudio.fileOps) {
+      window.ytdlpStudio.fileOps.revealPath({ path: body }).then(res => {
+        if (!res.ok) this._toastRaw('Could not open in Explorer', res.error || 'Unknown error');
+      }).catch(err => this._toastRaw('Could not open in Explorer', String(err && err.message ? err.message : err)));
+    }
+    this._toastRaw(title, body);
+  }
+  _toastRaw(title, body) {
     const id = Math.random();
     this.setState(s => ({ toasts: [...s.toasts, { id, title, body }] }));
     setTimeout(() => this.setState(s => ({ toasts: s.toasts.filter(t => t.id !== id) })), 3600);
@@ -2439,10 +2525,49 @@ class Component extends DCLogic {
     }, 120);
   }
   settingAction(key) {
-    if (key === 'vocab') this.toast('Vocabulary loaded', 'personal-vocabulary.json · 212 terms now replace the stock copy');
-    else if (key === 'appLogo') this.toast('App mark', 'Pick a square PNG or SVG — title bar, tray and installer');
-    else if (key === 'editor') this.toast('Handed off', 'yt-dlp.conf opened in your editor — saved changes reload live');
-    else if (key === 'tickets') this.setState({ dialog: 'notifications' });
+    if (key === 'vocab') {
+      if (!window.ytdlpStudio) { this.toast('Vocabulary', 'Not connected to the app shell.'); return; }
+      window.ytdlpStudio.vocabulary.pickAndLoad().then(res => {
+        this.setState({ vocabState: res.state });
+        if (res.cancelled) return;
+        if (!res.ok) { this.toast('Vocabulary rejected', res.error || 'The file could not be loaded.'); return; }
+        const n = res.state.entryCount;
+        this.toast('Vocabulary loaded', n + ' term' + (n === 1 ? '' : 's') + ' now replace the stock copy');
+      }).catch(err => this.toast('Vocabulary', 'Could not open the picker: ' + (err && err.message ? err.message : String(err))));
+    }
+    else if (key === 'appLogo') {
+      if (!window.ytdlpStudio) { this.toast('App mark', 'Not connected to the app shell.'); return; }
+      window.ytdlpStudio.appMark.pickAndApply().then(res => {
+        this.setState({ appMarkState: res.state });
+        if (res.cancelled) return;
+        if (!res.ok) { this.toast('App mark rejected', res.error || 'The image could not be applied.'); return; }
+        this.toast('App mark applied', res.state.widthPx + 'x' + res.state.heightPx + 'px — title bar and tray only');
+      }).catch(err => this.toast('App mark', 'Could not open the picker: ' + (err && err.message ? err.message : String(err))));
+    }
+    else if (key === 'editor') {
+      const bridge = window.ytdlpStudio;
+      if (!bridge || !bridge.fileOps) { this.toast('Not connected', 'window.ytdlpStudio.fileOps is missing'); return; }
+      bridge.fileOps.listConfigFiles().then(files => {
+        const target = (files || []).find(f => f.exists) || (files || [])[0];
+        if (!target) { this.toast('No config file', 'No configuration location could be resolved'); return; }
+        return bridge.fileOps.openInEditor({ path: target.path }).then(res => {
+          if (!res.ok) { this.toast('Could not open editor', res.error || 'Unknown error'); return; }
+          this.toast('Handed off', target.path + ' opened' + (res.method === 'vscode' ? ' in VS Code' : ' in your default editor'));
+        });
+      }).catch(err => this.toast('Could not open editor', String(err && err.message ? err.message : err)));
+    }
+    else if (key === 'tickets') {
+      if (!window.ytdlpStudio) { this.toast('Support tickets', 'Not connected to the app shell.'); return; }
+      const category = window.prompt('Support ticket — category (e.g. "Playback", "Downloads", "Just venting")', 'General');
+      if (category === null) return;
+      const description = window.prompt("Describe what went wrong.\n\nThis is a local joke, not a real help desk: nothing here is ever sent anywhere, no ticket exists outside this computer, no network request is made, and nobody is reading it. Nobody is coming. The button below opens this app’s own data folder so you can delete it yourself.", '');
+      if (description === null) return;
+      window.ytdlpStudio.supportTickets.create({ category, description }).then(res => {
+        if (!res.ok || !res.ticket) { this.toast('Support tickets', res.error || 'Could not file the ticket.'); return; }
+        this.toast('Ticket ' + res.ticket.number + ' filed', 'Status: ' + res.ticket.status + '. Opening this app’s data folder — that is the whole "resolution".');
+        return window.ytdlpStudio.supportTickets.openDataFolder();
+      }).catch(err => this.toast('Support tickets', 'Could not file the ticket: ' + (err && err.message ? err.message : String(err))));
+    }
     else if (key === 'changelog') { this.setState({ docId: 'changelog' }); this.goto('docs'); }
     else if (key === 'dimsum') this.toast('🥟 Dim-sum surprise', 'Har gow — crystal skin, three pleats minimum');
   }
@@ -3225,7 +3350,15 @@ class Component extends DCLogic {
       historyKeep: keep,
       historyKeepOpts: [keep].concat(['30 days', '90 days', '1 year', 'Forever'].filter(v => v !== keep)).map(v => ({ v })),
       setHistoryKeep: e => this._wire.setHistoryKeep(this, e.target.value),
-      historyCompact: () => this.toast('Compacted', 'history.jsonl rewritten · 482 KiB → 301 KiB'),
+      historyCompact: () => {
+        const bridge = window.ytdlpStudio;
+        if (!bridge || !bridge.fileOps) { this.toast('Not connected', 'window.ytdlpStudio.fileOps is missing'); return; }
+        const archivePath = s.values['--download-archive'] || null;
+        bridge.fileOps.compactArchive(archivePath).then(res => {
+          if (!res.ok) { this.toast('Compaction failed', res.error || 'Unknown error'); return; }
+          this.toast('Compacted', res.path + ' rewritten · removed ' + res.removedDuplicates + ' duplicate id(s) · ' + res.beforeBytes + 'B → ' + res.afterBytes + 'B');
+        }).catch(err => this.toast('Compaction failed', String(err && err.message ? err.message : err)));
+      },
     };
   }
   renderVals() {
@@ -3329,12 +3462,20 @@ class Component extends DCLogic {
         { glyph: '▶', label: j.state === 'downloading' ? 'Pause this job' : 'Start now', run: () => this.toast('Queue', j.title) },
         { glyph: '↻', label: 'Retry with --force-overwrites', run: () => this.toast('Retrying', j.title) },
         { glyph: 'F', label: 'List formats (-F)', run: () => this.goto('formats') },
-        { glyph: '⌯', label: 'List subtitles (--list-subs)', run: () => this.toast('--list-subs', '18 languages, 2 auto') },
-        { glyph: '▢', label: 'List thumbnails', run: () => this.toast('--list-thumbnails', '7 thumbnails') },
+        { glyph: '⌯', label: 'List subtitles (--list-subs)', run: () => this._wire.listSubtitlesForJob(this, j) },
+        { glyph: '▢', label: 'List thumbnails', run: () => this._wire.listThumbnailsForJob(this, j) },
         { glyph: '⎘', label: 'Copy generated command', run: () => this.toast('Copied', 'yt-dlp … ' + j.extractor) },
         { glyph: '{}', label: 'Copy --print JSON', run: () => this.toast('Copied', 'info.json for ' + j.title) },
         { glyph: '⌂', label: 'Open containing folder', run: () => this.toast('Explorer', s.easyFolder) },
-        { glyph: '⊕', label: 'Add to download archive', run: () => this.toast('Archive', '1 id appended') },
+        { glyph: '⊕', label: 'Add to download archive', run: () => {
+          const bridge = window.ytdlpStudio;
+          if (!bridge || !bridge.fileOps) { this.toast('Not connected', 'window.ytdlpStudio.fileOps is missing'); return; }
+          const archivePath = s.values['--download-archive'] || null;
+          bridge.fileOps.readArchive(archivePath).then(res => {
+            if (res.error) { this.toast('Archive unavailable', res.error); return; }
+            this.toast('Archive', (res.path || 'No --download-archive path is set') + ' · ' + res.lineCount + ' id(s) on disk');
+          }).catch(err => this.toast('Archive unavailable', String(err && err.message ? err.message : err)));
+        } },
         { glyph: '×', label: 'Remove from queue', color: '#ffb4ab', run: () => this.setState(st => ({ jobs: st.jobs.filter(x => x.id !== j.id) })) },
       ]),
     }));
@@ -3670,18 +3811,26 @@ class Component extends DCLogic {
       refresh: () => this.toast('Refreshed', 'Extractors, formats and archive re-read'),
 
       // easy mode
-      easyUrl: s.easyUrl, setEasyUrl: e => this.setState({ easyUrl: e.target.value }),
-      pasteEasy: () => this.setState({ easyUrl: 'https://www.youtube.com/@blenderfoundation' }),
+      easyUrl: s.easyUrl, setEasyUrl: e => { const v = e.target.value; this.setState({ easyUrl: v }); this._wire.probeEasyUrl(this, v); },
+      pasteEasy: () => { const v = 'https://www.youtube.com/@blenderfoundation'; this.setState({ easyUrl: v }); this._wire.probeEasyUrl(this, v); },
       easyKindColor: kind === 'channel' ? '#82d5cc' : kind === 'playlist' ? '#febc2e' : kind === 'empty' ? '#3f4948' : '#82d5cc',
       easyKindGlyph: kind === 'channel' ? 'subscriptions' : kind === 'playlist' ? 'playlist_play' : kind === 'empty' ? 'link' : 'play_circle',
-      easyKindTitle: kind === 'channel' ? 'Channel detected' : kind === 'playlist' ? 'Playlist detected' : kind === 'empty' ? 'Waiting for a link' : 'Single video',
-      easyKindDetail: kind === 'channel' ? 'Blender Foundation · 312 videos · newest 2 days ago'
-        : kind === 'playlist' ? '40 entries · mixed qualities'
-        : kind === 'empty' ? 'Paste anything from 1900+ supported sites'
-        : 'Big Buck Bunny 4K remaster · 10:34 · 24 formats',
-      easyExtractor: this.extractorOf(),
+      easyKindTitle: kind === 'empty' ? 'Waiting for a link'
+        : (s.easyProbe && s.easyProbe.loading) ? 'Checking…'
+        : (s.easyProbe && s.easyProbe.error) ? 'Could not check'
+        : (s.easyProbe && s.easyProbe.result && s.easyProbe.result.isCollection) ? (kind === 'playlist' ? 'Playlist detected' : 'Channel detected')
+        : (s.easyProbe && s.easyProbe.result) ? 'Single video'
+        : 'Not checked yet',
+      easyKindDetail: kind === 'empty' ? 'Paste anything from 1900+ supported sites'
+        : (s.easyProbe && s.easyProbe.loading) ? 'Asking yt-dlp…'
+        : (s.easyProbe && s.easyProbe.error) ? s.easyProbe.error
+        : (s.easyProbe && s.easyProbe.result) ? (s.easyProbe.result.isCollection
+            ? (s.easyProbe.result.entryCount != null ? s.easyProbe.result.entryCount + ' entries · first: ' + (s.easyProbe.result.title || '(no title)') : 'First entry: ' + (s.easyProbe.result.title || '(no title)'))
+            : (s.easyProbe.result.title || '(no title)') + (s.easyProbe.result.durationSec != null ? ' · ' + Math.floor(s.easyProbe.result.durationSec / 60) + ':' + String(Math.round(s.easyProbe.result.durationSec % 60)).padStart(2, '0') : ''))
+        : 'Press Enter or paste a link to check',
+      easyExtractor: (s.easyProbe && s.easyProbe.result && s.easyProbe.result.extractor) || this.extractorOf(),
       easyIsChannel: kind === 'channel' || kind === 'playlist',
-      easyEntryCount: kind === 'playlist' ? 40 : 312,
+      easyEntryCount: (s.easyProbe && s.easyProbe.result && s.easyProbe.result.entryCount) || 0,
       qualityOptions: ['best', '2160', '1080', '720', 'small', 'audio'].map(k => {
         const on = s.easyQuality === k;
         return {
@@ -4011,7 +4160,7 @@ class Component extends DCLogic {
           { glyph: '{}', label: 'Open .info.json', run: () => this.toast('info.json', r[0]) },
           { glyph: '↻', label: 'Re-download with current options', run: () => this.toast('Queued', r[0]) },
           { glyph: '⚙', label: 'Re-run post-processing only', run: () => this.toast('Post-processing', r[0]) },
-          { glyph: '⊖', label: 'Remove archive id', color: '#ffb4ab', run: () => this.toast('Archive', r[5] + ' removed') },
+          { glyph: '⊖', label: 'Remove archive id', color: '#ffb4ab', run: () => this.toast('Not implemented', 'Removing a single id from the download archive needs a real per-row extractor id, which this list does not carry yet') },
           { glyph: '×', label: 'Delete file from disk', color: '#ffb4ab', run: () => this.askDestructive('Delete from disk?', 'The file is removed permanently. The download archive entry stays unless you remove it separately.') },
         ]),
       })),
@@ -4059,9 +4208,26 @@ class Component extends DCLogic {
         fg: s.configFile === id ? '#82d5cc' : '#dee4e3',
         pick: () => this.setState({ configFile: id }),
         menu: e => this.openMenu(e, label + ' config', [
-          { glyph: '↗', label: 'Open in the editor', run: () => this.setState({ configFile: id }) },
+          { glyph: '↗', label: 'Open in the editor', run: () => {
+            this.setState({ configFile: id });
+            const bridge = window.ytdlpStudio;
+            if (!bridge || !bridge.fileOps) { this.toast('Not connected', 'window.ytdlpStudio.fileOps is missing'); return; }
+            bridge.fileOps.openInEditor({ path }).then(res => {
+              if (!res.ok) { this.toast('Could not open editor', res.error || 'Unknown error'); return; }
+              this.toast('Handed off', path + ' opened' + (res.method === 'vscode' ? ' in VS Code' : ' in your default editor'));
+            }).catch(err => this.toast('Could not open editor', String(err && err.message ? err.message : err)));
+          } },
           { glyph: '⎘', label: 'Copy path', run: () => this.toast('Copied', path) },
-          { glyph: '▤', label: 'Export as .conf', run: () => this.toast('Exported', label + '.conf') },
+          { glyph: '▤', label: 'Export as .conf', run: () => {
+            const bridge = window.ytdlpStudio;
+            if (!bridge || !bridge.fileOps) { this.toast('Not connected', 'window.ytdlpStudio.fileOps is missing'); return; }
+            const text = confLines.map(l => (l.on ? '' : '# ') + l.flag + (l.value ? ' ' + l.value : '')).join('\n');
+            bridge.fileOps.exportContent({ suggestedName: label + '.conf', contents: text, formatLabel: 'yt-dlp config' }).then(res => {
+              if (res.cancelled) return;
+              if (!res.ok) { this.toast('Export failed', res.error || 'Unknown error'); return; }
+              this.toast('Exported', res.path);
+            }).catch(err => this.toast('Export failed', String(err && err.message ? err.message : err)));
+          } },
           { glyph: '⊘', label: 'Ignore this file (--ignore-config)', run: () => this.toast('--ignore-config', label + ' skipped') },
           { glyph: '×', label: 'Delete file', color: '#ffb4ab', run: () => this.askDestructive('Delete from disk?', 'The file is removed permanently. The download archive entry stays unless you remove it separately.') },
         ]),
@@ -4229,7 +4395,7 @@ class Component extends DCLogic {
             { glyph: '▤', label: 'Open browser to sign in', run: () => this.setState({ dialog: 'login' }) },
             { glyph: '⚿', label: 'Authentication options', run: () => this.goto('group', 'auth') },
           ]) },
-        { glyph: 'extension', text: '—', color: '#bec9c7', title: 'Loaded extractors',
+        { glyph: 'extension', text: (s.extractorCountText || '—'), color: '#bec9c7', title: 'Loaded extractors',
           menu: e => this.openMenu(e, 'Extractors', [
             { glyph: '↗', label: 'Browse supported sites', run: () => this.goto('sites') },
             { glyph: '⚙', label: 'Extractor options', run: () => this.goto('group', 'extractor') },
@@ -4362,11 +4528,25 @@ class Component extends DCLogic {
         ['dimsum', 'Dim-sum surprise', 'A small treat, on demand.', 'action', 'Surprise me'],
       ].filter(r => this.match(r[1] + ' ' + r[2], s.settingsSearch)).map(r => {
         const [key, label, help, type, options] = r;
+        if (!this._settingsActionsPolled && window.ytdlpStudio) {
+          this._settingsActionsPolled = true;
+          window.ytdlpStudio.vocabulary.getState().then(vs => this.setState({ vocabState: vs })).catch(() => {});
+          window.ytdlpStudio.appMark.getState().then(ms => this.setState({ appMarkState: ms })).catch(() => {});
+        }
+        const liveHelp = key === 'vocab'
+          ? ((s.vocabState && s.vocabState.loaded)
+              ? (s.vocabState.entryCount + ' term' + (s.vocabState.entryCount === 1 ? '' : 's') + ' active — your words replace the stock copy everywhere.')
+              : 'No file loaded — original wording is shown everywhere. Upload a local JSON dictionary to replace it.')
+          : key === 'appLogo'
+          ? ((s.appMarkState && s.appMarkState.active)
+              ? ('Custom mark active (' + s.appMarkState.widthPx + 'x' + s.appMarkState.heightPx + 'px) in the title bar and tray. Display only — never changes installer or data identity.')
+              : 'Using the shipped app mark. Replace it with your own PNG — title bar and tray only.')
+          : help;
         const store = { confirmDestructive: true, autoWizard: true, keepHistory: true, enFunny: 2, yueFunny: 3, scale: 1, weight: 400, radius: 12, ...(s.prefs || {}), ...(s.settings || {}) };
         const val = store[key];
         const on = val === true;
         return {
-          label, help, isToggle: type === 'toggle', isSelect: type === 'select', isRange: type === 'range',
+          label, help: liveHelp, isToggle: type === 'toggle', isSelect: type === 'select', isRange: type === 'range',
           isAction: type === 'action', actionLabel: type === 'action' ? options : '',
           act: () => this.settingAction(key),
           value: type === 'range' ? String(val || 6) : String(val || ((type === 'select' && options) || [''])[0]),

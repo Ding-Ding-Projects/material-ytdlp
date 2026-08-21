@@ -1,0 +1,13 @@
+#!/bin/sh
+# Bring the pinned dependencies up to their upstream tip after every pull.
+#
+# Both vendor/ submodules track master, and this project deliberately wants the
+# newest upstream rather than a frozen one: yt-dlp in particular breaks when a
+# site changes and is fixed upstream within days, so a pin that never moves is a
+# downloader that quietly stops working.
+#
+# The trade is real and worth naming: advancing to the tip means two checkouts
+# of the same commit of THIS repository can build different binaries. That is
+# why every build writes a stamp recording the exact submodule commit it used,
+# so a given artifact is still traceable even though the pin moves.
+exec "$(dirname "$0")/update-submodules.sh"

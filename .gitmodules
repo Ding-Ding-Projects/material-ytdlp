@@ -1,3 +1,10 @@
 [submodule "vendor/yt-dlp"]
 	path = vendor/yt-dlp
 	url = https://github.com/yt-dlp/yt-dlp
+	branch = master
+	update = merge
+[submodule "vendor/ffmpeg"]
+	path = vendor/ffmpeg
+	url = https://github.com/FFmpeg/FFmpeg
+	branch = master
+	update = merge

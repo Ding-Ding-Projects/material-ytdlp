@@ -119,22 +119,40 @@ jobs:
       - name: Verify vendored binaries
         shell: pwsh
         run: |
-          Write-Host "yt-dlp cache hit: ${{ steps.cache-ytdlp.outputs.cache-hit }}"
-          Write-Host "ffmpeg cache hit: ${{ steps.cache-ffmpeg.outputs.cache-hit }}"
+          Write-Host "yt-dlp cache hit: '${{ steps.cache-ytdlp.outputs.cache-hit }}'"
+          Write-Host "ffmpeg cache hit: '${{ steps.cache-ffmpeg.outputs.cache-hit }}'"
+
+          # Capture the output fully BEFORE reading $LASTEXITCODE.
+          #
+          # `& $exe --version | Select-Object -First 1` looks harmless and is
+          # not: Select-Object -First stops the upstream pipeline as soon as it
+          # has what it needs, which terminates the native command early and
+          # leaves $LASTEXITCODE unset. The first version of this step did that
+          # and reported every binary as "(exit )" - an empty exit code - while
+          # all three were present and working perfectly.
           $bad = @()
           foreach ($exe in 'yt-dlp', 'ffmpeg', 'ffprobe') {
             $path = "vendor/bin/$exe.exe"
             if (-not (Test-Path $path)) { $bad += "$path (missing)"; continue }
+
             $flag = if ($exe -eq 'yt-dlp') { '--version' } else { '-version' }
-            $first = (& $path $flag 2>&1 | Select-Object -First 1)
-            if ($LASTEXITCODE -ne 0) { $bad += "$path (exit $LASTEXITCODE)" }
-            else { Write-Host "$exe : $first" }
-          }
-          if ($bad.Count -gt 0) {
-            Write-Error ("Vendored binaries missing or not runnable: " + ($bad -join '; ') + ". A cache entry restored files that cannot be used; delete that cache key and rerun.")
-            exit 1
+            $output = & $path $flag 2>&1
+            $code = $LASTEXITCODE
+
+            if ($code -ne 0) {
+              $bad += "$path (exit $code)"
+            } else {
+              $first = ($output | Select-Object -First 1)
+              Write-Host "$exe : $first"
+            }
           }
 
+          if ($bad.Count -gt 0) {
+            Write-Error ("Vendored binaries missing or not runnable: " + ($bad -join '; ') +
+              ". If a cache entry restored files that cannot be used, delete that cache key and rerun.")
+            exit 1
+          }
+          Write-Host "All three bundled binaries are present and runnable."
       - name: Build installer
         shell: cmd
         run: .\build-installer.bat /s

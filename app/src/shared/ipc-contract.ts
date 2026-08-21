@@ -89,7 +89,17 @@ export type JobState = 'queued' | 'running' | 'paused' | 'done' | 'error' | 'can
 
 export interface JobProgress {
   status: string | null
+  /**
+   * Overall, monotonic-within-phase download percentage, already aggregated
+   * across fragments where applicable. This is what a progress bar should
+   * bind to. See ytdlp.ts `computeJobProgress` for why this cannot simply be
+   * yt-dlp's own `_percent_str` on a fragmented (DASH/HLS) download: that
+   * field is PER-FRAGMENT, resets to ~0% at the start of every fragment, and
+   * would make a bar wired to it jitter and repeatedly hit 100% early.
+   */
   pct: string | null
+  /** The raw, unaggregated per-fragment percentage as yt-dlp reported it, for diagnostics/expert display only. Not monotonic — do not bind a progress bar to this. */
+  fragmentPct: string | null
   rate: string | null
   size: string | null
   eta: string | null

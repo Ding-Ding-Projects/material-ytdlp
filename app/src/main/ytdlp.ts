@@ -33,21 +33,161 @@ function progressFlags(): string[] {
   return ['--newline', '--progress-template', PROGRESS_TEMPLATE]
 }
 
-function parseProgressLine(line: string): JobProgress | null {
+/**
+ * Splits one `[[PROGRESS]]`-prefixed line into its raw, unaggregated fields.
+ * Returns null when the line does not carry the marker at all.
+ *
+ * yt-dlp reports several of these fields as the literal strings "NA" or
+ * "Unknown" when the value is not knowable yet (very common on fragmented
+ * DASH/HLS streams, where total size and ETA are unknown until enough
+ * fragments have been seen). Those are normalized to null here rather than
+ * coerced into 0 or NaN: a size of NaN rendered in the UI reads as a broken
+ * app, while null lets the surface honestly show nothing.
+ */
+export function parseRawProgressLine(line: string): RawProgressFields | null {
   const idx = line.indexOf(PROGRESS_MARKER)
   if (idx === -1) return null
   const rest = line.slice(idx + PROGRESS_MARKER.length)
-  const parts = rest.split('|')
-  const [status, pct, rate, size, eta, fragIndex, fragCount] = parts
-  const na = (v: string | undefined) => (v === undefined || v === 'NA' ? null : v)
+  const [status, pct, rate, size, eta, fragIndex, fragCount] = rest.split('|')
+  // yt-dlp right-pads/left-pads several of these fields with spaces for
+  // fixed-width alignment even inside a custom --progress-template (real
+  // observed output: "   803.01B/s", "       N/A") — trim before comparing
+  // against or storing a value, or padding survives into the UI and an
+  // "N/A" with leading spaces fails to match the sentinel below.
+  // yt-dlp prints "N/A" (with the slash) for an unknown _total_bytes_str and
+  // "NA" for some other unknown numeric fields, plus "Unknown" for
+  // _eta_str — accept all three rather than only one spelling.
+  const na = (v: string | undefined) => {
+    const trimmed = v?.trim() ?? ''
+    return trimmed === '' || trimmed === 'NA' || trimmed === 'N/A' || trimmed === 'Unknown' ? null : trimmed
+  }
   return {
     status: na(status),
-    pct: na(pct),
+    percentStr: na(pct),
     rate: na(rate),
     size: na(size),
     eta: na(eta),
-    frags: fragIndex && fragCount && fragIndex !== 'NA' && fragCount !== 'NA' ? `${fragIndex}/${fragCount}` : null,
+    fragmentIndexStr: na(fragIndex),
+    fragmentCountStr: na(fragCount),
   }
+}
+
+export interface RawProgressFields {
+  status: string | null
+  percentStr: string | null
+  rate: string | null
+  size: string | null
+  eta: string | null
+  fragmentIndexStr: string | null
+  fragmentCountStr: string | null
+}
+
+/**
+ * Per-job state carried between successive progress lines so `pct` can be
+ * made monotonic within a download phase. Not part of the public contract —
+ * this is purely bookkeeping for computeJobProgress.
+ */
+export interface ProgressPhaseState {
+  /** The last fragment_index seen, or null once we are past fragmented output for this phase. */
+  lastFragmentIndex: number | null
+  /** Whether the last line seen carried fragment info at all (video/audio download vs. e.g. a merge step). */
+  hadFragments: boolean
+  /** The highest overall percentage computed so far in the current phase, used to prevent `pct` going backwards. */
+  maxOverallPct: number | null
+}
+
+export function initialProgressPhaseState(): ProgressPhaseState {
+  return { lastFragmentIndex: null, hadFragments: false, maxOverallPct: null }
+}
+
+function parseNumber(v: string | null): number | null {
+  if (v === null) return null
+  const n = parseFloat(v.replace('%', '').trim())
+  return Number.isFinite(n) ? n : null
+}
+
+function parseInteger(v: string | null): number | null {
+  if (v === null) return null
+  const n = parseInt(v.trim(), 10)
+  return Number.isFinite(n) ? n : null
+}
+
+function formatPct(n: number): string {
+  return `${n.toFixed(1)}%`
+}
+
+/**
+ * Aggregates one raw progress line into the JobProgress the UI actually
+ * binds to, plus the updated phase state to pass into the next call.
+ *
+ * WHY THIS EXISTS (do not "simplify" this back to `pct: raw.percentStr`):
+ * yt-dlp's `progress._percent_str` on a fragmented download (DASH/HLS,
+ * i.e. whenever fragment_count is set) is the percentage of the CURRENT
+ * FRAGMENT, not of the file. With fragment_count=123 it counts 0% -> 100%
+ * up to 123 separate times over the course of one download. A progress bar
+ * wired straight to that field jitters wildly and repeatedly claims the
+ * download finished. Real evidence from a fragmented DASH download:
+ *
+ *   downloading|100.0%|...|0|123|<id>   <- fragment 0 finishing
+ *   downloading|  0.4%|...|1|123|<id>   <- fragment 1 starting: percent resets
+ *   downloading|  4.0%|...|1|123|<id>
+ *   downloading|  3.5%|...|1|123|<id>   <- even within one fragment, percent can wobble
+ *
+ * So: when fragment_count is a positive number, compute an overall
+ * percentage as (fragment_index + fragmentPercent/100) / fragment_count *
+ * 100, and clamp it to never go backwards within the current phase. A
+ * download can have multiple phases (video stream, then audio stream, then
+ * mux/merge) — fragment_index resets to a lower value at the start of a new
+ * phase, which is treated here as a genuine phase boundary: the monotonic
+ * clamp is reset rather than letting the new phase's low fragment_index get
+ * clamped up against the old phase's high water mark.
+ */
+export function computeJobProgress(
+  raw: RawProgressFields,
+  state: ProgressPhaseState,
+): { progress: JobProgress; nextState: ProgressPhaseState } {
+  const fragmentIndex = parseInteger(raw.fragmentIndexStr)
+  const fragmentCount = parseInteger(raw.fragmentCountStr)
+  const fragmentPercent = parseNumber(raw.percentStr)
+  const hasFragments = fragmentIndex !== null && fragmentCount !== null && fragmentCount > 0
+
+  // A phase boundary is: fragment_index has gone backwards (a new fragmented
+  // stream started), or fragment info disappeared/appeared entirely (moving
+  // between a fragmented download step and a non-fragmented step such as a
+  // merge). Either way, the old phase's high-water mark must not clamp the
+  // new phase's readings.
+  const fragmentIndexWentBackwards =
+    state.lastFragmentIndex !== null && fragmentIndex !== null && fragmentIndex < state.lastFragmentIndex
+  const fragmentPresenceChanged = state.hadFragments !== hasFragments
+  const isNewPhase = fragmentIndexWentBackwards || fragmentPresenceChanged
+
+  let overallPct: number | null
+  if (hasFragments && fragmentPercent !== null) {
+    overallPct = ((fragmentIndex + fragmentPercent / 100) / fragmentCount) * 100
+  } else {
+    overallPct = fragmentPercent
+  }
+
+  const priorMax = isNewPhase ? null : state.maxOverallPct
+  const clampedPct = overallPct === null ? null : priorMax === null ? overallPct : Math.max(overallPct, priorMax)
+
+  const nextState: ProgressPhaseState = {
+    lastFragmentIndex: fragmentIndex,
+    hadFragments: hasFragments,
+    maxOverallPct: clampedPct === null ? state.maxOverallPct : clampedPct,
+  }
+
+  const progress: JobProgress = {
+    status: raw.status,
+    pct: clampedPct === null ? null : formatPct(clampedPct),
+    fragmentPct: raw.percentStr,
+    rate: raw.rate,
+    size: raw.size,
+    eta: raw.eta,
+    frags: fragmentIndex !== null && fragmentCount !== null ? `${fragmentIndex}/${fragmentCount}` : null,
+  }
+
+  return { progress, nextState }
 }
 
 function classifyLogLevel(line: string): LogLevel {
@@ -84,6 +224,8 @@ interface InternalJob {
   record: JobRecord
   child: ChildProcess | null
   binaryPath: string
+  /** Carried across progress lines within the current process run so `pct` can be made monotonic. Reset on every (re)spawn — see spawnFor. */
+  phaseState: ProgressPhaseState
 }
 
 /**
@@ -127,12 +269,12 @@ export class YtDlpManager {
       argv: req.argv,
       cwd: req.cwd ?? null,
       state: 'queued',
-      progress: { status: null, pct: null, rate: null, size: null, eta: null, frags: null },
+      progress: { status: null, pct: null, fragmentPct: null, rate: null, size: null, eta: null, frags: null },
       exitCode: null,
       createdAt: now,
       updatedAt: now,
     }
-    this.jobs.set(req.id, { record, child: null, binaryPath })
+    this.jobs.set(req.id, { record, child: null, binaryPath, phaseState: initialProgressPhaseState() })
     this.spawnFor(req.id, req.argv)
     return record
   }
@@ -149,13 +291,20 @@ export class YtDlpManager {
       // template) must never reach a shell for interpretation.
     })
     job.child = child
+    // Each (re)spawn is its own process run — reset the monotonic-percent
+    // bookkeeping so a resumed/retried job does not get clamped against a
+    // high-water mark left over from a previous run.
+    job.phaseState = initialProgressPhaseState()
     this.setState(id, 'running')
 
     const emitLog = (text: string) => {
-      const idx = text.indexOf(PROGRESS_MARKER)
-      if (idx !== -1) {
-        const progress = parseProgressLine(text)
-        if (progress) this.emitProgress(id, progress)
+      const raw = parseRawProgressLine(text)
+      if (raw) {
+        const current = this.jobs.get(id)
+        if (!current) return
+        const { progress, nextState } = computeJobProgress(raw, current.phaseState)
+        current.phaseState = nextState
+        this.emitProgress(id, progress)
         return
       }
       this.emitLog(id, text, classifyLogLevel(text))

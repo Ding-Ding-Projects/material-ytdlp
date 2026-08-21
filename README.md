@@ -137,29 +137,27 @@ surface in the project is eventually held to. See [`ROADMAP.md`](ROADMAP.md).
 ## Screenshot gallery
 
 <!-- HUISHOT-GALLERY -->
-Every image below is a capture of the **real built application**, taken from the packaged build
-through an off-screen desktop. None of them is a mockup, a design export, or a hand-edited image.
+Every image below is a capture of the **real packaged application**, launched from a fresh profile
+on an off-screen desktop. None is a mockup, a design export, or a hand-edited image.
 
 <details open>
-<summary><b>Easy mode</b> — paste a URL, pick a folder, go</summary>
+<summary><b>Easy mode</b> — paste a link, pick a quality, download</summary>
 
-![Easy mode: a URL field, a quality selector, a download folder with a native Browse button, and switches for subtitles, thumbnail and SponsorBlock. The exact yt-dlp command is previewed along the bottom.](docs/screenshots/01-easy-mode.png)
-
-</details>
-
-<details>
-<summary><b>Expert mode</b> — all 16 groups and 250 flags</summary>
-
-![Expert mode: the option groups listed down the left with their flag counts, and the General group expanded on the right showing each flag with its short form, real help text and the correct control.](docs/screenshots/02-expert-mode.png)
+![Easy mode on a fresh profile: an empty link field, a "Waiting for a link" card, quality presets from best-available through 4K, 1080p, 720p, small-file and audio-only, a save-to path with a browse control, and subtitle, cover-art and skip-sponsors switches. The exact yt-dlp command is previewed underneath, and the status bar reads zero active, zero queued, zero failed.](docs/screenshots/01-studio-easy.png)
 
 </details>
 
 <details>
-<summary><b>Queue and console</b></summary>
+<summary><b>Expert mode</b> — every option, the queue, and the live command</summary>
 
-![The queue and console destination with honest empty states: no jobs yet, and no console output yet.](docs/screenshots/03-queue-console.png)
+![Expert mode on a fresh profile: browser-style tabs with a pinned Download tab, an intake card with quick-action chips, a session panel reading zero active and a dash for the rate, an empty queue and console with their own search fields, and the full command line along the bottom with copy, config-export and run actions.](docs/screenshots/02-studio-expert.png)
 
 </details>
+
+> [!NOTE]
+> These are captured on a **fresh profile**, which is deliberate. The application ships with no
+> seeded downloads, no example library and no invented figures — where something cannot be true
+> yet, it renders a dash rather than a plausible-looking number.
 <!-- /HUISHOT-GALLERY -->
 
 ## Quick start

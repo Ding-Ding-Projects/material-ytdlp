@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; script-src 'self'" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>yt-dlp Studio</title>
+    <style>
+      /*
+       * FONTS: the design reference links Google Fonts (Roboto, Roboto Mono,
+       * Material Symbols Outlined) from a CDN. This app must be fully
+       * offline with no CDN dependency, and the font files were not
+       * available to vendor in this pass (no network fetch tool for binary
+       * assets in this environment). Rather than silently linking the CDN,
+       * this falls back to system fonts. Material Symbols ligature icons
+       * (the "msym" class) WILL NOT RENDER until
+       * app/src/renderer/assets/fonts/MaterialSymbolsOutlined.woff2 (or
+       * similar) is vendored and an @font-face rule below is pointed at it
+       * — see the TODO below. Every <i class="msym"> currently falls back
+       * to displaying the literal icon name as English text, which is the
+       * documented, honest failure mode for a ligature font that is
+       * missing, rather than a blank icon or a crash.
+       */
+      @font-face {
+        font-family: 'Roboto';
+        src: local('Segoe UI');
+        font-weight: 400 700;
+      }
+      /* TODO(fonts): vendor Material Symbols Outlined locally and add:
+         @font-face {
+           font-family: 'Material Symbols Outlined';
+           src: url('./assets/fonts/MaterialSymbolsOutlined.woff2') format('woff2');
+           font-weight: 100 700;
+         }
+         Until then .msym intentionally has no @font-face and renders its
+         text content (the icon's English name) as plain text. */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #0f1414;
+        color: #dee4e3;
+        font:
+          14px/1.43 Roboto,
+          'Segoe UI',
+          system-ui,
+          sans-serif;
+        letter-spacing: 0.1px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      a {
+        color: #82d5cc;
+        text-decoration: none;
+      }
+      button {
+        font-family: inherit;
+        cursor: pointer;
+        border: 0;
+      }
+      input,
+      select,
+      textarea {
+        font-family: inherit;
+        color: inherit;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible {
+        outline: 3px solid #82d5cc;
+        outline-offset: 2px;
+      }
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #303636;
+        border-radius: 8px;
+      }
+      .msym {
+        font-family: 'Material Symbols Outlined', sans-serif;
+        font-weight: 400;
+        font-style: normal;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        /* Honest fallback: with no ligature font present, this renders the
+           icon's own English name as small caption text rather than a
+           mysterious glyph or empty box. */
+        font-size: 11px !important;
+        vertical-align: middle;
+      }
+      code,
+      pre,
+      .mono {
+        font-family:
+          'Roboto Mono',
+          Consolas,
+          'Cascadia Mono',
+          monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>

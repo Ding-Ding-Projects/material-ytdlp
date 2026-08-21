@@ -10,3 +10,4 @@ vendor/yt-dlp/build/
 vendor/toolchain/
 app/dist/
 app/out/
+.claude/

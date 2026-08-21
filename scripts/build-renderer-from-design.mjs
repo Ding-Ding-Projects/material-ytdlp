@@ -61,6 +61,7 @@ import { wireAppearance } from './wire-appearance.mjs'
 import { wirePaletteTabs } from './wire-palette-tabs.mjs'
 import { wireLocksAuth } from './wire-locks-auth.mjs'
 import { wireToolsModes } from './wire-tools-modes.mjs'
+import { wireDownloadFolder } from './wire-download-folder.mjs'
 import { wireWindowChrome } from './wire-window-chrome.mjs'
 import { wireLifecycleRepair } from './wire-lifecycle-repair.mjs'
 
@@ -244,6 +245,7 @@ function main() {
   html = wireLanguage(html, replaceExact)
   html = wireAppearance(html, replaceExact)
   html = wireToolsModes(html, replaceExact)
+  html = wireDownloadFolder(html, replaceExact)
   html = wireWindowChrome(html, replaceExact)
   // MUST run last. It repairs collisions between earlier lanes -- the
   // duplicated componentDidUpdate and the assignment to the getter-only

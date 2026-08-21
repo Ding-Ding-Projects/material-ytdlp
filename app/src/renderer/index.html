@@ -2208,6 +2208,7 @@ class Component extends DCLogic {
       const label = caps && caps.pauseMode === 'suspend' ? 'Pause queue' : 'Stop queue (Windows cannot truly suspend a process — resuming restarts it with --continue)';
       this.setState({ pauseLabelOverride: label });
     }).catch(() => {});
+    this._hydrateDownloadFolder();
     this._wireHistoryBridge();
   }
 
@@ -2216,6 +2217,29 @@ class Component extends DCLogic {
   // state, replacing the design's static demo record list. When git is
   // not on PATH the store reports itself unavailable with a reason, and
   // that is shown plainly rather than as an empty "no history yet" list.
+  _hydrateDownloadFolder() {
+    const bridge = window.ytdlpStudio;
+    if (!bridge || !bridge.store) return;
+    bridge.store.getLastPaths().then(paths => {
+      const folder = paths && paths.downloadFolder;
+      if (!folder) return;
+      // Do not clobber a folder the user has already set while this was in flight.
+      this.setState(st => (st.easyFolder ? null : { easyFolder: folder }));
+    }).catch(() => {
+      // A missing default is not worth a toast: the folder field is visible and
+      // editable, and the picker beside it still works. Staying quiet here beats
+      // an error the user can neither act on nor dismiss meaningfully.
+    });
+  }
+
+  _rememberDownloadFolder(folder) {
+    const bridge = window.ytdlpStudio;
+    if (!bridge || !bridge.store || !folder) return;
+    bridge.store.getLastPaths()
+      .then(paths => bridge.store.setLastPaths({ ...paths, downloadFolder: folder }))
+      .catch(() => {});
+  }
+
   _wireHistoryBridge() {
     const bridge = window.ytdlpStudio;
     if (!bridge || !bridge.history) return;
@@ -2342,6 +2366,10 @@ class Component extends DCLogic {
   }
 
   _startJob(comp, url, argv) {
+    if (!String(url || '').trim() && !(argv && argv.length)) {
+      comp.toast('Nothing to download', 'Paste a link first — an empty job can only fail.');
+      return null;
+    }
     const bridge = window.ytdlpStudio;
     if (!bridge) { comp.toast('Not connected', 'window.ytdlpStudio is missing'); return; }
     const id = 'job-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
@@ -2499,6 +2527,7 @@ class Component extends DCLogic {
         const qmap = { best: 'bv*+ba/b', '1080p': 'bv*[height<=1080]+ba/b[height<=1080]', '720p': 'bv*[height<=720]+ba/b[height<=720]', '480p': 'bv*[height<=480]+ba/b[height<=480]' };
         argv.push('-f', qmap[s.easyQuality] || 'bv*+ba/b');
         if (s.easyFolder) argv.push('-P', s.easyFolder);
+        argv.push('-o', '%(uploader)s/%(playlist|)s/%(title)s [%(id)s].%(ext)s');
         if (s.easySubs) argv.push('--write-subs', '--write-auto-subs', '--embed-subs');
         if (s.easyThumb) argv.push('--write-thumbnail', '--embed-thumbnail');
         if (s.easySponsor) argv.push('--sponsorblock-mark', 'all');
@@ -4729,7 +4758,7 @@ class Component extends DCLogic {
       easyLimit: s.easyLimit, setEasyLimit: e => this.setState({ easyLimit: e.target.value }),
       easyAfter: s.easyAfter, setEasyAfter: e => this.setState({ easyAfter: e.target.value }),
       easyArchive: s.easyArchive, setEasyArchive: e => this.setState({ easyArchive: e.target.value }),
-      easyFolder: s.easyFolder, setEasyFolder: e => this.setState({ easyFolder: e.target.value }),
+      easyFolder: s.easyFolder, setEasyFolder: e => { const v = e.target.value; this.setState({ easyFolder: v }); this._rememberDownloadFolder(v); },
       browseFolder: () => this._wire.browseFolder(this, v => this.setState({ easyFolder: v })),
       easySubs: s.easySubs, toggleEasySubs: () => this.setState(st => ({ easySubs: !st.easySubs })),
       easyThumb: s.easyThumb, toggleEasyThumb: () => this.setState(st => ({ easyThumb: !st.easyThumb })),

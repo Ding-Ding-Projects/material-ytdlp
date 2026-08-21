@@ -37,7 +37,7 @@ const APP_DIR = process.env.SMOKE_APP_DIR
 const APP_EXE = path.join(APP_DIR, "yt-dlp Studio.exe");
 const BUILT_RENDERER = path.join(REPO_ROOT, "app", "out", "renderer", "index.html");
 const PACKAGED_ASAR = path.join(APP_DIR, "resources", "app.asar");
-const RESOURCES_DIR = path.join(REPO_ROOT, "app", "dist", "win-unpacked", "resources");
+const RESOURCES_DIR = path.join(APP_DIR, "resources");
 const BIN_DIR = path.join(RESOURCES_DIR, "bin");
 
 const EXPECTED_TITLE = "yt-dlp Studio";

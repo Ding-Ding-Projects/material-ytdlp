@@ -105,6 +105,24 @@ const DEFAULT_LAST_PATHS: LastPaths = {
   cookiesFile: null,
 }
 
+/**
+ * The default download destination: a named subfolder of the user's own
+ * Downloads folder, so this app's output stays together instead of scattering
+ * itself through the folder every browser and installer also writes to.
+ *
+ * Returns null if the platform cannot name a Downloads folder. Never throws:
+ * a missing default must degrade to "ask the user" rather than take down the
+ * store that every other preference is read from.
+ */
+function defaultDownloadFolder(): string | null {
+  try {
+    const downloads = app.getPath('downloads')
+    return downloads ? join(downloads, 'yt-dlp Studio') : null
+  } catch {
+    return null
+  }
+}
+
 const MAX_JOB_HISTORY = 500
 
 export class Store {
@@ -140,7 +158,23 @@ export class Store {
 
   async getLastPaths(): Promise<LastPaths> {
     const stored = await readJsonFile<Partial<LastPaths>>(this.path('last-paths.json'), {})
-    return { ...DEFAULT_LAST_PATHS, ...stored }
+    const merged = { ...DEFAULT_LAST_PATHS, ...stored }
+
+    // Downloads must land somewhere real. Resolved here rather than in
+    // DEFAULT_LAST_PATHS because app.getPath() is only valid once the app is
+    // ready, and that constant is evaluated at module load.
+    //
+    // An empty folder is not a harmless default: the renderer only passes -P
+    // when it has one, so yt-dlp fell back to writing relative to whatever
+    // working directory the packaged app inherited. That varies by how the app
+    // was launched, and when it lands somewhere unwritable yt-dlp's Python
+    // reports it as "[Errno 28] No space left on device" -- observed on a disk
+    // with 2.5 TB free, which sends anyone reading it in entirely the wrong
+    // direction.
+    if (!merged.downloadFolder) {
+      merged.downloadFolder = defaultDownloadFolder()
+    }
+    return merged
   }
 
   async setLastPaths(paths: LastPaths): Promise<void> {

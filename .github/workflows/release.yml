@@ -1,0 +1,130 @@
+name: Release
+
+on:
+  push:
+  workflow_dispatch:
+
+# This workflow builds and packages the application and publishes a GitHub Release.
+# It intentionally runs NO test job, NO lint job, NO type-check gate, and NO coverage
+# check — nothing here can withhold a release on a code-quality verdict. Checking
+# happens on the contributor's own machine before pushing. See AGENTS.md.
+#
+# No `concurrency: cancel-in-progress` group is used here on purpose: publishing a
+# release is not idempotent, and cancelling a run mid-flight could strand a tag
+# without its artifacts.
+
+permissions:
+  contents: write
+
+env:
+  GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Record workflow start time
+        id: start
+        shell: pwsh
+        run: |
+          $startedAt = [DateTimeOffset]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
+          "started-at=$startedAt" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download dependencies
+        shell: cmd
+        run: download-dependencies.bat /s
+
+      - name: Build yt-dlp from pinned source
+        shell: cmd
+        run: build-ytdlp.bat /s
+
+      - name: Build installer
+        shell: cmd
+        run: build-installer.bat /s
+
+      - name: Compute release tag
+        id: tag
+        shell: pwsh
+        run: |
+          $tag = "v" + (Get-Date -AsUTC).ToString("yyyy.MM.dd-HHmmss") + "-$($env:GITHUB_RUN_NUMBER)"
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Locate Squirrel artifacts
+        id: artifacts
+        shell: pwsh
+        run: |
+          $setupExe = Get-ChildItem -Path app -Recurse -Filter "*Setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $releases = Get-ChildItem -Path app -Recurse -Filter "RELEASES" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $nupkgs = Get-ChildItem -Path app -Recurse -Filter "*-full.nupkg" -ErrorAction SilentlyContinue
+          if (-not $setupExe -or -not $releases -or -not $nupkgs) {
+            Write-Error "Squirrel artifacts not found under app/**/dist/squirrel-windows/. Build failed to produce a release."
+            exit 1
+          }
+          $paths = @($setupExe.FullName, $releases.FullName) + ($nupkgs | ForEach-Object { $_.FullName })
+          $joined = $paths -join "`n"
+          "paths<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          $joined | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Record completion time and duration
+        id: finish
+        shell: pwsh
+        run: |
+          $startedAt = [DateTimeOffset]::Parse("${{ steps.start.outputs.started-at }}")
+          $completedAt = [DateTimeOffset]::UtcNow
+          $duration = $completedAt - $startedAt
+          $durationStr = "{0:D2}:{1:D2}:{2:D2}" -f [int]$duration.TotalHours, $duration.Minutes, $duration.Seconds
+          "completed-at=$($completedAt.ToString('yyyy-MM-ddTHH:mm:ssZ'))" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "duration=$durationStr" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        run: |
+          $notes = @"
+          ## yt-dlp Studio ${{ steps.tag.outputs.tag }}
+
+          **This installer is unsigned, on purpose.** Code signing is permanently out of
+          scope for this project. Windows will show an "unknown publisher" SmartScreen
+          warning when you run Setup.exe — this is expected and does not indicate the
+          installer is corrupted or malicious.
+
+          **This build ran no automated tests.** This project's CI builds and packages
+          releases; it does not run a test or lint gate. See AGENTS.md for why.
+
+          ### Workflow timing
+
+          - Workflow started: ${{ steps.start.outputs.started-at }}
+          - Workflow completed: ${{ steps.finish.outputs.completed-at }}
+          - Workflow duration: ${{ steps.finish.outputs.duration }}
+
+          ### Artifacts
+
+          - Setup.exe (Squirrel.Windows installer, unsigned)
+          - RELEASES
+          - Full .nupkg package
+          "@
+          $notes | Out-File -FilePath release-notes.md -Encoding utf8
+
+          $files = "${{ steps.artifacts.outputs.paths }}" -split "`n" | Where-Object { $_.Trim() -ne "" }
+
+          gh release create "${{ steps.tag.outputs.tag }}" `
+            --title "yt-dlp Studio ${{ steps.tag.outputs.tag }}" `
+            --notes-file release-notes.md `
+            --target "${{ github.sha }}" `
+            $files

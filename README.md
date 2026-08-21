@@ -67,15 +67,72 @@ listed in [Not built yet](#not-built-yet) rather than quietly omitted.
 | **Light and dark themes** | Follows the system by default, with a toggle that persists. |
 | **Genuinely mobile** | Verified at 375px: no off-screen controls, a 57px header, no sideways scroll. |
 
-## Not built yet
+## Committed but not built yet
 
-These are real roadmap items, listed so their absence reads as a decision rather than an
-oversight. See [`ROADMAP.md`](ROADMAP.md).
+Everything below is a real commitment with a roadmap row, **not a claim about the current
+build**. None of it ships today. It is listed in full because an absence that reads as a
+decision is better than one that reads as an oversight — and because this is the standard every
+surface in the project is eventually held to. See [`ROADMAP.md`](ROADMAP.md).
 
-Language modes (English / Cantonese / bilingual) · playfulness sliders · spoken narrator ·
-School mode · ADHD modes · command palette · browser-style tabs with groups · per-element
-appearance editor · scheduled settings · local model suite · file converter · changelog viewer ·
-support tickets · the companion browser extension · automatic updates · **automated tests**.
+### Language and voice
+
+| Planned | What it will do |
+| --- | --- |
+| **Three language modes** | English, playful Hong Kong Cantonese, and a bilingual mode showing both without crowding the layout. |
+| **Two playfulness sliders** | One per language, 1 (fully serious) to 5 (maximum playfulness), wired to the copy the app actually renders. Voice changes; the facts never do — a warning still names exactly what will happen at every level. |
+| **Emoji toggle** | Decorative emoji in dialogs and message boxes, on or off, never inside button or control labels. |
+| **Spoken narrator** | Text-to-speech for app events, **off by default**, with per-language voice, rate and pitch selection, a serialised queue so lines never overlap, and deference to an active screen reader. |
+
+### Accessibility and focus
+
+| Planned | What it will do |
+| --- | --- |
+| **ADHD modes** | Five independent toggles — Focus, Low stimulation, Time awareness, One thing at a time, Momentum — all off by default. Interface accommodations, never medical claims, and never scolding copy, streaks or scores. |
+| **School mode** | One shared switch that hides the playful capabilities across every app at once, renameable by the user, and unlocked with a locally verified credential. A user-experience lock, not a security boundary, and it says so. |
+| **Unlock ladder** | Locked out? Play your way out: identify a dim sum dish, then ten quick sums, then whack-a-mole. It clears the *waiting*, never the credential — you still need your password — and it is budgeted so it can never become a cheaper brute force. |
+
+### Customisation
+
+| Planned | What it will do |
+| --- | --- |
+| **Per-element appearance editor** | Right-click any rendered element and restyle it: word-processor-depth typography, every installed font, spacing, shape, elevation and state. |
+| **Infinite colour picker** | A continuous spectrum with numeric entry, plus a translator converting between HEX, RGB, HSL, HSV, HWB, CIELAB, OKLCH and CMYK, with contrast readouts — and an animated rainbow option. |
+| **Rename the app** | Change the name the app calls itself. Display only: the data directory, installer identity and update feed never move. |
+| **App-mark customisation** | Swap the application mark for shipped presets or your own image, converted locally with no upload. |
+| **Themes, density, scale** | Light and dark, density, accent colour, font family and size, corner radius, reduced motion — all persisted, exportable and importable. |
+| **Scheduled settings** | Put any of the above on a schedule, or drive it from a local API or a Home Assistant switch. |
+
+### Getting around
+
+| Planned | What it will do |
+| --- | --- |
+| **Command palette** | `Ctrl+Shift+F` opens every command, page and setting, with live controls inline in the results and teleport-with-highlight to the exact element. |
+| **Browser-style tabs** | Dockable to any edge (left by default), with overflow, reordering, pinning, groups, and four separate tab searches. |
+| **Regex builder on every search** | Every search field, dropdown and right-click menu gets a filter with an anchored regex builder beside it. Plain text stays the default. |
+| **Guided forms** | Pickers populated from real data instead of empty boxes, and every disabled control names the exact condition it is waiting on. |
+
+### Your data
+
+| Planned | What it will do |
+| --- | --- |
+| **Local version history** | A local Git-backed history of the download list and every setting, with a day-grouped manager, a diff inspector, restore points and rich filters. Restoring is itself a new entry, so an undo can be undone. |
+| **Export everything** | Every list and record exportable as JSON, JSONL, YAML, TOML, XML, CSV, TSV, Markdown, HTML and SQL, plus ZIP and 7z archives with the full 7z option surface. |
+| **Bulk actions everywhere** | Multi-select, range select, honest select-all, inverse selection, and every single-item action available in bulk with a reviewable preview first. |
+| **Built-in authenticator** | Standards-compliant TOTP with QR pairing, generated locally with no network call, secrets held in the operating-system credential vault. |
+| **Per-element toy locks** | Lock any element behind its own password or one-time code. Explicitly for fun, not security, and it tells you exactly how to recover. |
+| **File converter** | A local converter with a categorised adapter catalog, honest disclosure of what each conversion loses, and an unlimited queue that never loads every file into memory. |
+| **Local model suite** | Manage locally installed Ollama models, with conservative hardware-fit verdicts backed by evidence rather than guesses. |
+
+### Everywhere else
+
+| Planned | What it will do |
+| --- | --- |
+| **Non-blocking notifications** | Corner toasts with a reviewable history. Modals reserved for decisions you must actually make. |
+| **Two-key destructive gate** | Anything irreversible needs two independent keys and a full-range slider before it will run. |
+| **Changelog viewer** | Every released version in-app, with a date picker, search and a link to the commit behind each entry. |
+| **Automatic updates** | Chrome-style background updates with a non-blocking ready banner, honest about the artifacts being unsigned. |
+| **Companion browser extension** | Popup, injected page controls, and an options page, with real download start, progress and completion surfaces. |
+| **Automated tests** | This build ships with **none**, by decision, and the records say so everywhere rather than implying coverage that does not exist. |
 
 ## Screenshot gallery
 

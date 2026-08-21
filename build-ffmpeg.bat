@@ -196,7 +196,7 @@ for /f "usebackq delims=" %%D in (`powershell -NoProfile -Command "Get-Date -For
   echo   "ffmpegVersion": "%FFMPEG_VERSION:"=\"%",
   echo   "ffmpegSha256": "%FFMPEG_SHA256%",
   echo   "ffprobeSha256": "%FFPROBE_SHA256%",
-  echo   "configureFlags": "%FF_CONFIGURE_FLAGS%",
+  echo   "configureFlags": "%FF_CONFIGURE_FLAGS:"=\"%",
   echo   "licence": "LGPL (no --enable-gpl, no --enable-nonfree)",
   echo   "builtAt": "%BUILT_AT%"
   echo }
@@ -218,22 +218,35 @@ set "VSC_TARGET=%~1"
 set "VSC_TARGET_POSIX=%VSC_TARGET:\=/%"
 set "VSC_TARGET_POSIX=/!VSC_TARGET_POSIX::=!"
 set "VSC_BAD_DLLS="
-for /f "usebackq delims=" %%D in (`"%MSYS2_BASH%" -lc "/mingw64/bin/objdump -p '%VSC_TARGET_POSIX%' | grep -i 'DLL Name' | sed -E 's/.*DLL Name: //I'"`) do call :vsc_check_one "%%D"
+set "VSC_OUT=%BUILD_ROOT%\dll-check.txt"
+set "VSC_OUT_POSIX=%BUILD_ROOT_POSIX%/dll-check.txt"
+REM Write objdump's output to a plain file rather than reading it through a
+REM FOR /F backquoted command: nested double quotes inside a backquoted
+REM command (the -lc argument here needs its own quoting on top of the
+REM single quotes around the path) breaks cmd.exe's subshell parsing --
+REM confirmed by an earlier attempt that printed a mangled command name
+REM instead of running objdump at all. Redirecting to a file and reading
+REM that file with a plain FOR /F sidesteps that problem, but introduced a
+REM second one: MSYS2's redirect writes LF-only line endings, and
+REM findstr /R's "$" anchor does not recognize a bare LF as end-of-line --
+REM confirmed by testing the identical pattern against a CRLF file (matched
+REM correctly) and this LF file (matched nothing at all, every DLL flagged
+REM as bad including ones plainly present and allowlisted). The allowlist
+REM comparison below is done in PowerShell instead, which has no such
+REM line-ending sensitivity, rather than fighting findstr further.
+"%MSYS2_BASH%" -lc "/mingw64/bin/objdump -p '%VSC_TARGET_POSIX%' | grep -i 'DLL Name' | sed -E 's/.*DLL Name: //I' > '%VSC_OUT_POSIX%'"
+if not exist "%VSC_OUT%" (
+  call :fail "Could not read the import table of %VSC_TARGET% (objdump produced no output file)."
+  exit /b 1
+)
+set "VSC_BAD_DLLS="
+for /f "usebackq delims=" %%D in (`powershell -NoProfile -Command "$allow = @('KERNEL32.dll','msvcrt.dll','ADVAPI32.dll','USER32.dll','GDI32.dll','WS2_32.dll','BCRYPT.dll','CRYPT32.dll','ncrypt.dll','SHELL32.dll','SHLWAPI.dll','ole32.dll','OLEAUT32.dll','SECUR32.dll','IPHLPAPI.dll','WINMM.dll','AVICAP32.dll','dwmapi.dll'); (Get-Content -LiteralPath '%VSC_OUT%' ^| Where-Object { $_.Trim() -and ($allow -notcontains $_.Trim()) }) -join ' '"`) do set "VSC_BAD_DLLS=%%D"
 if defined VSC_BAD_DLLS (
   call :fail "%VSC_TARGET% is not statically linked -- it depends on non-system DLLs at runtime and would fail to start on a user's machine: %VSC_BAD_DLLS%"
   exit /b 1
 )
 call :log "  %VSC_TARGET%: only Windows system DLLs in the import table (self-contained)."
 exit /b 0
-
-:vsc_check_one
-set "VSC_DLL=%~1"
-REM Allowlist: standard Windows system DLLs ffmpeg/ffprobe are expected to
-REM use even when fully static. Anything else is a runtime dependency this
-REM build must not have.
-echo %VSC_DLL% | findstr /I /R "^KERNEL32\.dll$ ^msvcrt\.dll$ ^ADVAPI32\.dll$ ^USER32\.dll$ ^GDI32\.dll$ ^WS2_32\.dll$ ^BCRYPT\.dll$ ^CRYPT32\.dll$ ^ncrypt\.dll$ ^SHELL32\.dll$ ^SHLWAPI\.dll$ ^ole32\.dll$ ^OLEAUT32\.dll$ ^SECUR32\.dll$ ^IPHLPAPI\.dll$ ^WINMM\.dll$ ^AVICAP32\.dll$ ^dwmapi\.dll$" >nul
-if errorlevel 1 set "VSC_BAD_DLLS=%VSC_BAD_DLLS% %VSC_DLL%"
-goto :eof
 
 REM ============================================================================
 :find_msys2_bash

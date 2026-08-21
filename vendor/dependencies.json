@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json.schemastore.org/vendor-dependencies.json",
+  "description": "Pinned external binaries fetched by download-dependencies.bat. Every entry is verified by SHA-256 before use. Never trust an unverified download.",
+  "ffmpeg": {
+    "source": "BtbN/FFmpeg-Builds",
+    "release": "latest-master",
+    "asset": "ffmpeg-master-latest-win64-gpl.zip",
+    "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
+    "sha256": "fc292fa0861352e94d6eec2be41ef6453df094fa581398f1f43315bba740321c",
+    "verifiedAt": "2026-08-20",
+    "extractFiles": [
+      "ffmpeg.exe",
+      "ffprobe.exe"
+    ],
+    "note": "sha256 was computed by download-dependencies.bat against a real download of the URL above on the date in verifiedAt, and is checked on every subsequent download before the archive is trusted or extracted. Note that BtbN publishes 'latest' as a rolling tag: this digest will need refreshing (by clearing sha256 and re-running download-dependencies.bat, which reports the new digest without trusting it) whenever BtbN cuts a new nightly build under the same URL."
+  },
+  "python": {
+    "minVersion": "3.11",
+    "wingetId": "Python.Python.3.12",
+    "fallbackInstallerUrl": "https://www.python.org/ftp/python/3.12.7/python-3.12.7-amd64.exe",
+    "fallbackInstallerSha256": "",
+    "note": "fallbackInstallerSha256 is intentionally blank: it was never downloaded and verified during this task, so no digest is recorded rather than an invented one. download-dependencies.bat only reaches this fallback when winget is unavailable, and it refuses to run the fallback installer while this value is blank, reporting the exact blocker instead. Fill this in only after downloading the asset yourself and computing its real SHA-256."
+  }
+}

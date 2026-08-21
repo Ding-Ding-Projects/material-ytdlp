@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentation — yt-dlp Studio</title>
+<meta name="description" content="Documentation for yt-dlp Studio: bundled binaries, building from source, and the unsigned-installer warning.">
+<link rel="icon" href="data:,">
+
+<meta property="og:title" content="yt-dlp Studio Documentation">
+<meta property="og:description" content="Bundled binaries, building from source, and the unsigned-installer warning, explained.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ding-ding-projects.github.io/material-ytdlp/docs.html">
+<meta property="og:site_name" content="yt-dlp Studio">
+<meta property="og:image" content="https://ding-ding-projects.github.io/material-ytdlp/social-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="yt-dlp Studio wordmark on a dark terminal-styled card">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="yt-dlp Studio Documentation">
+<meta name="twitter:description" content="Bundled binaries, building from source, and the unsigned-installer warning, explained.">
+<meta name="twitter:image" content="https://ding-ding-projects.github.io/material-ytdlp/social-preview.png">
+<meta name="theme-color" content="#2954e6">
+
+<link rel="stylesheet" href="assets/theme.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="container header-row">
+    <a class="wordmark" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+        <rect width="26" height="26" rx="7" fill="var(--accent)"></rect>
+        <path d="M8 7l7 6-7 6V7z" fill="var(--accent-contrast)"></path>
+      </svg>
+      yt-dlp Studio
+    </a>
+    <nav class="primary-nav" aria-label="Primary">
+      <a href="index.html#capabilities">Capabilities</a>
+      <a href="index.html#workflow">Workflow</a>
+      <a href="docs.html" aria-current="page">Documentation</a>
+    </nav>
+    <div class="header-spacer"></div>
+
+    <div class="search-wrap" data-site-search>
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6"></circle><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+        <label class="visually-hidden" for="site-search-input">Search this page</label>
+        <input id="site-search-input" type="text" placeholder="Search this page" data-search-input autocomplete="off">
+        <button type="button" class="regex-toggle-btn" data-regex-toggle aria-haspopup="dialog" aria-expanded="false" aria-controls="regex-popover">.*</button>
+      </div>
+      <div class="search-results" data-search-results hidden></div>
+
+      <div class="regex-popover" id="regex-popover" data-regex-popover role="dialog" aria-label="Regex search builder" hidden>
+        <h3>Regex search builder</h3>
+        <div class="field">
+          <label for="regex-pattern">Pattern</label>
+          <input id="regex-pattern" type="text" data-regex-pattern placeholder="e.g. ffmpeg|codec" autocomplete="off">
+        </div>
+        <div class="regex-row" aria-label="Insert common tokens">
+          <button type="button" data-regex-insert="^">^ start</button>
+          <button type="button" data-regex-insert="$">$ end</button>
+          <button type="button" data-regex-insert="\d">\d digit</button>
+          <button type="button" data-regex-insert="\w">\w word</button>
+          <button type="button" data-regex-insert="\s">\s space</button>
+          <button type="button" data-regex-insert="[]">[ ] class</button>
+          <button type="button" data-regex-insert="()">( ) group</button>
+          <button type="button" data-regex-insert="|">| or</button>
+          <button type="button" data-regex-insert="*">* 0+</button>
+          <button type="button" data-regex-insert="+">+ 1+</button>
+          <button type="button" data-regex-insert="?">? optional</button>
+        </div>
+        <div class="regex-flags">
+          <label><input type="checkbox" data-regex-flag="m"> Multiline (m)</label>
+          <label><input type="checkbox" data-regex-flag="u"> Unicode (u)</label>
+        </div>
+        <div class="field">
+          <label for="regex-sample">Sample text</label>
+          <textarea id="regex-sample" data-regex-sample rows="3" placeholder="Type text to test the pattern against.">The installer bundles ffmpeg and yt-dlp, built from pinned source.</textarea>
+        </div>
+        <p class="regex-status" data-regex-status>Enter a pattern to preview matches.</p>
+        <div class="regex-matches" data-regex-matches></div>
+        <div class="regex-actions">
+          <button type="button" class="btn btn-outline btn-sm" data-regex-clear>Clear</button>
+          <button type="button" class="btn btn-primary btn-sm" data-regex-apply>Apply to search</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="icon-btn" data-theme-toggle aria-pressed="false" aria-label="Switch to dark theme">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M15 10.5A6.5 6.5 0 017.5 3 6.5 6.5 0 1015 10.5z" stroke="currentColor" stroke-width="1.4"></path></svg>
+      </button>
+      <a class="btn-pill-nav" href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases">View releases</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="container" style="padding:40px 24px 80px;">
+    <div class="docs-grid">
+      <nav class="docs-nav" aria-label="Documentation sections">
+        <h4>On this page</h4>
+        <ul>
+          <li><a href="#bundled-binaries">Bundled binaries</a></li>
+          <li><a href="#unsigned-installer">The unsigned installer</a></li>
+          <li><a href="#building-from-source">Building from source</a></li>
+          <li><a href="#converter">File converter</a></li>
+          <li><a href="#local-models">Local model suite</a></li>
+          <li><a href="#getting-help">Getting help</a></li>
+        </ul>
+        <h4>Elsewhere</h4>
+        <ul>
+          <li><a href="https://github.com/Ding-Ding-Projects/material-ytdlp" rel="noopener">Source repository</a></li>
+          <li><a href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases" rel="noopener">Releases</a></li>
+          <li><a href="https://github.com/yt-dlp/yt-dlp" rel="noopener">Upstream yt-dlp</a></li>
+        </ul>
+      </nav>
+
+      <article class="docs-article">
+        <h1 id="docs-title" data-index data-index-section="Documentation">Documentation</h1>
+        <p>yt-dlp Studio is a Windows desktop application built with Electron and Material Design components. This page covers the parts of the project that matter most before your first install: what's bundled, why the installer is unsigned, and how to build it yourself.</p>
+
+        <div class="warn-banner" role="note">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M9 6v4M9 12.5h.01M2.5 15h13L9 3 2.5 15z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"></path></svg>
+          <span>No release has been published yet. Everything on this page describes how the project is built and how it will behave once a build ships — check the <a href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases" rel="noopener">releases page</a> for the current state.</span>
+        </div>
+
+        <h2 id="bundled-binaries" data-index data-index-section="Bundled binaries">Bundled binaries</h2>
+        <p data-index data-index-section="Bundled binaries">yt-dlp Studio bundles two external tools inside its own installer so nothing has to be installed separately: <strong>yt-dlp</strong>, built from a pinned commit of the upstream <a href="https://github.com/yt-dlp/yt-dlp" rel="noopener">yt-dlp</a> source, and <strong>ffmpeg</strong>, used for merging separate video and audio streams and for format conversion. Both ship as part of the application package rather than being downloaded at first run, so the app works fully offline once installed.</p>
+        <p>Pinning the yt-dlp source means a given release of yt-dlp Studio always bundles a known, reproducible version of the downloader — the release notes for each build will record exactly which upstream commit was used.</p>
+
+        <h2 id="unsigned-installer" data-index data-index-section="The unsigned installer">The unsigned installer</h2>
+        <p data-index data-index-section="The unsigned installer">This project does not use code signing. Windows SmartScreen will show an "unknown publisher" warning the first time you run a new installer or update — this is expected for any unsigned application and is not, by itself, evidence that a download has been tampered with.</p>
+        <p>What you should still do before trusting a download: fetch it only from the project's own <a href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases" rel="noopener">GitHub Releases page</a>, never from a third-party mirror; confirm the release was published from this repository; and, if the release notes publish a checksum, verify the downloaded file against it before running the installer.</p>
+
+        <h2 id="building-from-source" data-index data-index-section="Building from source">Building from source</h2>
+        <p data-index data-index-section="Building from source">If you would rather not wait for a signed or even an unsigned release, the project builds from source with ordinary Node.js and Electron tooling:</p>
+        <pre><code>git clone --recurse-submodules https://github.com/Ding-Ding-Projects/material-ytdlp
+cd material-ytdlp/app
+npm install
+npm run build
+npm run dist</code></pre>
+        <p><code>npm run dist</code> produces a Squirrel.Windows installer under the app package's build output. Because <code>vendor/yt-dlp</code> is a git submodule, remember to clone with <code>--recurse-submodules</code> or run <code>git submodule update --init</code> afterward, or the bundled yt-dlp source will be an empty directory.</p>
+
+        <h2 id="converter" data-index data-index-section="File converter">File converter</h2>
+        <p data-index data-index-section="File converter">The desktop app includes a file converter that uses the bundled ffmpeg to change a downloaded file's container or codec after the fact — for example, pulling audio out of a video file, or converting between common video containers. Conversion runs entirely locally; nothing is uploaded anywhere.</p>
+
+        <h2 id="local-models" data-index data-index-section="Local model suite">Local model suite</h2>
+        <p data-index data-index-section="Local model suite">yt-dlp Studio can optionally manage a locally installed <a href="https://ollama.com" rel="noopener">Ollama</a> runtime for on-device model features. This is opt-in: the app does not install or require Ollama to perform ordinary downloads, and no model data or prompt ever leaves your machine through this feature.</p>
+
+        <h2 id="getting-help" data-index data-index-section="Getting help">Getting help</h2>
+        <p data-index data-index-section="Getting help">Questions, bug reports, and feature requests belong on the <a href="https://github.com/Ding-Ding-Projects/material-ytdlp/issues" rel="noopener">issue tracker</a> in the source repository. Please don't file yt-dlp download-engine bugs there — those belong upstream, on the <a href="https://github.com/yt-dlp/yt-dlp/issues" rel="noopener">yt-dlp issue tracker</a> itself.</p>
+      </article>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-row">
+    <p class="footer-note">yt-dlp Studio is an independent project and is not affiliated with, endorsed by, or produced by the yt-dlp maintainers. This site is a landing and documentation surface — it is not the application itself.</p>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="https://github.com/Ding-Ding-Projects/material-ytdlp" rel="noopener">Source</a>
+      <a href="https://github.com/yt-dlp/yt-dlp" rel="noopener">Upstream yt-dlp</a>
+      <a href="https://github.com/Ding-Ding-Projects/material-ytdlp/releases" rel="noopener">Releases</a>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

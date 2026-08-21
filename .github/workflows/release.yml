@@ -288,19 +288,19 @@ jobs:
           Nothing has to be installed separately. Both yt-dlp and ffmpeg are
           **built from pinned source** during this workflow rather than
           downloaded as prebuilt binaries. ffmpeg is an LGPL build (no
-          `--enable-gpl`, no `--enable-nonfree`) — see
+          ``--enable-gpl``, no ``--enable-nonfree``) — see
           [building-ffmpeg-from-source.md](docs/features/build-and-packaging/building-ffmpeg-from-source.md).
 
           | | |
           | --- | --- |
-          | yt-dlp version | `$ytdlpVersion` |
-          | Built from submodule commit | `$submoduleSha` |
-          | yt-dlp.exe SHA-256 | `$ytdlpSha` |
-          | ffmpeg version | `${{ steps.evidence.outputs.ffmpeg-version }}` |
-          | Built from submodule commit | `${{ steps.evidence.outputs.ffmpeg-submodule-sha }}` |
-          | ffmpeg.exe SHA-256 | `${{ steps.evidence.outputs.ffmpeg-sha }}` |
-          | ffprobe.exe SHA-256 | `${{ steps.evidence.outputs.ffprobe-sha }}` |
-          | Setup.exe SHA-256 | `$setupSha` |
+          | yt-dlp version | ``$ytdlpVersion`` |
+          | Built from submodule commit | ``$submoduleSha`` |
+          | yt-dlp.exe SHA-256 | ``$ytdlpSha`` |
+          | ffmpeg version | ``${{ steps.evidence.outputs.ffmpeg-version }}`` |
+          | Built from submodule commit | ``${{ steps.evidence.outputs.ffmpeg-submodule-sha }}`` |
+          | ffmpeg.exe SHA-256 | ``${{ steps.evidence.outputs.ffmpeg-sha }}`` |
+          | ffprobe.exe SHA-256 | ``${{ steps.evidence.outputs.ffprobe-sha }}`` |
+          | Setup.exe SHA-256 | ``$setupSha`` |
           | Setup.exe size | $setupSize MB |
 
           ### Artifacts

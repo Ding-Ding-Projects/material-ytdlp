@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>yt-dlp Studio Companion</title>
+<link rel="stylesheet" href="shared.css" />
+<style>
+  body {
+    width: 340px;
+  }
+  .wrap {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mark {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    background: var(--accent);
+    color: var(--accent-on);
+    font-weight: 800;
+    font-size: 11px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+  }
+  .title {
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .page-title {
+    font-size: 12px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .page-url {
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+  }
+  #hint {
+    display: none;
+  }
+  #hint.show {
+    display: block;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="mark">Y</div>
+    <div class="title">yt-dlp Studio Companion</div>
+  </div>
+
+  <div id="pageCard" class="card">
+    <div id="pageTitle" class="page-title">Checking the current tab…</div>
+    <div id="pageUrl" class="page-url mono"></div>
+  </div>
+
+  <div class="actions">
+    <button id="sendBtn" class="btn-primary" disabled>Send to yt-dlp Studio</button>
+    <div id="status" class="status-line status-hint"></div>
+    <div id="hint" class="status-line status-hint">
+      Nothing happened? yt-dlp Studio may not be installed yet, or Windows
+      hasn't been told to open <code>ytdlp-studio://</code> links with it.
+      <a href="install.html" target="_blank" rel="noopener">Install guide ↗</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="install.html" target="_blank" rel="noopener">Install guide</a>
+    <a href="options.html" target="_blank" rel="noopener">Options</a>
+  </div>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>

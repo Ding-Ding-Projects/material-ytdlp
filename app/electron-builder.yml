@@ -19,6 +19,12 @@ files:
 extraResources:
   - from: ../vendor/bin
     to: bin
+  # The yt-dlp Studio Companion browser extension. It has no build step of
+  # its own (plain manifest/HTML/JS -- see extension/), so it ships as-is;
+  # app/src/main/protocol.ts resolves it at runtime as
+  # `${process.resourcesPath}/extension`, right beside `bin/` above.
+  - from: ../extension
+    to: extension
 
 win:
   icon: build/icon.ico

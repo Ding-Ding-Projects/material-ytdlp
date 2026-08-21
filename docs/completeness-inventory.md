@@ -18,14 +18,14 @@ backing + verified in the built app) · **WIRED-UNVERIFIED** (surface + real bac
 | Status | Count |
 |---|---|
 | SHIPPED | 2 |
-| WIRED-UNVERIFIED | 6 |
+| WIRED-UNVERIFIED | 7 |
 | SURFACE-ONLY | 17 |
 | HONEST-STUB | 1 |
-| ABSENT | 11 |
+| ABSENT | 10 |
 | **Total features audited** | **37** |
 
 **2 of 37 (5%) are genuinely done. 17 of 37 (46%) are the defect this audit exists to name: a
-control that renders, opens, and looks finished, backed by nothing.** Most of the rest (11, 30%)
+control that renders, opens, and looks finished, backed by nothing.** Most of the rest (10, 27%)
 are simply not built yet, which is a normal and honest state — the 17 SURFACE-ONLY rows are the
 ones that need fixing first, because they are indistinguishable from working features until
 someone checks.
@@ -67,7 +67,7 @@ someone checks.
 | Support Tickets (local) | **SHIPPED** | [contract-audit.md § Everywhere else](contract-audit.md#everywhere-else) |
 | Dim-sum surprise | ABSENT | [contract-audit.md § Everywhere else](contract-audit.md#everywhere-else) |
 | External-editor handoff | WIRED-UNVERIFIED | [contract-audit.md § Everywhere else](contract-audit.md#everywhere-else) |
-| Companion browser extension | ABSENT (in this repo) | [contract-audit.md § Everywhere else](contract-audit.md#everywhere-else) |
+| Companion browser extension | WIRED-UNVERIFIED (partial) | [contract-audit.md § Everywhere else](contract-audit.md#everywhere-else) |
 | Documentation site | ABSENT | [contract-audit.md § Everywhere else](contract-audit.md#everywhere-else) |
 
 ## The actionable defect list — SURFACE-ONLY (looks live, nothing real behind it)

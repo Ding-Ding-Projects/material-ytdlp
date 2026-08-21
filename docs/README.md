@@ -14,6 +14,9 @@ Categorized feature documentation for yt-dlp Studio.
   appearance-customization system.
 - [Diagnostics](features/diagnostics/README.md) — local logging: where the log file lives, which
   failures reach it, and what is redacted before it gets there.
+- [Browser extension](features/browser-extension/README.md) — the Companion Chrome/Edge
+  extension and the `ytdlp-studio://` protocol handoff that gets a link from a browser tab into
+  this app.
 
 See also: [`completeness-inventory.md`](completeness-inventory.md) for the hand-written,
 per-feature status table covering every canonical feature named in

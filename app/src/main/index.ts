@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { registerIpcHandlers } from './ipc'
 import { handleSquirrelEvent } from './squirrel-startup'
 import { attachWebContentsLogging, initLogging } from './logging'
+import { attachProtocolBridge, initExtensionInstallBridge, initProtocolHandling } from './protocol'
 
 // Code signing is permanently prohibited for this project. This build is
 // intentionally unsigned; nothing here requests, discovers, or invokes a
@@ -16,6 +17,12 @@ import { attachWebContentsLogging, initLogging } from './logging'
 // lands in app/logging/main.log instead of vanishing.
 initLogging()
 
+let mainWindow: BrowserWindow | null = null
+
+function getMainWindow(): BrowserWindow | null {
+  return mainWindow
+}
+
 // Squirrel.Windows install/update/uninstall lifecycle handling MUST run
 // before anything else: before app.whenReady(), before any window is
 // created, before IPC registration. If this launch is a Squirrel lifecycle
@@ -26,16 +33,24 @@ initLogging()
 if (handleSquirrelEvent()) {
   app.quit()
 } else {
-  runApp()
+  // The browser-extension protocol handoff (app/src/main/protocol.ts) needs
+  // exactly one running instance: Windows starts a brand new PROCESS for a
+  // ytdlp-studio://... click, delivered to it as an argv entry, and without
+  // this lock that second process would just open a second, useless copy of
+  // the app instead of handing the link to the one already running. This is
+  // requested only for an ordinary launch — never during a Squirrel
+  // lifecycle event above, where failing the lock must never skip shortcut
+  // creation/removal.
+  const gotSingleInstanceLock = app.requestSingleInstanceLock()
+  if (!gotSingleInstanceLock) {
+    app.quit()
+  } else {
+    initProtocolHandling(getMainWindow)
+    runApp()
+  }
 }
 
 function runApp(): void {
-  let mainWindow: BrowserWindow | null = null
-
-  function getMainWindow(): BrowserWindow | null {
-    return mainWindow
-  }
-
   function createWindow(): void {
     const win = new BrowserWindow({
       width: 1360,
@@ -67,6 +82,11 @@ function runApp(): void {
     // this window's WebContents. See app/src/main/logging.ts.
     attachWebContentsLogging(win.webContents)
 
+    // Delivers a ytdlp-studio://... link (from the browser extension) to
+    // this window's renderer, whether it arrived before or after this
+    // point. See app/src/main/protocol.ts.
+    attachProtocolBridge(win)
+
     win.once('ready-to-show', () => {
       win.show()
     })
@@ -91,8 +111,14 @@ function runApp(): void {
     mainWindow = win
   }
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     registerIpcHandlers(getMainWindow)
+    // Registers window.ytdlpStudioExtension for the renderer (the guided-
+    // install surface + incoming-link handoff) before the first window's
+    // page ever loads. See app/src/main/protocol.ts for why this is a
+    // separately-registered preload rather than an edit to
+    // app/src/preload/index.ts.
+    await initExtensionInstallBridge()
     createWindow()
 
     app.on('activate', () => {

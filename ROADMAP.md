@@ -61,7 +61,15 @@ verification status of everything in this repository.
 - [ ] Personal-vocabulary JSON upload *(built and wired: 11 validation rules, local-only storage, real entry count. Not yet exercised in the packaged app, so not ticked.)*
 - [ ] App-mark / logo customization
 - [ ] Browser companion extension (Chrome) — popup, injected page controls, options page, and
-      its own full feature contract independent of the desktop app
+      its own full feature contract independent of the desktop app *(a real, working extension
+      now exists at `extension/` — Manifest V3, `activeTab`+`storage` only, no signing key —
+      with a popup that sends the current tab to the app over a new `ytdlp-studio://` protocol
+      handoff (`app/src/main/protocol.ts`), an options page with one working setting, and a
+      guided in-app install dialog. Verified loading and running cleanly in a real Chrome via
+      "Load unpacked". Still missing: injected page controls, and the extension's own copy of
+      the full universal feature contract — language modes, funny levels, ADHD modes, toy
+      locks, local history, and the rest HANDOFF.md's "Contract feature inventory" section
+      requires independently of the desktop app. Not ticked because that contract is not met.)*
 - [ ] Documentation site (GitHub Pages) with the same tabbed/searchable/appearance-customizable
       contract as the app
 - [ ] Automatic updates (Squirrel feed, unsigned-artifact disclosure)

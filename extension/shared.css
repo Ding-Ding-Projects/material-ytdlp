@@ -1,0 +1,114 @@
+/* Shared visual language for the yt-dlp Studio Companion extension.
+ *
+ * Colors match the desktop app's own dark theme (see app/src/renderer's
+ * generated CSS and design/yt-dlp Companion (Chrome).dc.html) so the
+ * extension reads as the same product rather than a bolted-on add-on.
+ * No remote fonts, no CDN, no network dependency of any kind -- MV3's
+ * extension-page CSP would refuse a remote font-src anyway, and this
+ * project's own house rules forbid one regardless of what CSP allows.
+ */
+
+:root {
+  --bg: #0f1414;
+  --card-bg: #1b2121;
+  --header-bg: #0a0f0f;
+  --border: #2a3130;
+  --border-strong: #3f4948;
+  --text: #dee4e3;
+  --muted: #889391;
+  --accent: #82d5cc;
+  --accent-on: #003733;
+  --accent-soft: #252b2b;
+  --warn: #febc2e;
+  --error: #ffb4ab;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.45 'Segoe UI', -apple-system, Roboto, Arial, sans-serif;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  font: inherit;
+  border: 0;
+  cursor: pointer;
+  color: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+code,
+.mono {
+  font-family: 'Consolas', 'Cascadia Mono', monospace;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-on);
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.btn-secondary {
+  background: var(--accent-soft);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.card {
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.status-line {
+  font-size: 11.5px;
+  min-height: 16px;
+}
+
+.status-ok {
+  color: var(--accent);
+}
+
+.status-hint {
+  color: var(--muted);
+}
+
+.status-error {
+  color: var(--error);
+}

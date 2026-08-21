@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Install the yt-dlp Studio Companion</title>
+<link rel="stylesheet" href="shared.css" />
+<style>
+  body {
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 32px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  h1 {
+    font-size: 20px;
+    margin: 0;
+  }
+  .step {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 12px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+  }
+  .step h2 {
+    font-size: 14px;
+    margin: 0 0 4px;
+  }
+  .step p {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+  .addr {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--accent-soft);
+    border: 1px solid var(--border-strong);
+  }
+  .box {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .note {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+    background: var(--header-bg);
+    border-radius: 8px;
+    padding: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Getting the yt-dlp Studio Companion working</h1>
+  <p class="muted" style="margin:0">
+    Since this extension isn't on the Chrome Web Store — this project never
+    generates or stores a signing key, permanently — installing it takes
+    three manual steps instead of one click. If you're reading this page,
+    the extension is already loaded; keep it for reference or send it to
+    whoever needs it next.
+  </p>
+
+  <div class="box">
+    <div class="step">
+      <div class="num">1</div>
+      <div>
+        <h2>Open your browser's extensions page</h2>
+        <p>Neither Chrome nor Edge lets another app open this page for you — paste one of these into the address bar yourself.</p>
+        <span class="addr mono">chrome://extensions</span>
+        &nbsp;or&nbsp;
+        <span class="addr mono">edge://extensions</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <div>
+        <h2>Turn on Developer mode</h2>
+        <p>It's a toggle in the top-right corner of that page. Unpacked extensions (extensions loaded from a folder instead of the Web Store) only show up once it's on.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <div>
+        <h2>Click "Load unpacked" and choose this extension's folder</h2>
+        <p>yt-dlp Studio's own <b>Browser extension</b> screen (open it with <code>Ctrl+Shift+F</code> and search "extension") shows the exact folder path on this computer, with buttons to open it in Explorer or copy the path.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>The first time you click "Send to yt-dlp Studio"</b>, Windows will
+    ask which app should open <code>ytdlp-studio://</code> links. Choose
+    <b>yt-dlp Studio</b> and tick "always allow" so it only asks once. If
+    nothing asks at all, yt-dlp Studio probably isn't installed yet — grab
+    the installer from the app's own release page and run it first.
+  </div>
+</div>
+</body>
+</html>

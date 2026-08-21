@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "yt-dlp Studio Companion",
+  "version": "0.1.0",
+  "description": "Send the page you're on straight to yt-dlp Studio for download. No account, no server, no tracking.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Send to yt-dlp Studio",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_page": "options.html",
+  "permissions": ["activeTab", "storage"],
+  "author": "Ding Ding Projects",
+  "homepage_url": "https://github.com/Ding-Ding-Projects/material-ytdlp"
+}

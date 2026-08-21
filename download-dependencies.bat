@@ -96,20 +96,47 @@ if exist "%REPO_ROOT%\app\package.json" (
   call :log "  app\package.json does not exist yet (owned by another lane); skipping Node dependency install."
 )
 
-REM --- Phase 3: ffmpeg + ffprobe ------------------------------------------
-call :log "[3/3] Checking ffmpeg + ffprobe..."
-set "FFMPEG_PRESENT=0"
-if exist "%VENDOR_BIN%\ffmpeg.exe" if exist "%VENDOR_BIN%\ffprobe.exe" set "FFMPEG_PRESENT=1"
-if "%FFMPEG_PRESENT%"=="1" (
-  call :log "  Already present at %VENDOR_BIN%\ffmpeg.exe and ffprobe.exe; skipping."
-) else (
-  call :log "  Fetching pinned ffmpeg build (see vendor\dependencies.json for the source and digest)..."
-  call :fetch_ffmpeg
+REM --- Phase 3: MSYS2 + mingw-w64 toolchain (for building ffmpeg from source) ---
+call :log "[3/3] Checking MSYS2 + mingw-w64 build toolchain..."
+call :find_msys2_bash
+if defined MSYS2_BASH (
+  call :log "  Found MSYS2 at %MSYS2_BASH%. Checking required packages..."
+  call :ensure_mingw_packages
   if errorlevel 1 (
-    call :fail "ffmpeg fetch/verify/extract failed. See the messages above for the exact step and error."
+    call :fail "Failed to install required MSYS2/mingw-w64 packages. See the pacman output above for the exact error."
+    exit /b 1
+  )
+) else (
+  call :log "  MSYS2 not found. Installing via winget (user-scoped, unattended)..."
+  where winget >nul 2>&1
+  if errorlevel 1 (
+    call :fail "MSYS2 is missing and winget is not available on this machine. Install MSYS2 manually (https://www.msys2.org/) and re-run, or install winget (App Installer from the Microsoft Store) first."
+    exit /b 1
+  )
+  winget install --id MSYS2.MSYS2 --scope machine --silent --accept-package-agreements --accept-source-agreements
+  set "MSYS2_RC=!ERRORLEVEL!"
+  if not "!MSYS2_RC!"=="0" (
+    winget install --id MSYS2.MSYS2 --silent --accept-package-agreements --accept-source-agreements
+    set "MSYS2_RC=!ERRORLEVEL!"
+  )
+  if not "!MSYS2_RC!"=="0" (
+    call :fail "winget install of MSYS2.MSYS2 failed with exit code !MSYS2_RC!. Source tried: winget (MSYS2.MSYS2). See the winget output above for the exact error."
+    exit /b 1
+  )
+  call :refresh_path
+  call :find_msys2_bash
+  if not defined MSYS2_BASH (
+    call :fail "MSYS2 was installed by winget but its bash.exe cannot be found at C:\msys64\usr\bin\bash.exe. Open a new shell and re-run this script."
+    exit /b 1
+  )
+  call :log "  Installed MSYS2 at %MSYS2_BASH%."
+  call :ensure_mingw_packages
+  if errorlevel 1 (
+    call :fail "Failed to install required MSYS2/mingw-w64 packages after a fresh MSYS2 install. See the pacman output above for the exact error."
     exit /b 1
   )
 )
+call :log "  MSYS2 + mingw-w64 build toolchain ready. Run build-ffmpeg.bat to build ffmpeg.exe and ffprobe.exe from vendor\ffmpeg."
 
 set "STEP_END=%TIME%"
 call :log "=== download-dependencies.bat finished successfully ==="
@@ -133,6 +160,25 @@ if not errorlevel 1 (
 goto :eof
 
 REM ============================================================================
+:find_msys2_bash
+set "MSYS2_BASH="
+if exist "C:\msys64\usr\bin\bash.exe" set "MSYS2_BASH=C:\msys64\usr\bin\bash.exe"
+goto :eof
+
+REM ============================================================================
+:ensure_mingw_packages
+REM Installs the mingw-w64 x86_64 toolchain plus the packages ffmpeg's own
+REM configure/make needs: gcc toolchain, nasm assembler, make, pkg-config,
+REM diffutils, and the small set of LGPL-compatible codec libraries the
+REM configure flags in build-ffmpeg.bat enable (gnutls, zlib, mp3lame, opus,
+REM vorbis -- no GPL-only library such as libx264 or libvpx is installed,
+REM since build-ffmpeg.bat never enables one). Idempotent: pacman -S --needed
+REM skips what is already present.
+"%MSYS2_BASH%" -lc "pacman -Sy --noconfirm" >nul 2>&1
+"%MSYS2_BASH%" -lc "pacman -S --needed --noconfirm mingw-w64-x86_64-toolchain mingw-w64-x86_64-nasm mingw-w64-x86_64-pkg-config mingw-w64-x86_64-gnutls mingw-w64-x86_64-zlib mingw-w64-x86_64-lame mingw-w64-x86_64-opus mingw-w64-x86_64-libvorbis make diffutils yasm python3"
+exit /b !ERRORLEVEL!
+
+REM ============================================================================
 :refresh_path
 REM Pull the freshly-written user + machine PATH into THIS cmd process.
 for /f "usebackq tokens=2,*" %%A in (`reg query "HKCU\Environment" /v Path 2^>nul`) do set "USERPATH=%%B"
@@ -140,71 +186,6 @@ for /f "usebackq tokens=2,*" %%A in (`reg query "HKLM\SYSTEM\CurrentControlSet\C
 if defined SYSPATH if defined USERPATH set "PATH=%SYSPATH%;%USERPATH%"
 if defined SYSPATH if not defined USERPATH set "PATH=%SYSPATH%"
 goto :eof
-
-REM ============================================================================
-:fetch_ffmpeg
-REM Reads url/sha256 from vendor\dependencies.json via a small inline python
-REM check (python is guaranteed present by phase 1), downloads, verifies,
-REM and extracts ffmpeg.exe/ffprobe.exe into vendor\bin.
-set "FF_URL="
-set "FF_SHA="
-for /f "usebackq delims=" %%U in (`!PYTHON_EXE! -c "import json;d=json.load(open(r'%DEPS_JSON%',encoding='utf-8'));print(d['ffmpeg']['url'])"`) do set "FF_URL=%%U"
-for /f "usebackq delims=" %%S in (`!PYTHON_EXE! -c "import json;d=json.load(open(r'%DEPS_JSON%',encoding='utf-8'));print(d['ffmpeg'].get('sha256',''))"`) do set "FF_SHA=%%S"
-
-if not defined FF_URL (
-  call :log "  vendor\dependencies.json has no ffmpeg.url entry."
-  exit /b 1
-)
-
-set "FF_ZIP=%TOOLCHAIN_DIR%\ffmpeg-download.zip"
-
-if "%FF_SHA%"=="" (
-  call :log "  No recorded SHA-256 for ffmpeg yet. Downloading once to compute and record it..."
-  powershell -NoProfile -ExecutionPolicy Bypass -File "%REPO_ROOT%\scripts\fetch-verified.ps1" -Url "%FF_URL%" -OutFile "%FF_ZIP%"
-  set "PSRC=!ERRORLEVEL!"
-  if "!PSRC!"=="2" (
-    call :log "  Downloaded and hashed. Re-run this script's ffmpeg step after recording the printed SHA-256"
-    call :log "  into vendor\dependencies.json (\"ffmpeg\".\"sha256\"). The file was NOT extracted yet"
-    call :log "  because it is not verified -- this is fail-closed by design."
-    exit /b 1
-  )
-  if not "!PSRC!"=="0" exit /b 1
-) else (
-  powershell -NoProfile -ExecutionPolicy Bypass -File "%REPO_ROOT%\scripts\fetch-verified.ps1" -Url "%FF_URL%" -OutFile "%FF_ZIP%" -Sha256 "%FF_SHA%"
-  if errorlevel 1 exit /b 1
-)
-
-call :log "  Extracting ffmpeg.exe and ffprobe.exe..."
-set "FF_EXTRACT=%TOOLCHAIN_DIR%\ffmpeg-extract"
-if exist "%FF_EXTRACT%" rmdir /s /q "%FF_EXTRACT%" >nul 2>&1
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -LiteralPath '%FF_ZIP%' -DestinationPath '%FF_EXTRACT%' -Force"
-if errorlevel 1 (
-  call :log "  Expand-Archive failed."
-  exit /b 1
-)
-
-set "FOUND_FFMPEG="
-set "FOUND_FFPROBE="
-for /f "delims=" %%F in ('dir /s /b "%FF_EXTRACT%\ffmpeg.exe" 2^>nul') do set "FOUND_FFMPEG=%%F"
-for /f "delims=" %%F in ('dir /s /b "%FF_EXTRACT%\ffprobe.exe" 2^>nul') do set "FOUND_FFPROBE=%%F"
-
-if not defined FOUND_FFMPEG (
-  call :log "  ffmpeg.exe not found inside the extracted archive."
-  exit /b 1
-)
-if not defined FOUND_FFPROBE (
-  call :log "  ffprobe.exe not found inside the extracted archive."
-  exit /b 1
-)
-
-copy /y "%FOUND_FFMPEG%" "%VENDOR_BIN%\ffmpeg.exe" >nul
-copy /y "%FOUND_FFPROBE%" "%VENDOR_BIN%\ffprobe.exe" >nul
-
-rmdir /s /q "%FF_EXTRACT%" >nul 2>&1
-del /q "%FF_ZIP%" >nul 2>&1
-
-call :log "  ffmpeg.exe and ffprobe.exe installed to %VENDOR_BIN%."
-exit /b 0
 
 REM ============================================================================
 :log

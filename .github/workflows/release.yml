@@ -62,6 +62,13 @@ jobs:
         shell: cmd
         run: .\build-ytdlp.bat /s
 
+      - name: Build ffmpeg from pinned source
+        shell: cmd
+        # windows-latest already ships MSYS2 at C:\msys64; download-dependencies.bat
+        # detects and reuses it rather than installing a second copy, so this step
+        # only needs to install the missing mingw-w64 packages before building.
+        run: .\build-ffmpeg.bat /s
+
       - name: Build installer
         shell: cmd
         run: .\build-installer.bat /s
@@ -104,6 +111,12 @@ jobs:
           "ytdlp-version=$($stamp.ytdlpVersion)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "ytdlp-sha=$($stamp.sha256)"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "submodule-sha=$($stamp.submoduleSha)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+          $ffstamp = Get-Content vendor/bin/ffmpeg.build.json -Raw | ConvertFrom-Json
+          "ffmpeg-version=$($ffstamp.ffmpegVersion)"        | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "ffmpeg-sha=$($ffstamp.ffmpegSha256)"             | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "ffprobe-sha=$($ffstamp.ffprobeSha256)"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "ffmpeg-submodule-sha=$($ffstamp.submoduleSha)"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
           $setup = Get-ChildItem -Path app -Recurse -Filter "*Setup.exe" | Select-Object -First 1
           $setupHash = (Get-FileHash $setup.FullName -Algorithm SHA256).Hash.ToLower()
@@ -160,15 +173,21 @@ jobs:
 
           ### What is inside the installer
 
-          Nothing has to be installed separately. yt-dlp is **built from pinned
-          source** during this workflow rather than downloaded as a prebuilt
-          binary, and ffmpeg is pinned and verified against a recorded digest.
+          Nothing has to be installed separately. Both yt-dlp and ffmpeg are
+          **built from pinned source** during this workflow rather than
+          downloaded as prebuilt binaries. ffmpeg is an LGPL build (no
+          `--enable-gpl`, no `--enable-nonfree`) — see
+          [building-ffmpeg-from-source.md](docs/features/build-and-packaging/building-ffmpeg-from-source.md).
 
           | | |
           | --- | --- |
           | yt-dlp version | `${{ steps.evidence.outputs.ytdlp-version }}` |
           | Built from submodule commit | `${{ steps.evidence.outputs.submodule-sha }}` |
           | yt-dlp.exe SHA-256 | `${{ steps.evidence.outputs.ytdlp-sha }}` |
+          | ffmpeg version | `${{ steps.evidence.outputs.ffmpeg-version }}` |
+          | Built from submodule commit | `${{ steps.evidence.outputs.ffmpeg-submodule-sha }}` |
+          | ffmpeg.exe SHA-256 | `${{ steps.evidence.outputs.ffmpeg-sha }}` |
+          | ffprobe.exe SHA-256 | `${{ steps.evidence.outputs.ffprobe-sha }}` |
           | Setup.exe SHA-256 | `${{ steps.evidence.outputs.setup-sha }}` |
           | Setup.exe size | ${{ steps.evidence.outputs.setup-size }} MB |
 

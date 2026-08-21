@@ -4,9 +4,9 @@ REM ============================================================================
 REM  build.bat -- one-click build of the runnable app
 REM
 REM  Assumes a fresh Windows machine with nothing installed. Calls
-REM  download-dependencies.bat then build-ytdlp.bat (never duplicates their
-REM  steps), then builds the Electron app in app\. On success, and only when
-REM  not running silently, offers to launch it.
+REM  download-dependencies.bat, then build-ytdlp.bat, then build-ffmpeg.bat
+REM  (never duplicates their steps), then builds the Electron app in app\.
+REM  On success, and only when not running silently, offers to launch it.
 REM
 REM  Usage:
 REM    build.bat            interactive; prompts to run the app at the end
@@ -34,6 +34,12 @@ if errorlevel 1 (
 call "%REPO_ROOT%\build-ytdlp.bat" %*
 if errorlevel 1 (
   call :fail "build-ytdlp.bat failed. See the output above for the exact step and error."
+  exit /b 1
+)
+
+call "%REPO_ROOT%\build-ffmpeg.bat" %*
+if errorlevel 1 (
+  call :fail "build-ffmpeg.bat failed. See the output above for the exact step and error."
   exit /b 1
 )
 

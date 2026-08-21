@@ -110,6 +110,48 @@ the running app, and are labeled as such.
 </details>
 
 <details>
+<summary><b>Size of the project, and how long a person would have taken</b></summary>
+
+Counted by the committed counter, `node scripts/count-lines.mjs`, which is the same script the
+release workflow runs. Vendored code, dependencies, build output and lockfiles are excluded, so
+these are lines belonging to this project.
+
+| Area | Total lines |
+| --- | ---: |
+| Design references (the transcribed option catalog and design components) | 7,720 |
+| Site, build scripts and root files | 2,950 |
+| Application main process | 978 |
+| Application renderer | 443 |
+| Scripts | 418 |
+| Documentation | 347 |
+| Application (other) | 310 |
+| Workflows | 185 |
+| Application preload | 138 |
+| **Total** | **13,489** |
+
+### How long would a human have taken?
+
+**Roughly three to six months of full-time work for one experienced developer.**
+
+That is an **estimate**, not a measurement. Nobody built this by hand, so there is no real figure to
+report — what follows is the arithmetic it came from, so you can disagree with the assumptions
+rather than with the conclusion:
+
+- **Implementation code — about 5,769 lines** (the total above, less the design references). At a
+  sustained **50 to 100 lines per day** for production code including design, debugging,
+  documentation and rework — not the burst rate anyone hits on a good afternoon — that is
+  **58 to 115 working days**.
+- **Design reference catalog — 7,720 lines.** This is largely transcription: roughly 250 yt-dlp
+  options with their help text, read out of upstream documentation. Transcription runs far faster
+  than authored logic, so at **400 to 800 lines per day** it is **10 to 19 working days**.
+- **Together: 68 to 134 working days**, which at five days a week is about **14 to 27 weeks**.
+
+The range is wide on purpose. A single figure would imply a precision this kind of estimate does not
+have, and the honest answer to "how long is this" is a range with its workings shown.
+
+</details>
+
+<details>
 <summary><b>Contributing, security, license</b></summary>
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md),

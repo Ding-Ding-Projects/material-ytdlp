@@ -53,9 +53,21 @@ function git(args) {
   return execFileSync("git", args, { cwd: REPO_ROOT, encoding: "utf8", maxBuffer: 1024 * 1024 * 256 });
 }
 
+// Generated files that are tracked but are not anybody's work. A lockfile is
+// the loud one: app/package-lock.json alone is over six thousand lines, so
+// counting it inflated the project total by roughly a third and made the
+// figure a statement about npm rather than about this project.
+const EXCLUDE_FILE_NAMES = new Set([
+  "package-lock.json",
+  "npm-shrinkwrap.json",
+  "yarn.lock",
+  "pnpm-lock.yaml",
+]);
+
 function isExcluded(relPath) {
   const parts = relPath.split("/");
-  return parts.some((p) => EXCLUDE_DIR_NAMES.has(p));
+  if (parts.some((p) => EXCLUDE_DIR_NAMES.has(p))) return true;
+  return EXCLUDE_FILE_NAMES.has(parts[parts.length - 1]);
 }
 
 function areaFor(relPath) {
@@ -152,7 +164,7 @@ function main() {
   const files = listTrackedFiles().filter((f) => !isExcluded(f));
 
   const areaTotals = new Map(); // area -> { total, nonBlank }
-  const excludedNote = [...EXCLUDE_DIR_NAMES].join(", ");
+  const excludedNote = [...EXCLUDE_DIR_NAMES, ...EXCLUDE_FILE_NAMES].join(", ");
 
   let grandTotal = 0;
   let grandNonBlank = 0;

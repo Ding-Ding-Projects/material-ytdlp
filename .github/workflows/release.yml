@@ -90,6 +90,43 @@ jobs:
           $joined | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
+      - name: Collect release evidence
+        id: evidence
+        shell: pwsh
+        run: |
+          # Line count, from the same committed counter anyone can run locally.
+          node scripts/count-lines.mjs | Out-File -FilePath line-count.md -Encoding utf8
+
+          # Provenance of the bundled binaries. These are facts about what is
+          # actually inside the installer, so they are read back off disk rather
+          # than repeated from the build log.
+          $stamp = Get-Content vendor/bin/yt-dlp.build.json -Raw | ConvertFrom-Json
+          "ytdlp-version=$($stamp.ytdlpVersion)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "ytdlp-sha=$($stamp.sha256)"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "submodule-sha=$($stamp.submoduleSha)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+          $setup = Get-ChildItem -Path app -Recurse -Filter "*Setup.exe" | Select-Object -First 1
+          $setupHash = (Get-FileHash $setup.FullName -Algorithm SHA256).Hash.ToLower()
+          "setup-sha=$setupHash" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "setup-size=$([math]::Round($setup.Length / 1MB, 1))" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Pick dim sum code name
+        id: dimsum
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          # Decoration with a purpose, and never a gate: if the public catalog
+          # cannot be reached or every dish is used, the release still ships.
+          $raw = node scripts/pick-dim-sum.mjs . 2>&1 | Select-Object -Last 1
+          if ($raw -and $raw.StartsWith("{")) {
+            $dish = $raw | ConvertFrom-Json
+            "name=$($dish.nameEn) - $($dish.nameZhHant)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            "asset=$($dish.assetName)"                   | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            "id=$($dish.id)"                             | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          } else {
+            Write-Host "No dim sum code name resolved: $raw"
+          }
+
       - name: Record completion time and duration
         id: finish
         shell: pwsh
@@ -121,15 +158,38 @@ jobs:
           - Workflow completed: ${{ steps.finish.outputs.completed-at }}
           - Workflow duration: ${{ steps.finish.outputs.duration }}
 
+          ### What is inside the installer
+
+          Nothing has to be installed separately. yt-dlp is **built from pinned
+          source** during this workflow rather than downloaded as a prebuilt
+          binary, and ffmpeg is pinned and verified against a recorded digest.
+
+          | | |
+          | --- | --- |
+          | yt-dlp version | `${{ steps.evidence.outputs.ytdlp-version }}` |
+          | Built from submodule commit | `${{ steps.evidence.outputs.submodule-sha }}` |
+          | yt-dlp.exe SHA-256 | `${{ steps.evidence.outputs.ytdlp-sha }}` |
+          | Setup.exe SHA-256 | `${{ steps.evidence.outputs.setup-sha }}` |
+          | Setup.exe size | ${{ steps.evidence.outputs.setup-size }} MB |
+
           ### Artifacts
 
           - Setup.exe (Squirrel.Windows installer, unsigned)
           - RELEASES
           - Full .nupkg package
+
+          ### Code name
+
+          **${{ steps.dimsum.outputs.name }}** - photo attached, from the public
+          catalog at Ding-Ding-Projects/dim-sum-photos.
+
           "@
           $notes | Out-File -FilePath release-notes.md -Encoding utf8
+          Get-Content line-count.md -Raw | Out-File -FilePath release-notes.md -Encoding utf8 -Append
 
           $files = "${{ steps.artifacts.outputs.paths }}" -split "`n" | Where-Object { $_.Trim() -ne "" }
+          $dish = "${{ steps.dimsum.outputs.asset }}"
+          if ($dish -and (Test-Path $dish)) { $files += (Resolve-Path $dish).Path }
 
           gh release create "${{ steps.tag.outputs.tag }}" `
             --title "yt-dlp Studio ${{ steps.tag.outputs.tag }}" `

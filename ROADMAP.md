@@ -14,11 +14,11 @@ verification status of everything in this repository.
 
 ## Phase 1 — Core build and process layer (in progress)
 
-- [ ] `download-dependencies.bat` / `.sh`
-- [ ] `build-ytdlp.bat` — builds `yt-dlp.exe` from the pinned submodule with PyInstaller
-- [ ] `build.bat` — one-click dev build
-- [ ] `build-installer.bat` — Squirrel.Windows installer build
-- [ ] Main-process layer: spawn yt-dlp with argv arrays, parse `--progress-template` output
+- [x] `download-dependencies.bat` / `.sh` *(run locally and on CI; ffmpeg digest verified)*
+- [x] `build-ytdlp.bat` — builds `yt-dlp.exe` from the pinned submodule with PyInstaller *(run locally and on CI; produced yt-dlp 2026.08.19 from the pinned commit)*
+- [ ] `build.bat` — one-click dev build *(written; has never completed end to end, because the renderer does not build yet)*
+- [ ] `build-installer.bat` — Squirrel.Windows installer build *(written; has never produced an installer)*
+- [x] Main-process layer: spawn yt-dlp with argv arrays, parse `--progress-template` output *(template verified against a real download; progress aggregated over fragments)*
 - [ ] Renderer shell wired to real IPC (currently design-only mock handlers)
 - [ ] Flag catalog (Expert mode) wired to the ~250-flag catalog in `design/ytdlp-flags.js`
 - [ ] Queue with real progress, pause/resume, retry

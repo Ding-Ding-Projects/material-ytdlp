@@ -71,6 +71,8 @@ import {
   type ExportContentResult,
   type OpenInEditorRequest,
   type OpenInEditorResult,
+  type OpenPathRequest,
+  type OpenPathResult,
   type ReadArchiveResult,
   type ReadConfigFileResult,
   type RevealPathRequest,
@@ -79,6 +81,11 @@ import {
   type WriteConfigFileResult,
 } from '../shared/fileops-contract'
 import { CookiesIpcChannel, type ValidateCookiesFileResult } from '../shared/stubs-contract'
+import {
+  CookiePasteIpcChannel,
+  type ParseCookiePasteRequest,
+  type ParseCookiePasteResult,
+} from '../shared/cookies-contract'
 import {
   LoggingIpcChannel,
   type LogFaultReport,
@@ -366,6 +373,7 @@ const bridge = {
     exportContent: (req: ExportContentRequest) =>
       invokeWithDeadline<ExportContentResult>(FileOpsIpcChannel.ExportContent, LONG, req),
     revealPath: (req: RevealPathRequest) => invokeWithDeadline<RevealPathResult>(FileOpsIpcChannel.RevealPath, SHORT, req),
+    openPath: (req: OpenPathRequest) => invokeWithDeadline<OpenPathResult>(FileOpsIpcChannel.OpenPath, MEDIUM, req),
     openInEditor: (req: OpenInEditorRequest) =>
       invokeWithDeadline<OpenInEditorResult>(FileOpsIpcChannel.OpenInEditor, MEDIUM, req),
     listConfigFiles: () => invokeWithDeadline<ConfigFileInfo[]>(FileOpsIpcChannel.ListConfigFiles, SHORT),
@@ -384,6 +392,15 @@ const bridge = {
   cookies: {
     validateFile: (path: string) =>
       invokeWithDeadline<ValidateCookiesFileResult>(CookiesIpcChannel.ValidateFile, SHORT, path),
+    /**
+     * Parses pasted cookie text (a Cookie header, a bare value, a curl
+     * command, a full cookies.txt, or a devtools JSON/table export) and
+     * writes it to a private Netscape cookie file. The request/response
+     * shape never carries a cookie value -- only counts, cookie NAMES, a
+     * domain, a format label, and a file path. See cookies-contract.ts.
+     */
+    parsePaste: (req: ParseCookiePasteRequest) =>
+      invokeWithDeadline<ParseCookiePasteResult>(CookiePasteIpcChannel.Parse, SHORT, req),
   },
 
   locks: {

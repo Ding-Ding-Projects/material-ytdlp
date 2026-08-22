@@ -168,6 +168,53 @@ async function main() {
 
     await sleep(3000); // let the resulting renders happen
 
+    // --watch=<ms> polls the component's own state so a question like "does
+    // progress actually arrive" is answered by observation rather than by
+    // reading the code that is supposed to deliver it.
+    const watchMs = Number(arg("watch", "0")) || 0;
+    if (watchMs > 0) {
+      console.log("");
+      console.log(`--- watching job state for ${watchMs}ms`);
+      const probe = `
+        (() => {
+          const findLogic = () => {
+            const root = document.getElementById('dc-root') || document.body;
+            const key = Object.keys(root).find(k => k.startsWith('__reactContainer') || k.startsWith('_reactRootContainer'));
+            const seen = new Set();
+            const stack = [key ? root[key] : null];
+            while (stack.length) {
+              const n = stack.pop();
+              if (!n || typeof n !== 'object' || seen.has(n)) continue;
+              seen.add(n);
+              if (n.stateNode && n.stateNode.logic && typeof n.stateNode.logic.renderVals === 'function') return n.stateNode.logic;
+              stack.push(n.child, n.sibling, n.current);
+            }
+            return null;
+          };
+          const l = findLogic();
+          if (!l) return JSON.stringify({ error: 'no logic' });
+          const st = l.state || {};
+          return JSON.stringify({
+            jobs: (st.jobs || []).map(j => ({ id: j.id, state: j.state, pct: j.pct, rate: j.rate, size: j.size, eta: j.eta })),
+            easyRuns: (st.easyRuns || []).map(r => ({ id: r.id, title: r.title, pct: r.pct })),
+            logLines: (st.log || []).length,
+            logTail: (st.log || []).slice(-6).map(l => Array.isArray(l) ? String(l[0]).slice(0, 3000) : String(l).slice(0, 3000)),
+          });
+        })()
+      `;
+      const started = Date.now();
+      let last = "";
+      while (Date.now() - started < watchMs) {
+        const r = await cdp.send("Runtime.evaluate", { expression: probe, returnByValue: true });
+        const v = r?.result?.value || "";
+        if (v && v !== last) {
+          console.log(`  +${String(Date.now() - started).padStart(5)}ms  ${v}`);
+          last = v;
+        }
+        await sleep(1000);
+      }
+    }
+
     console.log(`\n=== console errors after the action: ${consoleErrors.length}`);
     const unique = [...new Set(consoleErrors)];
     unique.slice(0, 10).forEach((e) => console.log("  " + e.split("\n").slice(0, 3).join("\n  ")));

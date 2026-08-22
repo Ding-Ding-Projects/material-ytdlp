@@ -60,12 +60,13 @@ import {
   setElementOverride,
   setRenameDisplayName,
 } from './appearance'
-import { FileOpsIpcChannel, type ConfigFileId, type ExportContentRequest, type OpenInEditorRequest, type RevealPathRequest } from '../shared/fileops-contract'
+import { FileOpsIpcChannel, type ConfigFileId, type ExportContentRequest, type OpenInEditorRequest, type OpenPathRequest, type RevealPathRequest } from '../shared/fileops-contract'
 import {
   compactArchive,
   exportContent,
   listConfigFiles,
   openInEditor,
+  openPath,
   readArchive,
   readConfigFile,
   revealPath,
@@ -73,7 +74,8 @@ import {
   writeConfigFile,
 } from './fileops'
 import { CookiesIpcChannel } from '../shared/stubs-contract'
-import { validateCookiesFile } from './cookies'
+import { CookiePasteIpcChannel, type ParseCookiePasteRequest } from '../shared/cookies-contract'
+import { parseCookiePasteAndWrite, validateCookiesFile } from './cookies'
 import {
   AuthenticatorIpcChannel,
   LocksIpcChannel,
@@ -321,6 +323,14 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): YtDl
 
   ipcMain.handle(CookiesIpcChannel.ValidateFile, (_event, path: string) => validateCookiesFile(path))
 
+  // -- Cookies: paste a value straight out of devtools (no export needed) --
+  // Credential material -- see the "SECRET MATERIAL" comment in cookies.ts.
+  // This handler's request/response never carries a cookie value: only the
+  // raw pasted text goes in, and only counts/names/domain/format/path come
+  // back out.
+
+  ipcMain.handle(CookiePasteIpcChannel.Parse, (_event, req: ParseCookiePasteRequest) => parseCookiePasteAndWrite(req))
+
   // -- Per-element toy locks (for-fun UX locks, never a security boundary) --
 
   ipcMain.handle(LocksIpcChannel.List, () => listLocks())
@@ -389,6 +399,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): YtDl
 
   ipcMain.handle(FileOpsIpcChannel.ExportContent, (_event, req: ExportContentRequest) => exportContent(req))
   ipcMain.handle(FileOpsIpcChannel.RevealPath, (_event, req: RevealPathRequest) => revealPath(req))
+  ipcMain.handle(FileOpsIpcChannel.OpenPath, (_event, req: OpenPathRequest) => openPath(req))
   ipcMain.handle(FileOpsIpcChannel.OpenInEditor, (_event, req: OpenInEditorRequest) => openInEditor(req))
   ipcMain.handle(FileOpsIpcChannel.ListConfigFiles, () => listConfigFiles())
   ipcMain.handle(FileOpsIpcChannel.ReadConfigFile, (_event, id: ConfigFileId) => readConfigFile(id))

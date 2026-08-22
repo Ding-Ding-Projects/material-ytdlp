@@ -9,6 +9,7 @@
 export enum FileOpsIpcChannel {
   ExportContent = 'fileops:export-content',
   RevealPath = 'fileops:reveal-path',
+  OpenPath = 'fileops:open-path',
   OpenInEditor = 'fileops:open-in-editor',
   ListConfigFiles = 'fileops:list-config-files',
   ReadConfigFile = 'fileops:read-config-file',
@@ -46,6 +47,17 @@ export interface RevealPathRequest {
 }
 
 export interface RevealPathResult {
+  ok: boolean
+  error: string | null
+}
+
+// -- Open with the OS default application ------------------------------------
+
+export interface OpenPathRequest {
+  path: string
+}
+
+export interface OpenPathResult {
   ok: boolean
   error: string | null
 }

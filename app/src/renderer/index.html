@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; media-src 'self' ytdlp-media:" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>yt-dlp Studio</title>
 <script src="./dc-resources.js"></script>
@@ -712,7 +712,7 @@
                 </div>
                 <div style="display:grid;gap:6px">
                   <sc-for list="{{ libraryRows }}" as="row" hint-placeholder-count="6">
-                    <div onContextMenu="{{ row.menu }}" style="display:grid;grid-template-columns:minmax(0,1fr) 150px 110px 96px 130px;gap:12px;align-items:center;padding:11px 13px;border-radius:12px;background:#252b2b">
+                    <div onContextMenu="{{ row.menu }}" style="display:grid;grid-template-columns:minmax(0,1fr) 150px 110px 96px 130px auto;gap:12px;align-items:center;padding:11px 13px;border-radius:12px;background:#252b2b">
                       <div style="min-width:0">
                         <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600">{{ row.title }}</div>
                         <div style="font-size:11px;color:#889391;font-family:'Roboto Mono',Consolas,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ row.path }}</div>
@@ -721,6 +721,10 @@
                       <div style="color:#bec9c7;font-size:12px;font-family:'Roboto Mono',Consolas,monospace">{{ row.size }}</div>
                       <div style="color:#bec9c7;font-size:12px;font-family:'Roboto Mono',Consolas,monospace">{{ row.ext }}</div>
                       <div style="color:#889391;font-size:11px;font-family:'Roboto Mono',Consolas,monospace">{{ row.archive }}</div>
+                      <div style="display:flex;gap:5px">
+                        <button onClick="{{ row.open }}" disabled="{{ !row.hasPath }}" title="{{ row.openTitle }}" style="width:32px;height:32px;border-radius:9px;background:#303636;color:{{ row.actionColor }};flex:0 0 auto"><i class="msym" style="font-size:17px">open_in_new</i></button>
+                        <button onClick="{{ row.reveal }}" disabled="{{ !row.hasPath }}" title="{{ row.revealTitle }}" style="width:32px;height:32px;border-radius:9px;background:#303636;color:{{ row.actionColor }};flex:0 0 auto"><i class="msym" style="font-size:17px">folder_open</i></button>
+                      </div>
                     </div>
                   </sc-for>
                 </div>
@@ -1287,6 +1291,79 @@
         </div>
       </sc-if>
 
+      <video id="ytdlp-video-el" style="{{ mediaShowVideoFrame ? 'width:36px;height:36px;object-fit:cover;display:block' : 'width:0;height:0;display:none' }}" onLoadedMetadata="{{ mediaOnLoadedMetadata }}" onTimeUpdate="{{ mediaOnTimeUpdate }}" onPlaying="{{ mediaOnPlaying }}" onPause="{{ mediaOnPause }}" onWaiting="{{ mediaOnWaiting }}" onEnded="{{ mediaOnEnded }}" onError="{{ mediaOnError }}"></video>
+      <audio id="ytdlp-audio-el" style="display:none" onLoadedMetadata="{{ mediaOnLoadedMetadata }}" onTimeUpdate="{{ mediaOnTimeUpdate }}" onPlaying="{{ mediaOnPlaying }}" onPause="{{ mediaOnPause }}" onWaiting="{{ mediaOnWaiting }}" onEnded="{{ mediaOnEnded }}" onError="{{ mediaOnError }}"></audio>
+      <div style="flex:0 0 auto;border-top:1px solid #2a3130;background:#12191a;display:flex;align-items:center;gap:12px;padding:0 14px;height:60px">
+        <div style="width:36px;height:36px;border-radius:9px;background:#1b2121;display:grid;place-items:center;flex:0 0 auto;overflow:hidden">
+          <sc-if value="{{ !mediaShowVideoFrame }}" hint-placeholder-val="{{ true }}">
+            <i class="msym" style="font-size:20px;color:{{ mediaKindColor }}">{{ mediaKindGlyph }}</i>
+          </sc-if>
+        </div>
+        <div style="min-width:0;width:200px;flex:0 0 auto">
+          <div style="font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ mediaCurrentTitle }}">{{ mediaCurrentTitle }}</div>
+          <div style="font-size:10.5px;color:{{ mediaStatusColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ mediaStatusMessage }}">{{ mediaStatusLabel }}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0;flex:0 0 auto">
+          <button onClick="{{ mediaPrev }}" title="Previous in queue" disabled="{{ !mediaHasPrev }}" style="width:32px;height:32px;border-radius:16px;background:transparent;color:{{ mediaHasPrev ? '#bec9c7' : '#4a5251' }}"><i class="msym" style="font-size:19px">skip_previous</i></button>
+          <button onClick="{{ mediaToggle }}" title="{{ mediaPlaying ? 'Pause' : 'Play' }}" disabled="{{ !mediaHasQueue }}" style="width:38px;height:38px;border-radius:19px;background:{{ mediaHasQueue ? '#82d5cc' : '#252b2b' }};color:{{ mediaHasQueue ? '#003733' : '#4a5251' }};margin:0 2px"><i class="msym" style="font-size:21px">{{ mediaToggleGlyph }}</i></button>
+          <button onClick="{{ mediaNext }}" title="Next in queue" disabled="{{ !mediaHasNext }}" style="width:32px;height:32px;border-radius:16px;background:transparent;color:{{ mediaHasNext ? '#bec9c7' : '#4a5251' }}"><i class="msym" style="font-size:19px">skip_next</i></button>
+        </div>
+        <div style="flex:1;min-width:0;display:flex;align-items:center;gap:8px">
+          <span style="font-size:10.5px;color:#889391;font-family:'Roboto Mono',Consolas,monospace;width:38px;text-align:right;flex:0 0 auto">{{ mediaPositionLabel }}</span>
+          <input type="range" min="0" max="{{ mediaSeekMax }}" step="1" value="{{ mediaPositionSec }}" onChange="{{ mediaSeek }}" disabled="{{ !mediaSeekable }}" style="flex:1;accent-color:#82d5cc" />
+          <span style="font-size:10.5px;color:#889391;font-family:'Roboto Mono',Consolas,monospace;width:38px;flex:0 0 auto">{{ mediaDurationLabel }}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:2px;flex:0 0 auto">
+          <button onClick="{{ mediaToggleMute }}" title="{{ mediaMuted ? 'Unmute' : 'Mute' }}" style="width:30px;height:30px;border-radius:15px;background:transparent;color:#bec9c7"><i class="msym" style="font-size:18px">{{ mediaVolumeGlyph }}</i></button>
+          <input type="range" min="0" max="100" step="1" value="{{ mediaVolumePct }}" onChange="{{ mediaSetVolume }}" style="width:64px;accent-color:#82d5cc" />
+        </div>
+        <button onClick="{{ mediaToggleQueueOpen }}" title="Play queue" style="width:32px;height:32px;border-radius:16px;background:{{ mediaQueueOpen ? '#252b2b' : 'transparent' }};color:#82d5cc;position:relative;flex:0 0 auto">
+          <i class="msym" style="font-size:19px">queue_music</i>
+          <sc-if value="{{ mediaQueueCount > 0 }}" hint-placeholder-val="{{ false }}">
+            <span style="position:absolute;top:1px;right:1px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:#82d5cc;color:#003733;font-size:9px;font-weight:700;display:grid;place-items:center;line-height:1">{{ mediaQueueCount }}</span>
+          </sc-if>
+        </button>
+      </div>
+
+      <sc-if value="{{ mediaQueueOpen }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ mediaCloseQueue }}" style="position:fixed;inset:0;z-index:31">
+          <div onClick="{{ stop }}" style="position:fixed;right:14px;bottom:80px;width:400px;max-height:min(560px,calc(100vh - 140px));overflow:auto;background:#1b2121;border:1px solid #2a3130;border-radius:16px;box-shadow:0 14px 40px #000b;padding:12px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+              <i class="msym" style="font-size:19px;color:#82d5cc">queue_music</i>
+              <b style="font-size:14px;font-weight:500;flex:1">Play queue · {{ mediaQueueCount }}</b>
+              <button onClick="{{ mediaClearQueueClick }}" title="Clear queue" disabled="{{ !mediaHasQueue }}" style="width:30px;height:30px;border-radius:15px;background:transparent;color:{{ mediaHasQueue ? '#ffb4ab' : '#4a5251' }}"><i class="msym" style="font-size:18px">delete</i></button>
+              <button onClick="{{ mediaCloseQueue }}" title="Close" style="width:30px;height:30px;border-radius:15px;background:transparent;color:#bec9c7"><i class="msym" style="font-size:18px">close</i></button>
+            </div>
+
+            <div style="background:#171d1d;border-radius:12px;padding:10px;margin-bottom:10px;display:grid;gap:8px">
+              <div style="font-size:11px;color:#889391;letter-spacing:.3px">Play a link without downloading it</div>
+              <input value="{{ mediaPasteUrl }}" onChange="{{ mediaSetPasteUrl }}" placeholder="Paste a video or audio URL" style="height:34px;background:#0f1414;border:1px solid #2a3130;border-radius:8px;color:#dee4e3;padding:0 10px;font-size:12.5px" />
+              <div style="display:flex;gap:8px">
+                <button onClick="{{ mediaQueueVideo }}" style="flex:1;height:32px;border-radius:16px;background:#252b2b;color:#bec9c7;font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:6px"><i class="msym" style="font-size:16px">movie</i>Queue video</button>
+                <button onClick="{{ mediaQueueAudio }}" style="flex:1;height:32px;border-radius:16px;background:#252b2b;color:#bec9c7;font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:6px"><i class="msym" style="font-size:16px">music_note</i>Queue audio</button>
+              </div>
+            </div>
+
+            <sc-if value="{{ !mediaHasQueue }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:20px 10px;text-align:center;color:#889391;font-size:12.5px">Nothing queued yet. Add a link above, or use "Play file" on a Library row.</div>
+            </sc-if>
+
+            <sc-for list="{{ mediaQueueRows }}" as="row" hint-placeholder-count="0">
+              <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:10px;background:{{ row.active ? '#213231' : 'transparent' }}">
+                <i class="msym" style="font-size:18px;color:{{ row.iconColor }};flex:0 0 auto">{{ row.glyph }}</i>
+                <button onClick="{{ row.play }}" style="flex:1;min-width:0;background:transparent;color:#dee4e3;text-align:left;padding:0">
+                  <div style="font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ row.title }}</div>
+                  <div style="font-size:10.5px;color:{{ row.statusColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ row.statusLabel }}</div>
+                </button>
+                <button onClick="{{ row.up }}" title="Move up" disabled="{{ row.isFirst }}" style="width:26px;height:26px;border-radius:13px;background:transparent;color:{{ row.isFirst ? '#4a5251' : '#bec9c7' }}"><i class="msym" style="font-size:16px">arrow_upward</i></button>
+                <button onClick="{{ row.down }}" title="Move down" disabled="{{ row.isLast }}" style="width:26px;height:26px;border-radius:13px;background:transparent;color:{{ row.isLast ? '#4a5251' : '#bec9c7' }}"><i class="msym" style="font-size:16px">arrow_downward</i></button>
+                <button onClick="{{ row.remove }}" title="Remove from queue" style="width:26px;height:26px;border-radius:13px;background:transparent;color:#ffb4ab"><i class="msym" style="font-size:16px">close</i></button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
       <div style="flex:0 0 auto;height:24px;background:#0b0f10;border-top:1px solid #1c2223;display:flex;align-items:center;gap:0;font-size:11px;color:#889391;font-family:'Roboto Mono',Consolas,monospace">
         <sc-for list="{{ statusSegments }}" as="seg" hint-placeholder-count="6">
           <div onContextMenu="{{ seg.menu }}" title="{{ seg.title }}" style="padding:0 11px;height:100%;display:flex;align-items:center;gap:6px;border-right:1px solid #1c2223;color:{{ seg.color }};white-space:nowrap">
@@ -1426,6 +1503,17 @@
               <span style="color:#bec9c7;font-size:12px">{{ cookieFileStatus }}</span>
               <button onClick="{{ pickCookiesFile }}" style="padding:9px 16px;border-radius:20px;font-weight:700;background:transparent;border:1px solid #889391;color:#82d5cc;flex:0 0 auto">Browse for a cookie file…</button>
             </div>
+          </div>
+
+          <div style="background:#161c1c;border-radius:12px;padding:14px 16px;margin-top:12px">
+            <p style="margin:0 0 4px;color:#82d5cc;font-size:11px;text-transform:uppercase;letter-spacing:1.3px;font-weight:800">Paste a cookie value</p>
+            <p style="color:#bec9c7;margin:0 0 11px;font-size:12.5px">Copied a <code style="color:#82d5cc">Cookie:</code> header, a plain value, a "Copy as cURL" command, a whole cookies.txt, or a devtools JSON/table export? Paste it below — it is parsed on this machine, written to a private Netscape file, and wired to <code style="color:#82d5cc">--cookies</code>. The value itself is never logged, exported, or saved anywhere else.</p>
+            <textarea value="{{ cookiePasteText }}" onChange="{{ setCookiePasteText }}" placeholder="Cookie: name=value; name2=value2 — or a Copy as cURL command, or a whole cookies.txt" style="width:100%;min-height:60px;background:#252b2b;border:1px solid #3f4948;border-radius:9px;color:#dee4e3;padding:8px 10px;font-size:12px;font-family:'Roboto Mono',Consolas,monospace;resize:vertical;box-sizing:border-box"></textarea>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+              <input value="{{ cookiePasteDomain }}" onChange="{{ setCookiePasteDomain }}" placeholder="Domain, e.g. .youtube.com (optional if the paste has a URL)" style="flex:1;height:36px;background:#252b2b;border:1px solid #3f4948;border-radius:9px;color:#dee4e3;padding:0 10px;font-size:12.5px;box-sizing:border-box" />
+              <button onClick="{{ parseCookiePaste }}" disabled="{{ cookiePasteBusy }}" style="padding:9px 16px;border-radius:20px;font-weight:700;background:#82d5cc;color:#003733;flex:0 0 auto">{{ cookiePasteButtonLabel }}</button>
+            </div>
+            <p style="color:{{ cookiePasteError ? '#ffb4ab' : '#889391' }};margin:8px 0 0;font-size:11.5px">{{ cookiePasteStatusText }}</p>
           </div>
 
           <button onClick="{{ closeDialog }}" style="width:100%;margin-top:16px;padding:11px;border-radius:22px;font-weight:700;background:transparent;border:1px solid #3f4948;color:#dee4e3">Close</button>
@@ -1755,7 +1843,7 @@
     </div>
   </sc-if>
 
-  <sc-if value="{{ hasWizard }}" hint-placeholder-val="{{ false }}">  <sc-if value="{{ hasWizard }}" hint-placeholder-val="{{ false }}">
+  <sc-if value="{{ hasWizard }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ closeWizard }}" style="position:fixed;inset:0;background:#0009;backdrop-filter:blur(3px);display:grid;place-items:center;overflow:auto;padding:24px 0;z-index:45">
       <div onClick="{{ stop }}" style="width:min(720px,calc(100vw - 40px));background:#1b2121;border:1px solid #3f4948;border-radius:9px;box-shadow:0 20px 70px #000b;overflow:hidden">
         <div style="height:34px;background:#0a0f0f;border-bottom:1px solid #2a3130;display:flex;align-items:center;gap:9px;padding:0 12px">
@@ -2319,6 +2407,236 @@ class Component extends DCLogic {
     });
   }
 
+  // -------------------------------------------------------------------
+  // In-app media player. Resolution (turning a library path or a pasted
+  // link into one playable ytdlp-media:// URL) always happens in the main
+  // process (app/src/main/media.ts, reached through window.ytdlpStudioMedia
+  // — a separately-registered bridge, exactly like window.ytdlpStudioExtension
+  // above). Everything here is queue bookkeeping and the two real media
+  // elements' imperative control (see this file's own module comment for
+  // why lookup-by-id rather than a ref).
+  // -------------------------------------------------------------------
+
+  _mediaEl(kind) {
+    return document.getElementById(kind === 'audio' ? 'ytdlp-audio-el' : 'ytdlp-video-el');
+  }
+  _mediaAllEls() {
+    return [document.getElementById('ytdlp-audio-el'), document.getElementById('ytdlp-video-el')].filter(Boolean);
+  }
+  _mediaFmtTime(sec) {
+    if (!Number.isFinite(sec) || sec < 0) return '--:--';
+    sec = Math.floor(sec);
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    const mm = h > 0 ? String(m).padStart(2, '0') : String(m);
+    const ss = String(s).padStart(2, '0');
+    return h > 0 ? (h + ':' + mm + ':' + ss) : (mm + ':' + ss);
+  }
+
+  _mediaAddLocal(path, title) {
+    if (!window.ytdlpStudioMedia) { this.toast('Not connected', 'window.ytdlpStudioMedia is missing — running outside the packaged app?'); return; }
+    if (!path) { this.toast('No output path', 'This download has no recorded output path to play.'); return; }
+    const item = {
+      id: Math.random(), source: 'local', path, url: null, requestedKind: 'video',
+      title: title || path, resolvedKind: null, fellBackToAudio: false,
+      status: 'queued', statusMessage: '', streamUrl: null, retried: false,
+    };
+    const hadCurrent = !!this.state.mediaCurrentId;
+    this.setState(st => ({ mediaQueue: [...st.mediaQueue, item] }));
+    this.toast('Added to queue', title || path);
+    if (!hadCurrent) this._mediaPlayItem(item.id);
+  }
+
+  _mediaAddRemote(url, kind) {
+    if (!window.ytdlpStudioMedia) { this.toast('Not connected', 'window.ytdlpStudioMedia is missing — running outside the packaged app?'); return; }
+    const trimmed = (url || '').trim();
+    if (!/^https?:\/\//i.test(trimmed)) { this.toast('Invalid link', 'Only http:// and https:// links can be queued.'); return; }
+    const item = {
+      id: Math.random(), source: 'remote', path: null, url: trimmed, requestedKind: kind,
+      title: trimmed, resolvedKind: null, fellBackToAudio: false,
+      status: 'queued', statusMessage: '', streamUrl: null, retried: false,
+    };
+    const hadCurrent = !!this.state.mediaCurrentId;
+    this.setState(st => ({ mediaQueue: [...st.mediaQueue, item], mediaPasteUrl: '' }));
+    this.toast('Added to queue', trimmed);
+    if (!hadCurrent) this._mediaPlayItem(item.id);
+  }
+
+  _mediaFindItem(id) {
+    return (this.state.mediaQueue || []).find(q => q.id === id) || null;
+  }
+  _mediaPatchItem(id, patch) {
+    this.setState(st => ({ mediaQueue: st.mediaQueue.map(q => q.id === id ? { ...q, ...patch } : q) }));
+  }
+  _mediaStopPlayback() {
+    this._mediaAllEls().forEach(el => {
+      try { el.pause(); el.removeAttribute('src'); el.load(); } catch (err) { /* element already gone */ }
+    });
+  }
+
+  _mediaPlayItem(id) {
+    const item = this._mediaFindItem(id);
+    if (!item) return;
+    this._mediaStopPlayback();
+    this._mediaPatchItem(id, { status: 'resolving', statusMessage: '', retried: false });
+    this.setState({
+      mediaCurrentId: id, mediaStatus: 'resolving', mediaStatusMessage: '',
+      mediaPositionSec: 0, mediaDurationSec: 0, mediaPlaying: false,
+    });
+    this._mediaResolveAndStart(id);
+  }
+
+  _mediaResolveAndStart(id) {
+    const bridge = window.ytdlpStudioMedia;
+    const item = this._mediaFindItem(id);
+    if (!bridge || !item) return;
+    const requestId = 'media-' + Math.random().toString(36).slice(2);
+    const req = item.source === 'local'
+      ? bridge.resolveLocal(item.path, requestId)
+      : bridge.resolveRemote(item.url, item.requestedKind, requestId);
+    req.then(res => {
+      // Stale guard: the user may already have moved on to a different item
+      // (next/previous/removed) while this was resolving.
+      if (this.state.mediaCurrentId !== id) return;
+      if (!res || !res.ok) {
+        const errKind = res && res.error ? res.error.kind : 'unknown';
+        const message = (res && res.error && res.error.message) || 'That could not be played.';
+        const status = errKind === 'file-missing' ? 'file-missing' : 'unavailable';
+        this._mediaPatchItem(id, { status, statusMessage: message });
+        this.setState({ mediaStatus: status, mediaStatusMessage: message });
+        this.toast(status === 'file-missing' ? 'File no longer on disk' : 'Cannot play this', message);
+        return;
+      }
+      this._mediaPatchItem(id, {
+        status: 'ready', statusMessage: '', resolvedKind: res.mediaKind,
+        fellBackToAudio: !!res.videoFallenBackToAudio, streamUrl: res.streamUrl,
+      });
+      if (res.videoFallenBackToAudio) {
+        this.toast('Audio only', 'No combined video+audio stream is available for in-app playback — playing the audio track. Download it for the full video.');
+      }
+      this.setState({ mediaStatus: 'buffering', mediaStatusMessage: '' });
+      const el = this._mediaEl(res.mediaKind);
+      if (!el) return;
+      el.src = res.streamUrl;
+      el.volume = this.state.mediaMuted ? 0 : this.state.mediaVolume;
+      el.load();
+      const p = el.play();
+      if (p && p.catch) p.catch(() => { /* autoplay refusal or a real error, which onError below will also report */ });
+    }).catch(err => {
+      if (this.state.mediaCurrentId !== id) return;
+      const message = String(err && err.message ? err.message : err);
+      this._mediaPatchItem(id, { status: 'unavailable', statusMessage: message });
+      this.setState({ mediaStatus: 'unavailable', mediaStatusMessage: message });
+    });
+  }
+
+  _mediaOnError() {
+    const id = this.state.mediaCurrentId;
+    const item = this._mediaFindItem(id);
+    if (!item) return;
+    // Only a remote link can plausibly be an expired signed URL (e.g. a
+    // googlevideo-style `expire=` timestamp). A local file failing to play
+    // is a real, unrecoverable playback error — retrying would just fail
+    // again the same way.
+    if (item.source === 'remote' && !item.retried) {
+      this._mediaPatchItem(id, { status: 'expired-retrying', retried: true });
+      this.setState({ mediaStatus: 'expired-retrying', mediaStatusMessage: 'The link expired — resolving a fresh one…' });
+      this._mediaResolveAndStart(id);
+      return;
+    }
+    const message = item.source === 'local'
+      ? 'This file could not be played — it may be corrupted or in an unsupported format.'
+      : 'This link stopped working, even after resolving it again.';
+    this._mediaPatchItem(id, { status: 'unavailable', statusMessage: message });
+    this.setState({ mediaStatus: 'unavailable', mediaStatusMessage: message });
+  }
+
+  _mediaOnLoadedMetadata(e) {
+    const d = e.target.duration;
+    this.setState({ mediaDurationSec: Number.isFinite(d) ? d : this.state.mediaDurationSec });
+  }
+  _mediaOnTimeUpdate(e) {
+    this.setState({ mediaPositionSec: e.target.currentTime || 0 });
+  }
+  _mediaOnPlaying() { this.setState({ mediaStatus: 'playing', mediaPlaying: true }); }
+  _mediaOnPause() {
+    this.setState(st => ({ mediaStatus: st.mediaStatus === 'playing' ? 'paused' : st.mediaStatus, mediaPlaying: false }));
+  }
+  _mediaOnWaiting() { this.setState({ mediaStatus: 'buffering' }); }
+  _mediaOnEnded() { this._mediaNext(); }
+
+  _mediaToggle() {
+    const st = this.state;
+    const item = this._mediaFindItem(st.mediaCurrentId);
+    if (!item) {
+      if ((st.mediaQueue || []).length) this._mediaPlayItem(st.mediaQueue[0].id);
+      return;
+    }
+    const el = item.resolvedKind ? this._mediaEl(item.resolvedKind) : null;
+    if (!el || !item.streamUrl) { this._mediaPlayItem(item.id); return; }
+    if (st.mediaPlaying) { el.pause(); } else { const p = el.play(); if (p && p.catch) p.catch(() => {}); }
+  }
+  _mediaQueueIndex() {
+    return (this.state.mediaQueue || []).findIndex(q => q.id === this.state.mediaCurrentId);
+  }
+  _mediaNext() {
+    const q = this.state.mediaQueue || [];
+    const idx = this._mediaQueueIndex();
+    if (idx < 0 || idx >= q.length - 1) {
+      this._mediaStopPlayback();
+      this.setState({ mediaStatus: 'idle', mediaStatusMessage: '', mediaPlaying: false });
+      return;
+    }
+    this._mediaPlayItem(q[idx + 1].id);
+  }
+  _mediaPrev() {
+    const q = this.state.mediaQueue || [];
+    const idx = this._mediaQueueIndex();
+    if (idx <= 0) return;
+    this._mediaPlayItem(q[idx - 1].id);
+  }
+  _mediaSeek(e) {
+    const sec = Number(e.target.value);
+    const item = this._mediaFindItem(this.state.mediaCurrentId);
+    const el = item && item.resolvedKind ? this._mediaEl(item.resolvedKind) : null;
+    if (el && Number.isFinite(sec)) { try { el.currentTime = sec; } catch (err) { /* not seekable yet */ } }
+    this.setState({ mediaPositionSec: sec });
+  }
+  _mediaSetVolume(e) {
+    const pct = Number(e.target.value);
+    const vol = Math.max(0, Math.min(1, (Number.isFinite(pct) ? pct : 100) / 100));
+    this._mediaAllEls().forEach(el => { el.volume = vol; });
+    this.setState({ mediaVolume: vol, mediaMuted: false });
+  }
+  _mediaToggleMute() {
+    const muted = !this.state.mediaMuted;
+    this._mediaAllEls().forEach(el => { el.volume = muted ? 0 : this.state.mediaVolume; });
+    this.setState({ mediaMuted: muted });
+  }
+  _mediaRemove(id) {
+    const wasCurrent = this.state.mediaCurrentId === id;
+    if (window.ytdlpStudioMedia) window.ytdlpStudioMedia.cancel('media-remove-' + id);
+    this.setState(st => ({ mediaQueue: st.mediaQueue.filter(q => q.id !== id) }));
+    if (wasCurrent) {
+      this._mediaStopPlayback();
+      this.setState({ mediaCurrentId: null, mediaStatus: 'idle', mediaStatusMessage: '', mediaPlaying: false, mediaPositionSec: 0, mediaDurationSec: 0 });
+    }
+  }
+  _mediaMove(id, dir) {
+    this.setState(st => {
+      const q = st.mediaQueue.slice();
+      const idx = q.findIndex(x => x.id === id);
+      const target = idx + dir;
+      if (idx < 0 || target < 0 || target >= q.length) return null;
+      const tmp = q[idx]; q[idx] = q[target]; q[target] = tmp;
+      return { mediaQueue: q };
+    });
+  }
+  _mediaClearQueue() {
+    this._mediaStopPlayback();
+    this.setState({ mediaQueue: [], mediaCurrentId: null, mediaStatus: 'idle', mediaStatusMessage: '', mediaPlaying: false, mediaPositionSec: 0, mediaDurationSec: 0 });
+    this.toast('Queue cleared', 'Playback stopped.');
+  }
+
     _hydrateBinaryVersions() {
     const bridge = window.ytdlpStudio;
     if (!bridge || !bridge.binaries) return;
@@ -2775,6 +3093,38 @@ class Component extends DCLogic {
           });
         }).catch(err => comp.toast('Picker failed', String(err && err.message ? err.message : err)));
       },
+      setCookiePasteText(comp, e) {
+        comp.setState({ cookiePasteText: e.target.value, cookiePasteError: null });
+      },
+      setCookiePasteDomain(comp, e) {
+        comp.setState({ cookiePasteDomain: e.target.value, cookiePasteError: null });
+      },
+      parseCookiePaste(comp) {
+        if (comp.state.cookiePasteBusy) return; // one paste in flight at a time -- no double-submit
+        const bridge = window.ytdlpStudio;
+        if (!bridge) { comp.toast('Not connected', 'window.ytdlpStudio is missing'); return; }
+        if (!bridge.cookies || !bridge.cookies.parsePaste) { comp.toast('Not connected', 'window.ytdlpStudio.cookies.parsePaste is missing'); return; }
+        const text = comp.state.cookiePasteText || '';
+        if (!text.trim()) { comp.setState({ cookiePasteError: 'Paste something first.' }); return; }
+        const domain = comp.state.cookiePasteDomain || '';
+        comp.setState({ cookiePasteBusy: true, cookiePasteError: null });
+        bridge.cookies.parsePaste({ text: text, domain: domain.trim() ? domain : null }).then(res => {
+          if (!res || !res.ok) {
+            comp.setState({ cookiePasteBusy: false, cookiePasteError: (res && res.error) || 'That could not be parsed.' });
+            return;
+          }
+          comp.setV('--cookies', res.path);
+          comp.setState({
+            cookiePasteBusy: false,
+            cookiePasteError: null,
+            cookiePasteLastResult: { cookieCount: res.cookieCount, domain: res.domain, format: res.format, path: res.path },
+            cookiePasteText: '',
+          });
+          comp.toast('Cookie jar wired', res.cookieCount + ' cookie(s) for ' + res.domain);
+        }).catch(err => {
+          comp.setState({ cookiePasteBusy: false, cookiePasteError: String(err && err.message ? err.message : err) });
+        });
+      },
       validateConfig(comp, confLines) {
         const bad = confLines.filter(l => l.on && l.needsValue && !l.value);
         comp.toast(bad.length ? 'Validation failed' : 'Configuration valid',
@@ -2999,9 +3349,14 @@ class Component extends DCLogic {
     formatSearch: '', outTemplate: '%(uploader)s/%(playlist|)s/%(title)s [%(id)s].%(ext)s',
     fieldSearch: '', librarySearch: '', siteSearch: '', configSearch: '', historySearch: '',
     jobHistory: [],
+    mediaQueue: [], mediaCurrentId: null, mediaPlaying: false,
+    mediaStatus: 'idle', mediaStatusMessage: '',
+    mediaPositionSec: 0, mediaDurationSec: 0,
+    mediaVolume: 1, mediaMuted: false,
+    mediaQueueOpen: false, mediaPasteUrl: '',
     historySurf: 'all', historyKind: 'All', historyPinnedOnly: false, historySel: {}, historyOpen: 'h2',
     historyPins: {}, historyLive: true, historyKeep: '90 days', historyCollapsed: {},
-    settingsSearch: '', ppSearch: '', configFile: 'user', cookieBrowser: 'firefox', cookieFilePath: '',
+    settingsSearch: '', ppSearch: '', configFile: 'user', cookieBrowser: 'firefox', cookieFilePath: '', cookiePasteText: '', cookiePasteDomain: '', cookiePasteBusy: false, cookiePasteError: null, cookiePasteLastResult: null,
     toasts: [], loginCookieCount: 0, narratorVoicesEn: [], narratorVoicesYue: [],
     jobs: [],
     log: [],
@@ -5132,6 +5487,21 @@ class Component extends DCLogic {
       useCookieBrowser: () => this._wire.useCookieBrowser(this),
       pickCookiesFile: () => this._wire.pickCookiesFile(this),
       cookieFileStatus: s.cookieFilePath ? (s.cookieFilePath + ' · ' + s.loginCookieCount + ' cookie(s)') : 'No file picked yet',
+      cookiePasteText: s.cookiePasteText || '',
+      setCookiePasteText: e => this._wire.setCookiePasteText(this, e),
+      cookiePasteDomain: s.cookiePasteDomain || '',
+      setCookiePasteDomain: e => this._wire.setCookiePasteDomain(this, e),
+      cookiePasteBusy: !!s.cookiePasteBusy,
+      cookiePasteError: s.cookiePasteError || null,
+      parseCookiePaste: () => this._wire.parseCookiePaste(this),
+      cookiePasteButtonLabel: s.cookiePasteBusy ? 'Parsing…' : 'Parse & wire',
+      cookiePasteStatusText: s.cookiePasteBusy
+        ? 'Parsing…'
+        : s.cookiePasteError
+          ? ('Failed: ' + s.cookiePasteError)
+          : (s.cookiePasteLastResult && s.values['--cookies'] === s.cookiePasteLastResult.path)
+            ? ('In use — ' + s.cookiePasteLastResult.cookieCount + ' cookie(s) for ' + s.cookiePasteLastResult.domain + '.')
+            : 'Nothing pasted yet.',
 
       isFormats: expert && s.view === 'formats', isOutput: expert && s.view === 'output',
       isLibrary: expert && s.view === 'library', isSites: expert && s.view === 'sites',
@@ -5271,27 +5641,133 @@ class Component extends DCLogic {
         h.sizeLabel || '—',
         (h.outputPath || '').split('.').pop() || '—',
         h.extractor ? (h.extractor + (h.videoId ? ' ' + h.videoId : '')) : '—',
-      ])).filter(r => this.match(r.join(' '), s.librarySearch)).map(r => ({
+        h.outputPath || '',
+      ])).filter(r => this.match(r.join(' '), s.librarySearch)).map(r => {
+        const realPath = r[6];
+        const hasPath = !!realPath;
+        const openFile = () => {
+          const bridge = window.ytdlpStudio;
+          if (!hasPath) { this.toast('No file to open', 'This download has no recorded output path yet.'); return; }
+          if (!bridge || !bridge.fileOps) { this.toast('Not connected', 'window.ytdlpStudio is missing'); return; }
+          bridge.fileOps.openPath({ path: realPath }).then(res => {
+            if (!res || !res.ok) this.toast('Could not open', (res && res.error) || 'Unknown error');
+          }).catch(err => this.toast('Could not open', String(err && err.message ? err.message : err)));
+        };
+        const revealFile = () => {
+          const bridge = window.ytdlpStudio;
+          if (!hasPath) { this.toast('No file to reveal', 'This download has no recorded output path yet.'); return; }
+          if (!bridge || !bridge.fileOps) { this.toast('Not connected', 'window.ytdlpStudio is missing'); return; }
+          bridge.fileOps.revealPath({ path: realPath }).then(res => {
+            if (!res || !res.ok) this.toast('Could not open', (res && res.error) || 'Unknown error');
+          }).catch(err => this.toast('Could not open', String(err && err.message ? err.message : err)));
+        };
+        return {
         title: r[0], path: r[1], uploader: r[2], size: r[3], ext: r[4], archive: r[5],
+        hasPath, open: openFile, reveal: revealFile, actionColor: hasPath ? '#82d5cc' : '#4a5251',
+        openTitle: hasPath ? 'Open file' : 'No output path recorded for this download yet',
+        revealTitle: hasPath ? 'Show in Explorer' : 'No output path recorded for this download yet',
         menu: e => this.openMenu(e, r[0], [
-          { glyph: '▶', label: 'Play file', run: () => this.toast('Player', r[0]) },
-          { glyph: '⌂', label: 'Show in Explorer', run: () => {
-            const bridge = window.ytdlpStudio;
-            if (!bridge || !bridge.fileOps) { this.toast('Not connected', 'window.ytdlpStudio is missing'); return; }
-            bridge.fileOps.revealPath({ path: r[1] }).then(res => {
-              if (!res || !res.ok) this.toast('Could not open', (res && res.error) || 'Unknown error');
-            }).catch(err => this.toast('Could not open', String(err && err.message ? err.message : err)));
-          } },
+          { glyph: '▶', label: 'Play file', run: () => this._mediaAddLocal(r[1], r[0]) },
+          { glyph: '⌂', label: 'Show in Explorer', run: revealFile },
           { glyph: '{}', label: 'Open .info.json', run: () => this.toast('info.json', r[0]) },
           { glyph: '↻', label: 'Re-download with current options', run: () => this.toast('Queued', r[0]) },
           { glyph: '⚙', label: 'Re-run post-processing only', run: () => this.toast('Post-processing', r[0]) },
           { glyph: '⊖', label: 'Remove archive id', color: '#ffb4ab', run: () => this.toast('Not implemented', 'Removing a single id from the download archive needs a real per-row extractor id, which this list does not carry yet') },
           { glyph: '×', label: 'Delete file from disk', color: '#ffb4ab', run: () => this.toast('Not implemented', 'Deleting a real file needs a dedicated main-process delete capability, which is not wired up yet — nothing on disk is touched by this menu item.') },
         ]),
-      })),
+        };
+      }),
       libraryCount: (() => {
         const doneCount = (s.jobHistory || []).filter(h => h.state === 'done').length;
         return doneCount + (doneCount === 1 ? ' completed download' : ' completed downloads');
+      })(),
+
+      ...(() => {
+        const queue = s.mediaQueue || [];
+        const item = queue.find(q => q.id === s.mediaCurrentId) || null;
+        const kind = item ? (item.resolvedKind || item.requestedKind) : 'video';
+        const idx = queue.findIndex(q => q.id === s.mediaCurrentId);
+        const fmt = sec => this._mediaFmtTime(sec);
+        const statusLabelMap = {
+          idle: 'Nothing queued', resolving: 'Resolving…', buffering: 'Buffering…',
+          playing: 'Playing', paused: 'Paused',
+          unavailable: s.mediaStatusMessage || 'Unavailable',
+          'expired-retrying': 'Link expired — resolving a fresh one…',
+          'file-missing': 'File no longer on disk',
+        };
+        return {
+          mediaHasQueue: queue.length > 0,
+          mediaQueueCount: queue.length,
+          mediaCurrentTitle: item ? item.title : 'Nothing playing',
+          mediaStatusLabel: statusLabelMap[s.mediaStatus] || s.mediaStatus,
+          mediaStatusMessage: s.mediaStatusMessage,
+          mediaStatusColor: (s.mediaStatus === 'unavailable' || s.mediaStatus === 'file-missing') ? '#ffb4ab'
+            : (s.mediaStatus === 'resolving' || s.mediaStatus === 'buffering' || s.mediaStatus === 'expired-retrying') ? '#febc2e'
+            : '#889391',
+          mediaKindGlyph: kind === 'audio' ? 'music_note' : 'movie',
+          mediaKindColor: item && item.fellBackToAudio ? '#febc2e' : '#82d5cc',
+          mediaShowVideoFrame: kind === 'video' && !!item && item.status === 'ready' && !!item.streamUrl,
+          mediaPlaying: s.mediaPlaying,
+          mediaToggleGlyph: s.mediaPlaying ? 'pause' : 'play_arrow',
+          mediaHasPrev: idx > 0,
+          mediaHasNext: idx >= 0 && idx < queue.length - 1,
+          mediaPositionSec: s.mediaPositionSec,
+          mediaPositionLabel: fmt(s.mediaPositionSec),
+          mediaDurationLabel: s.mediaDurationSec > 0 ? fmt(s.mediaDurationSec) : '--:--',
+          mediaSeekMax: s.mediaDurationSec > 0 ? Math.floor(s.mediaDurationSec) : 0,
+          mediaSeekable: s.mediaDurationSec > 0 && (s.mediaStatus === 'playing' || s.mediaStatus === 'paused' || s.mediaStatus === 'buffering'),
+          mediaVolumePct: Math.round((s.mediaMuted ? 0 : s.mediaVolume) * 100),
+          mediaVolumeGlyph: (s.mediaMuted || s.mediaVolume === 0) ? 'volume_off' : (s.mediaVolume < 0.5 ? 'volume_down' : 'volume_up'),
+          mediaMuted: s.mediaMuted,
+          mediaQueueOpen: s.mediaQueueOpen,
+          mediaToggleQueueOpen: () => this.setState(st => ({ mediaQueueOpen: !st.mediaQueueOpen })),
+          mediaCloseQueue: () => this.setState({ mediaQueueOpen: false }),
+          mediaClearQueueClick: () => this._mediaClearQueue(),
+          mediaPrev: () => this._mediaPrev(),
+          mediaNext: () => this._mediaNext(),
+          mediaToggle: () => this._mediaToggle(),
+          mediaSeek: e => this._mediaSeek(e),
+          mediaSetVolume: e => this._mediaSetVolume(e),
+          mediaToggleMute: () => this._mediaToggleMute(),
+          mediaPasteUrl: s.mediaPasteUrl,
+          mediaSetPasteUrl: e => this.setState({ mediaPasteUrl: e.target.value }),
+          mediaQueueVideo: () => this._mediaAddRemote(s.mediaPasteUrl, 'video'),
+          mediaQueueAudio: () => this._mediaAddRemote(s.mediaPasteUrl, 'audio'),
+          mediaOnLoadedMetadata: e => this._mediaOnLoadedMetadata(e),
+          mediaOnTimeUpdate: e => this._mediaOnTimeUpdate(e),
+          mediaOnPlaying: () => this._mediaOnPlaying(),
+          mediaOnPause: () => this._mediaOnPause(),
+          mediaOnWaiting: () => this._mediaOnWaiting(),
+          mediaOnEnded: () => this._mediaOnEnded(),
+          mediaOnError: () => this._mediaOnError(),
+          mediaQueueRows: queue.map((q, i, arr) => {
+            const rowActive = q.id === s.mediaCurrentId;
+            const rowKind = q.resolvedKind || q.requestedKind;
+            const rowGlyph = q.status === 'resolving' ? 'autorenew'
+              : q.status === 'expired-retrying' ? 'sync_problem'
+              : q.status === 'unavailable' ? 'error'
+              : q.status === 'file-missing' ? 'warning'
+              : rowKind === 'audio' ? 'music_note' : 'movie';
+            const rowColor = (q.status === 'unavailable' || q.status === 'file-missing') ? '#ffb4ab'
+              : (q.status === 'resolving' || q.status === 'expired-retrying') ? '#febc2e'
+              : rowActive ? '#82d5cc' : '#889391';
+            const rowStatusLabel = q.status === 'queued' ? (q.source === 'local' ? 'From your library' : 'Pasted link')
+              : q.status === 'resolving' ? 'Resolving…'
+              : q.status === 'expired-retrying' ? 'Link expired — retrying…'
+              : q.status === 'unavailable' ? (q.statusMessage || 'Unavailable')
+              : q.status === 'file-missing' ? 'File no longer on disk'
+              : (q.fellBackToAudio ? 'Audio only (no video stream) · ready' : 'Ready');
+            return {
+              id: q.id, active: rowActive, glyph: rowGlyph, iconColor: rowColor,
+              statusLabel: rowStatusLabel, statusColor: rowColor, title: q.title,
+              isFirst: i === 0, isLast: i === arr.length - 1,
+              play: () => this._mediaPlayItem(q.id),
+              up: () => this._mediaMove(q.id, -1),
+              down: () => this._mediaMove(q.id, 1),
+              remove: () => this._mediaRemove(q.id),
+            };
+          }),
+        };
       })(),
 
       siteSearch: s.siteSearch, setSiteSearch: e => this.setState({ siteSearch: e.target.value }),

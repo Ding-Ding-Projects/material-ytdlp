@@ -3,9 +3,9 @@ import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { readFile, stat } from 'node:fs/promises'
 import { homedir, platform } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join, resolve as resolvePath, sep } from 'node:path'
 import { promisify } from 'node:util'
-import { atomicWriteFile } from './store'
+import { atomicWriteFile, getStore } from './store'
 import type {
   CompactArchiveResult,
   ConfigFileId,
@@ -14,6 +14,8 @@ import type {
   ExportContentResult,
   OpenInEditorRequest,
   OpenInEditorResult,
+  OpenPathRequest,
+  OpenPathResult,
   ReadArchiveResult,
   ReadConfigFileResult,
   RevealPathRequest,
@@ -86,6 +88,53 @@ export async function revealPath(req: RevealPathRequest): Promise<RevealPathResu
       return { ok: true, error: null }
     }
     shell.showItemInFolder(req.path)
+    return { ok: true, error: null }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Open with the OS default application ("Play file" / "Open file" — the
+// Library row's own control, distinct from openInEditor below which prefers
+// VS Code first). shell.openPath RETURNS an error string on failure rather
+// than throwing, so its result is always checked and reported honestly
+// instead of assumed to have worked.
+//
+// Only ever opens a path this app itself already knows about: the current
+// download destination (Store.getLastPaths().downloadFolder), or the
+// directory of a path recorded in a real JobHistoryEntry (a file this app
+// actually downloaded, even if the download folder setting has since
+// changed). Anything else is refused — the renderer should never be able to
+// hand this bridge an arbitrary filesystem path and have it opened.
+// ---------------------------------------------------------------------------
+
+async function isWithinKnownRoots(targetPath: string): Promise<boolean> {
+  const store = getStore()
+  const [lastPaths, jobHistory] = await Promise.all([store.getLastPaths(), store.getJobHistory()])
+  const roots = new Set<string>()
+  if (lastPaths.downloadFolder) roots.add(resolvePath(lastPaths.downloadFolder))
+  for (const entry of jobHistory) {
+    if (entry.outputPath) roots.add(resolvePath(dirname(entry.outputPath)))
+  }
+  const target = resolvePath(targetPath)
+  for (const root of roots) {
+    if (target === root || target.startsWith(root + sep)) return true
+  }
+  return false
+}
+
+export async function openPath(req: OpenPathRequest): Promise<OpenPathResult> {
+  if (!req.path) return { ok: false, error: 'No path was given.' }
+  if (!(await isWithinKnownRoots(req.path))) {
+    return { ok: false, error: `"${req.path}" is outside this app's known download folders and was not opened.` }
+  }
+  if (!existsSync(req.path)) {
+    return { ok: false, error: `Nothing exists at "${req.path}" anymore.` }
+  }
+  try {
+    const err = await shell.openPath(req.path)
+    if (err) return { ok: false, error: err }
     return { ok: true, error: null }
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) }

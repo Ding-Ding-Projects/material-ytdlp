@@ -4,6 +4,14 @@ import { registerIpcHandlers } from './ipc'
 import { handleSquirrelEvent } from './squirrel-startup'
 import { attachWebContentsLogging, initLogging } from './logging'
 import { attachProtocolBridge, initExtensionInstallBridge, initProtocolHandling } from './protocol'
+// Importing this module runs its module-level `protocol.registerSchemesAsPrivileged(...)`
+// call as a side effect. That MUST happen before the app's 'ready' event —
+// putting the import here, in this file's very first import block, means it
+// always runs before app.whenReady() below, regardless of which branch
+// (Squirrel lifecycle vs. ordinary launch) this process takes. The actual
+// request handler is registered separately, inside app.whenReady(), by the
+// explicit registerMediaProtocol() call further down.
+import { registerMediaProtocol } from './media'
 
 // Code signing is permanently prohibited for this project. This build is
 // intentionally unsigned; nothing here requests, discovers, or invokes a
@@ -119,6 +127,12 @@ function runApp(): void {
     // separately-registered preload rather than an edit to
     // app/src/preload/index.ts.
     await initExtensionInstallBridge()
+    // Registers window.ytdlpStudioMedia for the renderer (the in-app media
+    // player's queue-item resolution) and the ytdlp-media:// protocol
+    // handler that serves the actual bytes. See app/src/main/media.ts for
+    // why this — like the extension bridge above — is a separately
+    // registered preload rather than an edit to app/src/preload/index.ts.
+    await registerMediaProtocol()
     createWindow()
 
     app.on('activate', () => {

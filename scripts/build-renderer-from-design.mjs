@@ -56,16 +56,20 @@ import { wireProbes } from './wire-probes.mjs'
 import { wireExports } from './wire-exports.mjs'
 import { wireTruth } from './wire-truth.mjs'
 import { wireStubs } from './wire-stubs.mjs'
+import { wireCookiePaste } from './wire-cookie-paste.mjs'
 import { wireLanguage } from './wire-language.mjs'
 import { wireAppearance } from './wire-appearance.mjs'
 import { wirePaletteTabs } from './wire-palette-tabs.mjs'
 import { wireLocksAuth } from './wire-locks-auth.mjs'
 import { wireToolsModes } from './wire-tools-modes.mjs'
+import { wireDialogFix } from './wire-dialog-fix.mjs'
+import { wireOpenFile } from './wire-open-file.mjs'
 import { wireDownloadFolder } from './wire-download-folder.mjs'
 import { wireVersionFooter } from './wire-version-footer.mjs'
 import { wireWindowChrome } from './wire-window-chrome.mjs'
 import { wireExtensionInstall } from './wire-extension-install.mjs'
 import { wireDownloadHistory } from './wire-download-history.mjs'
+import { wireMediaPlayer } from './wire-media-player.mjs'
 import { wireLifecycleRepair } from './wire-lifecycle-repair.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -137,8 +141,18 @@ function main() {
   // 'unsafe-eval' Electron blocks that call and the component fails to
   // mount. Everything else stays locked to 'self': no remote origin is
   // ever permitted to supply script, style, font, or image content.
+  //
+  // `media-src 'self' ytdlp-media:` (app/src/main/media.ts, the in-app media
+  // player) is the one deliberate exception, and it is scoped as narrowly as
+  // the CSP mechanism allows: NOT `https:` or `*`, which would let a
+  // <video src="..."> reach any host on the internet. `ytdlp-media:` is a
+  // custom protocol handled entirely inside this app's own main process —
+  // every byte it serves is either a local file this app already downloaded
+  // (re-verified against job-history.json, never trusted from a raw path) or
+  // a stream yt-dlp itself resolved, proxied through this process. A
+  // <video>/<audio> element's `src` is never set to a raw http(s) URL.
   const CSP =
-    '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; script-src \'self\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\'; font-src \'self\'; img-src \'self\' data:; connect-src \'self\'" />'
+    '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; script-src \'self\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\'; font-src \'self\'; img-src \'self\' data:; connect-src \'self\'; media-src \'self\' ytdlp-media:" />'
   html = replaceExact(html, '<meta charset="utf-8">', '<meta charset="utf-8">\n' + CSP)
 
   // The packaged window otherwise falls back to Electron's app name
@@ -237,6 +251,7 @@ function main() {
 
   // Stubs pass: closes the gaps the design admitted to in its own copy.
   html = wireStubs(html, replaceExact)
+  html = wireCookiePaste(html, replaceExact)
 
   // The feature-contract lanes. Each closes a set of controls that rendered
   // convincingly and called nothing. They are ordered so that a lane whose
@@ -248,15 +263,45 @@ function main() {
   html = wireLanguage(html, replaceExact)
   html = wireAppearance(html, replaceExact)
   html = wireToolsModes(html, replaceExact)
+  // MUST run after wireToolsModes: it repairs a doubled, unclosed <sc-if>
+  // that lane emits, which silently nested every dialog below it inside an
+  // extra false conditional.
+  html = wireDialogFix(html, replaceExact)
   html = wireDownloadFolder(html, replaceExact)
   html = wireVersionFooter(html, replaceExact)
   html = wireWindowChrome(html, replaceExact)
   html = wireExtensionInstall(html, replaceExact)
   html = wireDownloadHistory(html, replaceExact)
+  html = wireOpenFile(html, replaceExact)
+  html = wireMediaPlayer(html, replaceExact)
   // MUST run last. It repairs collisions between earlier lanes -- the
   // duplicated componentDidUpdate and the assignment to the getter-only
   // _wire -- so every lane that could create one has to have run already.
   html = wireLifecycleRepair(html, replaceExact)
+
+  // Every replacement above asserts it matched exactly once, which catches a
+  // moved anchor. It does NOT catch a lane emitting malformed markup, and one
+  // did: a doubled, unclosed <sc-if value="{{ hasWizard }}"> with no closing tag
+  // between the two copies.
+  //
+  // Browsers do not auto-close an unrecognised custom element, so everything
+  // below that point silently nested inside an extra, currently-false
+  // conditional -- and every dialog in the app stopped appearing. Nothing
+  // failed: it generated, type-checked, built, packaged, and the click handlers
+  // ran correctly and set exactly the state they were supposed to. The markup
+  // simply swallowed the result.
+  //
+  // A balance check is crude and would not catch every malformed shape, but it
+  // catches THIS one, which is the shape that actually happened.
+  const opens = (html.match(/<sc-if\b/g) || []).length
+  const closes = (html.match(/<\/sc-if>/g) || []).length
+  if (opens !== closes) {
+    throw new Error(
+      `Generated markup has unbalanced <sc-if>: ${opens} opening, ${closes} closing. ` +
+        `An unclosed conditional nests everything after it inside itself, so whole ` +
+        `surfaces stop rendering with no error anywhere. Find the lane that emitted it.`,
+    )
+  }
 
   writeFileSync(OUT_HTML_PATH, html, 'utf8')
   console.log(`build-renderer-from-design: wrote ${OUT_HTML_PATH}`)

@@ -32,7 +32,27 @@ const PROGRESS_TEMPLATE =
   `%(progress.fragment_index)s|%(progress.fragment_count)s|%(info.id)s`
 
 function progressFlags(): string[] {
-  return ['--newline', '--progress-template', PROGRESS_TEMPLATE]
+  // --progress is REQUIRED here, not optional tidiness.
+  //
+  // historyPrintFlags() adds --print, and in yt-dlp --print implies --quiet.
+  // Quiet suppresses progress output entirely, so adding download history
+  // silently turned the progress bar off: yt-dlp emitted only the two --print
+  // lines and not one [[PROGRESS]] line, while the download itself ran
+  // perfectly. Measured on a real 28-second download -- pct sat at 0 the whole
+  // way and the app received exactly two log lines, both stderr warnings.
+  //
+  // --progress is yt-dlp's own answer to this: "Show progress bar, even if in
+  // quiet mode". Verified against the bundled binary both ways.
+  //
+  // A note on VERIFYING this, because it cost far more than the fix did: yt-dlp
+  // skips a file it has already downloaded, and a skipped download emits no
+  // progress at all -- only the --print lines. Re-running the same URL into the
+  // same folder therefore reproduces the exact symptom of this bug on a build
+  // where it is already fixed. Measured: 177 bytes and 0 progress lines on a
+  // repeat run, 2,215 bytes and 26 progress lines once the target file was
+  // removed. Any test of progress must download something that is not already
+  // on disk, or it is measuring the skip and not the fix.
+  return ['--newline', '--progress', '--progress-template', PROGRESS_TEMPLATE]
 }
 
 // ---------------------------------------------------------------------------
@@ -422,6 +442,17 @@ export class YtDlpManager {
     job.phaseState = initialProgressPhaseState()
     job.historyMeta = emptyHistoryMeta()
     this.setState(id, 'running')
+
+    // Record the exact argv. "Progress never arrives" cost a long time to chase
+    // because nothing anywhere said what was actually run -- the same flags
+    // reproduced perfectly from a shell, so the difference had to be in the
+    // command the app built, and there was no way to see it.
+    //
+    // This is the command line, not its output: it carries flags and the URL,
+    // both of which the interface already shows in its own command preview. It
+    // never carries a credential value; a cookies FILE PATH may appear, which is
+    // a path and not its contents.
+    this.emitLog(id, `$ ${job.binaryPath} ${fullArgv.join(' ')}`, 'info')
 
     const emitLog = (text: string) => {
       const historyField = parseHistoryMetaLine(text)

@@ -2,6 +2,13 @@ name: Release
 
 on:
   push:
+    # Branches ONLY. This workflow ends by running `gh release create`, which
+    # creates a tag -- and an unfiltered `push:` trigger fires on tag pushes too,
+    # so every release triggered another build which published another release.
+    # It ran away from 197 to 213 in ninety minutes before anyone noticed, each
+    # one a real release with real artifacts.
+    branches:
+      - "**"
   workflow_dispatch:
 
 # No concurrency group, deliberately. A group cancels a superseded PENDING run,
@@ -153,6 +160,39 @@ jobs:
             exit 1
           }
           Write-Host "All three bundled binaries are present and runnable."
+      # Every release until now shipped version 0.1.0, because nothing ever
+      # changed it. That is not cosmetic -- Squirrel.Windows keys its entire
+      # install and update model on the version inside the .nupkg. Installing
+      # 0.1.0 over an existing 0.1.0 means Squirrel considers that version
+      # already present: it does not create a new app-<version> folder, it never
+      # fires --squirrel-install, and so IT NEVER CREATES THE SHORTCUT. The old
+      # build simply stays on disk while the installer appears to do nothing.
+      #
+      # That is exactly what was reported: "installer still doesn't create
+      # shortcut", on a machine where app-0.1.0 already existed.
+      #
+      # The run number is monotonic and unique per build, so 0.1.<run> is a valid
+      # semver that always moves forward and lets Squirrel tell two builds apart.
+      - name: Stamp a unique build version
+        shell: pwsh
+        run: |
+          $manifest = "app/package.json"
+          $json = Get-Content $manifest -Raw | ConvertFrom-Json
+          $old = $json.version
+          $new = "0.1.$($env:GITHUB_RUN_NUMBER)"
+          $json.version = $new
+          $json | ConvertTo-Json -Depth 100 | Set-Content $manifest -Encoding utf8
+          # Read it back rather than trusting the write: a version that silently
+          # stayed the same is the whole defect being fixed here.
+          $check = (Get-Content $manifest -Raw | ConvertFrom-Json).version
+          if ($check -ne $new) {
+            Write-Error "Version stamp did not take: wanted $new, file says $check"
+            exit 1
+          }
+          Write-Host "Version $old -> $new"
+          "app-version=$new" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+        id: appversion
+
       - name: Build installer
         shell: cmd
         run: .\build-installer.bat /s

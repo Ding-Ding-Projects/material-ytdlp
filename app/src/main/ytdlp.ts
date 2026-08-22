@@ -3,6 +3,7 @@ import type { BrowserWindow } from 'electron'
 import {
   IpcEvent,
   type JobCapabilities,
+  type JobHistoryEntry,
   type JobLogEvent,
   type JobProgress,
   type JobProgressEvent,
@@ -13,6 +14,7 @@ import {
   type PauseMode,
   type StartJobRequest,
 } from '../shared/ipc-contract'
+import { getStore } from './store'
 
 // ---------------------------------------------------------------------------
 // Progress template
@@ -31,6 +33,118 @@ const PROGRESS_TEMPLATE =
 
 function progressFlags(): string[] {
   return ['--newline', '--progress-template', PROGRESS_TEMPLATE]
+}
+
+// ---------------------------------------------------------------------------
+// History metadata capture
+//
+// Job history (JobHistoryEntry, appended on finish() below) wants to say
+// what was actually downloaded — title, uploader, extractor, video id,
+// duration, the real output path — not just that a job id finished. None of
+// that is on the progress template above, so it is captured separately via
+// six `--print after_move:...` flags: yt-dlp's `after_move` hook fires once
+// per completed item, AFTER any merge/post-processing step has already
+// written the file to its final location, so %(filepath)s there names the
+// real file rather than a ".part" temporary.
+//
+// Six SEPARATE `--print` flags rather than one pipe-delimited template
+// deliberately: title/uploader/filepath are free-form strings that can
+// contain a literal "|", which would corrupt a single delimited line with
+// no reliable way to tell which field it belonged to. One marker per field,
+// each on its own line, has no such ambiguity — the same reasoning that
+// keeps PROGRESS_MARKER's own fields to values that cannot contain '|'.
+//
+// A playlist/channel job fires these six lines once per item; this layer
+// keeps only the LATEST set seen before the process exits (see
+// parseHistoryMetaLine's caller in spawnFor), so a multi-item job's history
+// entry describes its last completed item rather than its first. That is a
+// deliberate simplification, not a bug: a full per-item history is future
+// work, not what JobHistoryEntry (one entry per job run) models today.
+// ---------------------------------------------------------------------------
+
+const HISTORY_MARKERS = {
+  title: '[[HIST_TITLE]]',
+  uploader: '[[HIST_UPLOADER]]',
+  extractor: '[[HIST_EXTRACTOR]]',
+  durationSec: '[[HIST_DURATION]]',
+  outputPath: '[[HIST_FILEPATH]]',
+  videoId: '[[HIST_ID]]',
+} as const
+
+type HistoryMetaKey = keyof typeof HISTORY_MARKERS
+
+/** Maps a HistoryMeta key to the yt-dlp output-template field name it is printed from, for the (rare) keys where they differ. */
+const HISTORY_TEMPLATE_FIELD: Partial<Record<HistoryMetaKey, string>> = {
+  durationSec: 'duration',
+  videoId: 'id',
+}
+
+export interface HistoryMeta {
+  title: string | null
+  uploader: string | null
+  extractor: string | null
+  durationSec: number | null
+  outputPath: string | null
+  /** yt-dlp's own %(id)s for this media, e.g. a YouTube video id. Paired with `extractor` this is the same "extractor id" shape yt-dlp uses for --download-archive lines. */
+  videoId: string | null
+}
+
+export function emptyHistoryMeta(): HistoryMeta {
+  return { title: null, uploader: null, extractor: null, durationSec: null, outputPath: null, videoId: null }
+}
+
+function historyPrintFlags(): string[] {
+  const flags: string[] = []
+  for (const key of Object.keys(HISTORY_MARKERS) as HistoryMetaKey[]) {
+    const field = HISTORY_TEMPLATE_FIELD[key] ?? key
+    flags.push('--print', `after_move:${HISTORY_MARKERS[key]}%(${field})s`)
+  }
+  return flags
+}
+
+/**
+ * yt-dlp prints "NA" for a `%()s` field it cannot resolve (same convention
+ * documented on parseRawProgressLine's `na` helper above — duplicated here
+ * rather than shared, since the two parsers have no other code in common
+ * and this keeps that battle-tested progress parser untouched).
+ */
+function naHistoryField(v: string): string | null {
+  const trimmed = v.trim()
+  return trimmed === '' || trimmed === 'NA' || trimmed === 'None' ? null : trimmed
+}
+
+/**
+ * Recognizes one `[[HIST_*]]`-prefixed line and returns which HistoryMeta
+ * field it carries plus its normalized value, or null when the line carries
+ * none of the six markers at all (i.e. it is ordinary yt-dlp output).
+ */
+export function parseHistoryMetaLine(line: string): { key: HistoryMetaKey; value: string | number | null } | null {
+  for (const key of Object.keys(HISTORY_MARKERS) as HistoryMetaKey[]) {
+    const marker = HISTORY_MARKERS[key]
+    const idx = line.indexOf(marker)
+    if (idx === -1) continue
+    const raw = naHistoryField(line.slice(idx + marker.length))
+    if (key === 'durationSec') {
+      const n = raw === null ? null : Math.round(parseFloat(raw))
+      return { key, value: Number.isFinite(n) ? n : null }
+    }
+    return { key, value: raw }
+  }
+  return null
+}
+
+/**
+ * Applies one parsed `[[HIST_*]]` field onto a job's accumulated metadata.
+ * Written as an explicit switch (rather than a generic `meta[key] = value`
+ * indexed assignment) so TypeScript can actually verify each field lands in
+ * its correctly-typed slot instead of trusting a same-shaped cast.
+ */
+function applyHistoryMetaField(meta: HistoryMeta, field: { key: HistoryMetaKey; value: string | number | null }): void {
+  if (field.key === 'durationSec') {
+    meta.durationSec = typeof field.value === 'number' ? field.value : null
+    return
+  }
+  meta[field.key] = typeof field.value === 'string' ? field.value : null
 }
 
 /**
@@ -226,6 +340,8 @@ interface InternalJob {
   binaryPath: string
   /** Carried across progress lines within the current process run so `pct` can be made monotonic. Reset on every (re)spawn — see spawnFor. */
   phaseState: ProgressPhaseState
+  /** Accumulated from `[[HIST_*]]` lines during the current process run (see parseHistoryMetaLine). Reset on every (re)spawn, same as phaseState. */
+  historyMeta: HistoryMeta
 }
 
 /**
@@ -274,7 +390,13 @@ export class YtDlpManager {
       createdAt: now,
       updatedAt: now,
     }
-    this.jobs.set(req.id, { record, child: null, binaryPath, phaseState: initialProgressPhaseState() })
+    this.jobs.set(req.id, {
+      record,
+      child: null,
+      binaryPath,
+      phaseState: initialProgressPhaseState(),
+      historyMeta: emptyHistoryMeta(),
+    })
     this.spawnFor(req.id, req.argv)
     return record
   }
@@ -283,7 +405,7 @@ export class YtDlpManager {
     const job = this.jobs.get(id)
     if (!job) return
 
-    const fullArgv = [...argv, ...progressFlags()]
+    const fullArgv = [...argv, ...progressFlags(), ...historyPrintFlags()]
     const child = spawn(job.binaryPath, fullArgv, {
       cwd: job.record.cwd ?? undefined,
       windowsHide: true,
@@ -293,11 +415,21 @@ export class YtDlpManager {
     job.child = child
     // Each (re)spawn is its own process run — reset the monotonic-percent
     // bookkeeping so a resumed/retried job does not get clamped against a
-    // high-water mark left over from a previous run.
+    // high-water mark left over from a previous run. Same reasoning for
+    // historyMeta: a retry that succeeds should record ITS OWN after_move
+    // output, not metadata left over from an earlier failed attempt that
+    // never reached that hook.
     job.phaseState = initialProgressPhaseState()
+    job.historyMeta = emptyHistoryMeta()
     this.setState(id, 'running')
 
     const emitLog = (text: string) => {
+      const historyField = parseHistoryMetaLine(text)
+      if (historyField) {
+        const current = this.jobs.get(id)
+        if (current) applyHistoryMetaField(current.historyMeta, historyField)
+        return
+      }
       const raw = parseRawProgressLine(text)
       if (raw) {
         const current = this.jobs.get(id)
@@ -381,6 +513,42 @@ export class YtDlpManager {
     job.record.exitCode = exitCode
     job.child = null
     this.setState(id, state, exitCode)
+    this.recordHistory(id, state, exitCode)
+  }
+
+  /**
+   * Appends one JobHistoryEntry for this run to the on-disk job history
+   * (Store.appendJobHistory) — real title/uploader/extractor/duration/output
+   * path when this run's `after_move` output supplied them, honest `null`
+   * for whatever it did not. Fire-and-forget and never throws into a
+   * caller: a history-recording failure must never take down the real job
+   * it is trying to record, same principle the separate Git-backed
+   * download-list history already applies in
+   * app/src/main/ipc.ts's recordFromJobRecord.
+   */
+  private recordHistory(id: string, state: JobState, exitCode: number | null): void {
+    const job = this.jobs.get(id)
+    if (!job) return
+    const entry: JobHistoryEntry = {
+      id,
+      url: job.record.url,
+      argv: job.record.argv,
+      state,
+      exitCode,
+      finishedAt: Date.now(),
+      title: job.historyMeta.title,
+      uploader: job.historyMeta.uploader,
+      extractor: job.historyMeta.extractor,
+      videoId: job.historyMeta.videoId,
+      durationSec: job.historyMeta.durationSec,
+      outputPath: job.historyMeta.outputPath,
+      sizeLabel: job.record.progress.size,
+    }
+    void getStore()
+      .appendJobHistory(entry)
+      .catch((err) => {
+        console.error('[job-history] appendJobHistory failed:', err)
+      })
   }
 
   private setState(id: string, state: JobState, exitCode: number | null = null): void {

@@ -198,6 +198,22 @@ export interface LastPaths {
   [key: string]: unknown
 }
 
+/**
+ * A record of one job run reaching a terminal state (done/error/cancelled),
+ * appended by YtDlpManager (app/src/main/ytdlp.ts) via Store.appendJobHistory
+ * so a fresh launch can show what was actually downloaded — not merely that
+ * some job id finished.
+ *
+ * The five fields below `finishedAt` are captured from yt-dlp's own real
+ * output at the `after_move` hook (i.e. after any post-processing/merge has
+ * already written the final file), never invented. A run that never reached
+ * that hook — it failed during extraction, was cancelled early, or yt-dlp's
+ * build genuinely omitted a field for that extractor — leaves the
+ * corresponding field `null` rather than a guessed value. An entry loaded
+ * from a job-history.json written before this field set existed will simply
+ * have these as `undefined` at runtime; every reader must treat that the
+ * same as `null` rather than assuming presence.
+ */
 export interface JobHistoryEntry {
   id: string
   url: string
@@ -205,4 +221,33 @@ export interface JobHistoryEntry {
   state: JobState
   exitCode: number | null
   finishedAt: number
+  /** The media title yt-dlp resolved, or null if the job never got that far. */
+  title: string | null
+  /** The channel/account/user yt-dlp attributes the media to, or null when the extractor does not report one (or the job never got that far). */
+  uploader: string | null
+  /** The yt-dlp extractor that handled this URL (e.g. "youtube", "twitch:vod"), or null if extraction never started. */
+  extractor: string | null
+  /** The extractor's own id for this media (yt-dlp's %(id)s — e.g. a YouTube video id), or null if extraction never started. Paired with `extractor` this is the same "extractor id" shape yt-dlp itself uses for --download-archive lines, but it is not cross-checked against the actual archive file. */
+  videoId: string | null
+  /** Media duration in whole seconds, or null for a live/unknown-duration source, or a job that never resolved it. */
+  durationSec: number | null
+  /**
+   * The absolute path of the file yt-dlp actually wrote, captured AFTER any
+   * merge/post-processing step so it names the real final file rather than a
+   * temporary ".part" path. Null for a run that never produced an output
+   * file (failed before download, cancelled early, or a --simulate-style
+   * job). This is the exact string yt-dlp reported — it is not re-verified
+   * against the filesystem, so a since-deleted or since-moved file still
+   * shows its last known path here; callers must not present that path as
+   * proof the file still exists.
+   */
+  outputPath: string | null
+  /**
+   * The last human-readable size figure ("1.42GiB") yt-dlp reported in job
+   * progress before this run finished — for display only. It is the last
+   * progress line's own string, not a verified byte count of the final
+   * file (a multi-stream download's last progress line may describe only
+   * one stream), so treat it as an approximation.
+   */
+  sizeLabel: string | null
 }

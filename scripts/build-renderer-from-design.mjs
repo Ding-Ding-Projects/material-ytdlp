@@ -65,6 +65,7 @@ import { wireDownloadFolder } from './wire-download-folder.mjs'
 import { wireVersionFooter } from './wire-version-footer.mjs'
 import { wireWindowChrome } from './wire-window-chrome.mjs'
 import { wireExtensionInstall } from './wire-extension-install.mjs'
+import { wireDownloadHistory } from './wire-download-history.mjs'
 import { wireLifecycleRepair } from './wire-lifecycle-repair.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -251,6 +252,7 @@ function main() {
   html = wireVersionFooter(html, replaceExact)
   html = wireWindowChrome(html, replaceExact)
   html = wireExtensionInstall(html, replaceExact)
+  html = wireDownloadHistory(html, replaceExact)
   // MUST run last. It repairs collisions between earlier lanes -- the
   // duplicated componentDidUpdate and the assignment to the getter-only
   // _wire -- so every lane that could create one has to have run already.

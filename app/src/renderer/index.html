@@ -2160,12 +2160,27 @@ class Component extends DCLogic {
       this.setState(st => {
         const next = {};
         if (Array.isArray(saved.tabs) && saved.tabs.length) {
-          // Persisted tabs carry id/label/pinned/group; anything the design's
-          // richer runtime shape needs (view/groupId) is preserved from the
-          // live tab of the same id when one still exists, so restoring
-          // pin/group/order never clobbers a tab's own routing.
+          // Persisted tabs now carry view/groupId themselves. The merge against
+          // a live tab of the same id stays as a fallback, for state written by
+          // an older build that did not save them -- but a persisted view now
+          // wins over the seed, because the user's own tab is the truth about
+          // where that tab points.
+          //
+          // A tab that ends up with no view at all after both routes is dropped
+          // rather than restored: a tab that cannot resolve its own content is
+          // a dead entry in the strip, and silently keeping it is worse than
+          // losing it, because it looks operable and is not.
           const byId = new Map(st.tabs.map(t => [t.id, t]));
-          next.tabs = saved.tabs.map(pt => ({ ...(byId.get(pt.id) || {}), ...pt }));
+          next.tabs = saved.tabs
+            .map(pt => {
+              const live = byId.get(pt.id) || {};
+              const merged = { ...live, ...pt };
+              if (merged.view == null && live.view != null) merged.view = live.view;
+              if (merged.groupId == null && live.groupId != null) merged.groupId = live.groupId;
+              return merged;
+            })
+            .filter(t => t.view != null);
+          if (!next.tabs.length) delete next.tabs;
           next.nextTab = Math.max(st.nextTab, ...saved.tabs.map(t => (typeof t.id === 'number' ? t.id : 0)), 0) + 1;
         }
         if (Array.isArray(saved.groups)) next.customGroups = saved.groups;
@@ -2196,7 +2211,26 @@ class Component extends DCLogic {
     component._tabsStateSaveTimer = setTimeout(() => {
       if (!window.ytdlpStudio || !window.ytdlpStudio.tabsState) return;
       const payload = {
-        tabs: (st.tabs || []).map(t => ({ id: t.id, label: t.label, pinned: !!t.pinned, group: t.group || 'Ungrouped' })),
+        // Persist view and groupId, the fields the runtime actually uses.
+        //
+        // This previously saved neither. view is what every lookup resolves a
+        // tab's content from, and group was read off t.group -- a property
+        // the runtime does not have; it uses groupId -- so it evaluated to
+        // undefined every time and every tab was saved as 'Ungrouped'.
+        //
+        // The load side merged the missing fields back from a live tab of the
+        // same id, which hid the problem for the three tabs the design seeds
+        // and only those. Any tab the USER created has no live counterpart, so
+        // it was restored with no view at all -- observed on a real profile
+        // with a user-made tab labelled "History" that could no longer reach
+        // the view it was named after.
+        tabs: (st.tabs || []).map(t => ({
+          id: t.id,
+          label: t.label,
+          pinned: !!t.pinned,
+          view: t.view != null ? t.view : null,
+          groupId: t.groupId != null ? t.groupId : null,
+        })),
         groups: st.customGroups || [],
         dock: st.dock || 'left',
         prefs: st.prefs || {},
@@ -2248,6 +2282,10 @@ class Component extends DCLogic {
     this._offState = bridge.jobs.onState(ev => {
       const stateMap = { queued: 'queued', running: 'downloading', paused: 'queued', done: 'done', error: 'error', cancelled: 'error' };
       this.setState(st => ({ jobs: st.jobs.map(j => j.id === ev.id ? { ...j, state: stateMap[ev.state] || j.state } : j) }));
+      // YtDlpManager.finish() (app/src/main/ytdlp.ts) has just appended a
+      // real JobHistoryEntry for this run — pick it up now rather than on
+      // the next launch.
+      if (ev.state === 'done' || ev.state === 'error' || ev.state === 'cancelled') this._hydrateJobHistory();
     });
     bridge.jobs.capabilities().then(caps => {
       const label = caps && caps.pauseMode === 'suspend' ? 'Pause queue' : 'Stop queue (Windows cannot truly suspend a process — resuming restarts it with --continue)';
@@ -2257,6 +2295,7 @@ class Component extends DCLogic {
     this._hydrateBinaryVersions();
     this._hydrateExtensionInstall();
     this._wireExtensionUrlBridge();
+    this._hydrateJobHistory();
     this._wireHistoryBridge();
   }
 
@@ -2265,7 +2304,22 @@ class Component extends DCLogic {
   // state, replacing the design's static demo record list. When git is
   // not on PATH the store reports itself unavailable with a reason, and
   // that is shown plainly rather than as an empty "no history yet" list.
-  _hydrateBinaryVersions() {
+  // Real job-history.json (app/src/main/store.ts's JobHistoryEntry list),
+  // appended to by YtDlpManager.finish() (app/src/main/ytdlp.ts) every time
+  // a job reaches a terminal state. Powers the Library view below.
+  _hydrateJobHistory() {
+    const bridge = window.ytdlpStudio;
+    if (!bridge || !bridge.store) return;
+    bridge.store.getJobHistory().then(entries => {
+      this.setState({ jobHistory: Array.isArray(entries) ? entries : [] });
+    }).catch(() => {
+      // The Library view already renders an honest "0 completed downloads"
+      // from an empty jobHistory; a background refresh failing is not worth
+      // interrupting the user with a toast for.
+    });
+  }
+
+    _hydrateBinaryVersions() {
     const bridge = window.ytdlpStudio;
     if (!bridge || !bridge.binaries) return;
     bridge.binaries.resolveAll().then(all => {
@@ -2932,6 +2986,7 @@ class Component extends DCLogic {
     formatProbeUrl: '', formatProbe: null,
     formatSearch: '', outTemplate: '%(uploader)s/%(playlist|)s/%(title)s [%(id)s].%(ext)s',
     fieldSearch: '', librarySearch: '', siteSearch: '', configSearch: '', historySearch: '',
+    jobHistory: [],
     historySurf: 'all', historyKind: 'All', historyPinnedOnly: false, historySel: {}, historyOpen: 'h2',
     historyPins: {}, historyLive: true, historyKeep: '90 days', historyCollapsed: {},
     settingsSearch: '', ppSearch: '', configFile: 'user', cookieBrowser: 'firefox', cookieFilePath: '',
@@ -5197,21 +5252,35 @@ class Component extends DCLogic {
 
       librarySearch: s.librarySearch, setLibrarySearch: e => this.setState({ librarySearch: e.target.value }),
       openRegexLibrary: () => this.setState({ dialog: 'regex', regexTarget: 'library' }),
-      libraryRows: [
-
-      ].filter(r => this.match(r.join(' '), s.librarySearch)).map(r => ({
+      libraryRows: (s.jobHistory || []).filter(h => h.state === 'done').slice().reverse().map(h => ([
+        h.title || h.url,
+        h.outputPath || '(output path not recorded)',
+        h.uploader || '—',
+        h.sizeLabel || '—',
+        (h.outputPath || '').split('.').pop() || '—',
+        h.extractor ? (h.extractor + (h.videoId ? ' ' + h.videoId : '')) : '—',
+      ])).filter(r => this.match(r.join(' '), s.librarySearch)).map(r => ({
         title: r[0], path: r[1], uploader: r[2], size: r[3], ext: r[4], archive: r[5],
         menu: e => this.openMenu(e, r[0], [
           { glyph: '▶', label: 'Play file', run: () => this.toast('Player', r[0]) },
-          { glyph: '⌂', label: 'Show in Explorer', run: () => this.toast('Explorer', r[1]) },
+          { glyph: '⌂', label: 'Show in Explorer', run: () => {
+            const bridge = window.ytdlpStudio;
+            if (!bridge || !bridge.fileOps) { this.toast('Not connected', 'window.ytdlpStudio is missing'); return; }
+            bridge.fileOps.revealPath({ path: r[1] }).then(res => {
+              if (!res || !res.ok) this.toast('Could not open', (res && res.error) || 'Unknown error');
+            }).catch(err => this.toast('Could not open', String(err && err.message ? err.message : err)));
+          } },
           { glyph: '{}', label: 'Open .info.json', run: () => this.toast('info.json', r[0]) },
           { glyph: '↻', label: 'Re-download with current options', run: () => this.toast('Queued', r[0]) },
           { glyph: '⚙', label: 'Re-run post-processing only', run: () => this.toast('Post-processing', r[0]) },
           { glyph: '⊖', label: 'Remove archive id', color: '#ffb4ab', run: () => this.toast('Not implemented', 'Removing a single id from the download archive needs a real per-row extractor id, which this list does not carry yet') },
-          { glyph: '×', label: 'Delete file from disk', color: '#ffb4ab', run: () => this.askDestructive('Delete from disk?', 'The file is removed permanently. The download archive entry stays unless you remove it separately.') },
+          { glyph: '×', label: 'Delete file from disk', color: '#ffb4ab', run: () => this.toast('Not implemented', 'Deleting a real file needs a dedicated main-process delete capability, which is not wired up yet — nothing on disk is touched by this menu item.') },
         ]),
       })),
-      libraryCount: '0 of 0 files · — archive ids',
+      libraryCount: (() => {
+        const doneCount = (s.jobHistory || []).filter(h => h.state === 'done').length;
+        return doneCount + (doneCount === 1 ? ' completed download' : ' completed downloads');
+      })(),
 
       siteSearch: s.siteSearch, setSiteSearch: e => this.setState({ siteSearch: e.target.value }),
       openRegexSites: () => this.setState({ dialog: 'regex', regexTarget: 'sites' }),

@@ -127,12 +127,27 @@ function addHelperMethods(html, replaceExact) {
       this.setState(st => {
         const next = {};
         if (Array.isArray(saved.tabs) && saved.tabs.length) {
-          // Persisted tabs carry id/label/pinned/group; anything the design's
-          // richer runtime shape needs (view/groupId) is preserved from the
-          // live tab of the same id when one still exists, so restoring
-          // pin/group/order never clobbers a tab's own routing.
+          // Persisted tabs now carry view/groupId themselves. The merge against
+          // a live tab of the same id stays as a fallback, for state written by
+          // an older build that did not save them -- but a persisted view now
+          // wins over the seed, because the user's own tab is the truth about
+          // where that tab points.
+          //
+          // A tab that ends up with no view at all after both routes is dropped
+          // rather than restored: a tab that cannot resolve its own content is
+          // a dead entry in the strip, and silently keeping it is worse than
+          // losing it, because it looks operable and is not.
           const byId = new Map(st.tabs.map(t => [t.id, t]));
-          next.tabs = saved.tabs.map(pt => ({ ...(byId.get(pt.id) || {}), ...pt }));
+          next.tabs = saved.tabs
+            .map(pt => {
+              const live = byId.get(pt.id) || {};
+              const merged = { ...live, ...pt };
+              if (merged.view == null && live.view != null) merged.view = live.view;
+              if (merged.groupId == null && live.groupId != null) merged.groupId = live.groupId;
+              return merged;
+            })
+            .filter(t => t.view != null);
+          if (!next.tabs.length) delete next.tabs;
           next.nextTab = Math.max(st.nextTab, ...saved.tabs.map(t => (typeof t.id === 'number' ? t.id : 0)), 0) + 1;
         }
         if (Array.isArray(saved.groups)) next.customGroups = saved.groups;
@@ -163,7 +178,26 @@ function addHelperMethods(html, replaceExact) {
     component._tabsStateSaveTimer = setTimeout(() => {
       if (!window.ytdlpStudio || !window.ytdlpStudio.tabsState) return;
       const payload = {
-        tabs: (st.tabs || []).map(t => ({ id: t.id, label: t.label, pinned: !!t.pinned, group: t.group || 'Ungrouped' })),
+        // Persist view and groupId, the fields the runtime actually uses.
+        //
+        // This previously saved neither. view is what every lookup resolves a
+        // tab's content from, and group was read off t.group -- a property
+        // the runtime does not have; it uses groupId -- so it evaluated to
+        // undefined every time and every tab was saved as 'Ungrouped'.
+        //
+        // The load side merged the missing fields back from a live tab of the
+        // same id, which hid the problem for the three tabs the design seeds
+        // and only those. Any tab the USER created has no live counterpart, so
+        // it was restored with no view at all -- observed on a real profile
+        // with a user-made tab labelled "History" that could no longer reach
+        // the view it was named after.
+        tabs: (st.tabs || []).map(t => ({
+          id: t.id,
+          label: t.label,
+          pinned: !!t.pinned,
+          view: t.view != null ? t.view : null,
+          groupId: t.groupId != null ? t.groupId : null,
+        })),
         groups: st.customGroups || [],
         dock: st.dock || 'left',
         prefs: st.prefs || {},

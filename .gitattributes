@@ -1,0 +1,37 @@
+# Line endings are part of this project's build correctness, not a style choice.
+#
+# scripts/build-renderer-from-design.mjs matches multi-line needles against
+# design/yt-dlp Studio.dc.html, and those needles are written with \n. On a
+# machine where Git checks the design out with CRLF -- which is the DEFAULT on
+# Windows (core.autocrlf=true) -- not one multi-line needle matches, and the
+# generator dies on the first one. A fresh clone simply cannot build.
+#
+# That is not hypothetical: reproduced by cloning this repository with
+# core.autocrlf=true and running the generator, which failed immediately on the
+# font <link> block.
+#
+# So the checkout is pinned rather than left to each machine's configuration.
+
+# Everything text-like is LF in the working tree, on every platform.
+* text=auto eol=lf
+
+# The design export is the contract the generator matches against, byte for
+# byte. It must never be touched by any line-ending conversion.
+design/** -text
+
+# Binaries: never convert, never diff as text.
+*.png  binary
+*.jpg  binary
+*.webp binary
+*.ico  binary
+*.ttf  binary
+*.woff  binary
+*.woff2 binary
+*.zip  binary
+*.exe  binary
+*.nupkg binary
+
+# Windows batch files genuinely need CRLF -- cmd.exe can mis-parse an LF-only
+# .bat, and these are the entry points a fresh machine runs first.
+*.bat text eol=crlf
+*.cmd text eol=crlf

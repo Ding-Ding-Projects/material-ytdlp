@@ -132,7 +132,19 @@ function main() {
   copyFileSync(DESIGN_SUPPORT_PATH, OUT_SUPPORT_PATH)
   copyFileSync(DESIGN_CATALOG_PATH, OUT_CATALOG_PATH)
 
-  let html = readFileSync(DESIGN_HTML_PATH, 'utf8')
+  // Normalise line endings before anything matches against this.
+  //
+  // Every needle in every wire module is written with \n. If the design is
+  // checked out with CRLF -- the DEFAULT on Windows, where core.autocrlf=true --
+  // not one multi-line needle matches and the generator dies on the first one.
+  // A fresh clone could not build the project at all.
+  //
+  // .gitattributes now pins the checkout, which is the real fix. This is the
+  // belt to that pair of braces: it costs one pass over the file and makes the
+  // generator correct regardless of how the design arrived on disk -- a
+  // download, a zip, an editor that rewrote it, or a clone configured before
+  // .gitattributes existed.
+  let html = readFileSync(DESIGN_HTML_PATH, 'utf8').replace(/\r\n/g, '\n')
 
   // Insert a Content-Security-Policy meta tag. `script-src 'self'
   // 'unsafe-eval'` is required — not a nicety — because support.js's own

@@ -430,7 +430,23 @@ async function main() {
     return;
   }
 
+  // A fresh profile is the right default -- it is what proves the app works for
+  // a new user. But it also means this suite never sees a defect that only
+  // appears once real state has been persisted, which is exactly the shape of a
+  // bug reported from a running install and not reproducible here.
+  //
+  // SMOKE_SEED_PROFILE points at an existing profile to COPY (never to use in
+  // place -- the run would mutate the user's own state).
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), "ytdlp-studio-smoke-"));
+  if (process.env.SMOKE_SEED_PROFILE) {
+    const seed = path.resolve(process.env.SMOKE_SEED_PROFILE);
+    if (fs.existsSync(seed)) {
+      fs.cpSync(seed, profileDir, { recursive: true, force: true, errorOnExist: false });
+      console.log(`[seed] copied profile from ${seed}`);
+    } else {
+      console.log(`[seed] SMOKE_SEED_PROFILE not found: ${seed}`);
+    }
+  }
   let child = null;
   let cdp = null;
   const consoleErrors = [];

@@ -842,7 +842,19 @@ const WIRING_METHODS = `
   // something is being measured.
   _totalRateLabel(activeJobs) {
     const parse = (r) => {
-      const m = /([\d.]+)\s*([KMG]?)i?B\/s/i.exec(String(r || ''));
+      // Backslashes are DOUBLED because this whole method is inside a template
+      // literal that the generator emits into the app. In a template literal
+      // \\d, \\s and \\/ are not valid escapes, so a single backslash is simply
+      // dropped -- and this line shipped as:
+      //
+      //     /([d.]+)s*([KMG]?)i?B/s/i.exec(...)
+      //
+      // which is not a broken regex, it is a DIFFERENT PROGRAM. Losing the
+      // backslash before the slash ends the literal early at "B/", takes "s" as
+      // a flag, and parses the remainder as division by i.exec(...). There is no
+      // i, so pressing Download threw "ReferenceError: i is not defined" -- from
+      // a line that reads perfectly correctly in this file.
+      const m = /([\\d.]+)\\s*([KMG]?)i?B\\/s/i.exec(String(r || ''));
       if (!m) return 0;
       const mult = { K: 1024, M: 1024 * 1024, G: 1024 * 1024 * 1024 }[m[2].toUpperCase()] || 1;
       return parseFloat(m[1]) * mult;

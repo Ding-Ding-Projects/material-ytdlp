@@ -475,7 +475,7 @@ const ENUMERATE_EXPR = String.raw`
     const r = el.getBoundingClientRect();
     const label =
       (el.getAttribute('aria-label') || '') ||
-      (el.innerText || el.value || el.placeholder || el.title || '').toString().replace(/\s+/g, ' ').trim().slice(0, 120);
+      (el.innerText || el.value || el.placeholder || el.title || '').toString().replace(/\\s+/g, ' ').trim().slice(0, 120);
     out.push({
       path: cssPath(el),
       tag: el.tagName.toLowerCase(),

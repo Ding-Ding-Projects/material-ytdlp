@@ -208,6 +208,19 @@ jobs:
         shell: cmd
         run: node scripts/smoke-test.mjs
 
+      # The smoke test proves the app LOADS. This proves it SURVIVES BEING USED,
+      # which is a different question and the one that was not being asked.
+      #
+      # A regex in the rate-summing helper shipped with every backslash eaten by
+      # the template literal it was emitted from, so it parsed as division by an
+      # undefined identifier and pressing Download threw on every render. It
+      # type-checked, it built, it packaged, and it passed the smoke test --
+      # because the mangled line is valid JavaScript. Only pressing the button
+      # found it, and nothing in CI pressed anything.
+      - name: Drive the built application
+        shell: cmd
+        run: node scripts/drive-app.mjs
+
       - name: Compute release tag
         id: tag
         shell: pwsh
